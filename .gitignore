@@ -1,0 +1,24 @@
+# Віртуальне середовище
+venv/
+
+# Кеш Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Кеш FastAPI або інші тимчасові файли
+instance/
+*.log
+*.pid
+*.gz
+
+# Конфігураційні файли (якщо не хочете завантажувати їх)
+*.env
+
+# IDE
+.idea/
+.vscode/
+
+# Системні файли
+.DS_Store
+Thumbs.db
