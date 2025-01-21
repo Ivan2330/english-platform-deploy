@@ -62,5 +62,5 @@ class StudentLevelUpdate(BaseModel):
     level: EnglishLevel
 
 
-class AI_StatusUpdate(BaseModel):
-    ai_active: bool
+class StudentBalanceUpdate(BaseModel):
+    lesson_balance: int

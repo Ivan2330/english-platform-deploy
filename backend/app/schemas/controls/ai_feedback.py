@@ -1,28 +1,22 @@
 from pydantic import BaseModel
+from typing import Optional
+from datetime import datetime
 
 
 class AIFeedbackBase(BaseModel):
-    task_id: int
+    task_result_id: int
     feedback_text: str
-    score: int | None
-    comments: str | None
-    ai_model: str = "gpt-4"
+    detailed_feedback: Optional[str] = None
 
 
 class AIFeedbackCreate(AIFeedbackBase):
     pass
 
 
-class AIFeedbackUpdate(BaseModel):
-    feedback_text: str | None
-    score: int | None
-    comments: str | None
-
-
 class AIFeedbackResponse(AIFeedbackBase):
     id: int
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True

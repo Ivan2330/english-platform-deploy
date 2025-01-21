@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.users.staff import Staff
 from app.models.users.students import Student
 from app.core.config import settings
-from app.core.database import get_user_db
+from app.core.database import get_async_session
+
 
 secret_key = settings.secret_key
 
@@ -31,10 +32,10 @@ class StudentManager(BaseUserManager[Student, int]):
         print(f"Student {user.id} requested password reset. Token: {token}")
 
 
-async def get_staff_manager(user_db=Depends(get_user_db)):
+async def get_staff_manager(user_db=Depends(get_async_session)):
     yield StaffManager(user_db)
 
-async def get_student_manager(user_db=Depends(get_user_db)):
+async def get_student_manager(user_db=Depends(get_async_session)):
     yield StudentManager(user_db)
 
 

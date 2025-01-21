@@ -7,7 +7,9 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str = "HS256"
     expire_token_minutes: int = 30
-
+    OPENAI_API_KEY: str
+    OPENAI_API_URL: str
+    
     log_level: str = "info"
     environment: str = "development"
 

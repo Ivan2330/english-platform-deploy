@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, Enum, CheckConstraint, Text, ForeignKey
 from app.core.database import Base
+from sqlalchemy.orm import relationship
 import enum
 
 
@@ -43,6 +44,9 @@ class Student(Base):
     last_login = Column(DateTime, default=func.now(), onupdate=func.now())  # Дата останнього входу
     created_at = Column(DateTime, default=func.now())  # Дата створення акаунта
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())  # Дата оновлення акаунта
+    
+    
+    classrooms = relationship("Classroom", back_populates="student", foreign_keys="Classroom.student_id")
     
     __table_args__ = (
         CheckConstraint('age >= 5 AND age <= 90', name='check_age_valid_range'),  # Вік від 5 до 90 років

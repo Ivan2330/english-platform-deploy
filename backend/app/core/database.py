@@ -28,10 +28,3 @@ async def get_db_and_tables():
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_maker() as session:
         yield session
-
-
-# Універсальний генератор для роботи з моделями бази даних
-async def get_user_db(model_class):
-    async with async_session_maker() as session:
-        # Ви можете використовувати model_class для додаткової логіки, якщо потрібно
-        yield session

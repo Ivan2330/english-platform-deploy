@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, DateTime, func
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 class Classroom(Base):
@@ -12,3 +13,7 @@ class Classroom(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+
+    # Відношення
+    teacher = relationship("Staff", back_populates="created_classrooms")
+    student = relationship("Student", back_populates="classrooms", foreign_keys=[student_id])

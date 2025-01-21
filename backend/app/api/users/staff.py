@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from typing import List
 from app.core.database import get_async_session
 from app.models.users.staff import Staff, Status
-from app.schemas.users.staff import StaffCreate, StaffUpdate, StaffResponse
+from app.schemas.users.staff import StaffCreate, StaffUpdate, StaffResponse, StaffRoleUpdate
 from app.api.users.auth import current_active_staff
 from app.core.cache import get_cache, set_cache, delete_cache
 
@@ -28,8 +28,7 @@ async def create_staff(
     current_user: Staff = Depends(current_active_staff),
 ):
     
-    if current_user.status != Status.ADMIN:
-        raise HTTPException(status_code=403, detail="not access")
+    is_admin()
 
     existing_staff = await db.execute(
         select(Staff).filter((Staff.email == staff.email) | (Staff.username == staff.username))
@@ -54,7 +53,7 @@ async def list_users(
     current_user: Staff = Depends(current_active_staff),
 ):
     
-    is_teacher_or_admin(current_user)
+    is_admin(current_user)
 
     query = await db.execute(select(Staff))
     staff_list = query.scalars().all()
@@ -68,7 +67,7 @@ async def read_staff(
     current_user: Staff = Depends(current_active_staff),
 ):
     
-    is_teacher_or_admin(current_user)
+    is_admin(current_user)
 
     cache_key = f"staff:{staff_id}"
     cached_staff = await get_cache(cache_key)
@@ -128,3 +127,28 @@ async def delete_staff(
     await delete_cache(cache_key)
 
     return {"message": "Staff member deleted"}
+
+
+@router.put("/{staff_id}/role", response_model=StaffResponse)
+async def update_role(
+    staff_id: int,
+    updated_staff: StaffRoleUpdate,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: Staff = Depends(current_active_staff),
+):
+    is_admin(current_user)
+
+    staff = await db.get(Staff, staff_id)
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff not found")
+    
+    staff.status = updated_staff.status
+    staff.is_admin = updated_staff.is_admin
+
+    await db.commit()
+    await db.refresh(staff)
+
+    cache_key = f"staff:{staff_id}"
+    await set_cache(cache_key, StaffResponse.model_validate(staff).model_dump(), ttl=3600)
+
+    return staff
