@@ -1,18 +1,18 @@
 from pydantic import BaseModel
-from typing import Optional
+from datetime import datetime
 
 
 class ClassroomTaskBase(BaseModel):
     classroom_id: int
     task_id: int
-    assigned_by: int
+    user_id: int  # ✅ Використовуємо user_id замість assigned_by
 
 
 class ClassroomTaskUpdate(BaseModel):
-    classroom_id: int | None
-    task_id: int | None
-    assigned_by: int | None
-    is_active: bool | None
+    classroom_id: int | None = None
+    task_id: int | None = None
+    user_id: int | None = None  # ✅ Використовуємо user_id замість assigned_by
+    is_active: bool | None = None
     
     
 class ClassroomTaskCreate(ClassroomTaskBase):
@@ -24,13 +24,14 @@ class ClassroomTaskResponse(ClassroomTaskBase):
     is_active: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # ✅ Оновлено для Pydantic 2
 
 
 class ClassroomTaskAssign(BaseModel):
     classroom_id: int  # ID класу
+    user_id: int | None = None
     task_id: int       # ID завдання
-    due_date: Optional[str] = None  # Дата завершення (необов’язково)
+    due_date: datetime | None = None  # Дата завершення (необов’язково)
 
     class Config:
-        from_attributes = True
+        from_attributes = True  # ✅ Оновлено для Pydantic 2

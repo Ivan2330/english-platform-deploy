@@ -1,60 +1,56 @@
 from enum import Enum
 from pydantic import BaseModel, EmailStr
+from .users import UserCreate
+from datetime import datetime
+from app.models.users.users import UserRole, Status, EnglishLevel
 
 
-class Status(str, Enum):
-    TEACHER = "teacher"
-    ADMIN = "admin"
-
-
-class EnglishLevel(str, Enum):
-    B2 = "B2"
-    C1 = "C1"
-    C2 = "C2"
-
-
-class StaffBase(BaseModel):
-    username: str
-    email: EmailStr
+class StaffCreate(UserCreate):
+    username: str    
     phone_number: str
-    profile_image: str | None
-    level: EnglishLevel | None
-    
+    role: str = UserRole.STAFF.value  # ✅ Enum -> str
+    status: str
+    profile_image: str | None = None
+    level: str
 
-class StaffCreate(StaffBase):
-    password: str
-    status: Status = Status.TEACHER
+    class Config:
+        from_attributes = True  # ✅ Дозволяє працювати з ORM
+    
 
 
 class StaffUpdate(BaseModel):
-    username: str | None
-    email: EmailStr | None
-    phone_number: str | None
-    profile_image: str | None
-    level: EnglishLevel | None
-    status: Status | None
-    is_active: bool | None
+    username: str | None = None
+    email: EmailStr | None = None
+    phone_number: str | None = None
+    profile_image: str | None = None
+    level: str | None = None  # ✅ Enum -> str
+    status: str | None = None  # ✅ Enum -> str
+    is_active: bool | None = None
 
 
-class StaffResponse(StaffBase):
+class StaffResponse(BaseModel):
     id: int
-    status: Status
+    username: str
+    email: EmailStr
+    phone_number: str
+    profile_image: str | None = None
+    level: str | None = None  # ✅ Enum -> str
+    role: str  # ✅ Enum -> str
+    status: str
     is_active: bool
     is_admin: bool
-    created_at: str
-    updated_at: str
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class StaffRoleUpdate(BaseModel):
-    status: Status
+    status: str  # ✅ Enum -> str
     is_admin: bool
 
 
 class StaffLogin(BaseModel):
     email: EmailStr
     password: str
-
-

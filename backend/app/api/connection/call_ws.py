@@ -2,14 +2,12 @@ from fastapi import WebSocket, WebSocketDisconnect, APIRouter, Depends, HTTPExce
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.database import get_async_session
-from app.models.connection.call import Call, CallParticipant
-from app.api.users.auth import current_active_staff, current_active_student
-from app.models.users.staff import Staff
-from app.models.users.students import Student
-from app.models.users.staff import Status
 from sqlalchemy.future import select
 from sqlalchemy.sql import func
+from app.core.database import get_async_session
+from app.models.connection.call import Call, CallParticipant
+from app.api.users.auth import current_active_user
+from app.models.users.users import User, Status
 from app.core.cache import get_cache, set_cache, delete_cache
 import logging
 
@@ -27,13 +25,6 @@ def create_message(action: str, user_id: int, **kwargs) -> Dict[str, Any]:
     message = {"action": action, "user": user_id}
     message.update(kwargs)
     return message
-
-def current_active_user(
-    current_staff: Staff = Depends(current_active_staff),
-    current_student: Student = Depends(current_active_student)
-):
-    return current_staff or current_student
-
 
 async def get_cached_participant_status(call_id: int, user_id: int, db: AsyncSession):
     cache_key = f"call:{call_id}:participant:{user_id}"
@@ -54,9 +45,8 @@ async def get_cached_participant_status(call_id: int, user_id: int, db: AsyncSes
             "screen_sharing": participant.screen_sharing,
             "video_quality": participant.video_quality,
         }
-        await set_cache(cache_key, status, ttl=3600)
+        await set_cache(cache_key, status, ttl=1800)
     return status
-
 
 async def update_cached_participant_status(call_id: int, user_id: int, updates: Dict[str, Any]):
     cache_key = f"call:{call_id}:participant:{user_id}"
@@ -65,25 +55,22 @@ async def update_cached_participant_status(call_id: int, user_id: int, updates: 
         status.update(updates)
         await set_cache(cache_key, status, ttl=3600)
 
-
 async def notify_participants(call_id: int, message: Dict[str, Any]):
     """Відправка повідомлення всім учасникам дзвінка."""
     connections = active_connections.get(call_id, [])
     for connection in connections[:]:
-        
         try:
             await connection.send_json(message)
         except Exception as e:
             logger.error(f"Error sending message to participant: {e}")
             connections.remove(connection)
 
-
 @router.websocket("/{call_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
     call_id: int,
     db: AsyncSession = Depends(get_async_session),
-    current_user=Depends(current_active_user),
+    current_user: User = Depends(current_active_user),  # ✅ Використовуємо User замість Staff/Student
 ):
     await websocket.accept()
 
@@ -132,7 +119,7 @@ async def websocket_endpoint(
                 await notify_participants(call_id, create_message("quality_change", current_user.id, quality=data.quality))
 
             elif action == "end_call":
-                if isinstance(current_user, Staff) and current_user.id == call.leader_id:
+                if current_user.role == "staff" and current_user.status in [Status.ADMIN, Status.TEACHER]:
                     call.status = "ended"
                     call.ended_at = func.now()
                     await db.commit()

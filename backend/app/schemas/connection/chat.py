@@ -1,10 +1,11 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, List
+from typing import List
+from app.models.users.users import UserRole
 
 
 class ChatBase(BaseModel):
-    name: Optional[str]  # Назва для групових чатів
+    name: str | None = None  # Назва для групових чатів
     classroom_id: int
 
 
@@ -13,7 +14,7 @@ class ChatCreate(ChatBase):
 
 
 class ChatUpdate(BaseModel):
-    name: Optional[str]
+    name: str | None = None
 
 
 class ChatResponse(ChatBase):
@@ -21,7 +22,7 @@ class ChatResponse(ChatBase):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        from_attributes = True  # ✅ Оновлено для Pydantic 2
 
 
 class ChatMessageBase(BaseModel):
@@ -30,23 +31,23 @@ class ChatMessageBase(BaseModel):
 
 
 class ChatMessageCreate(ChatMessageBase):
-    sender_id: Optional[int]
-    sender_student_id: Optional[int]
+    user_id: int  # ✅ Використовуємо user_id замість sender_id і sender_student_id
+    role: UserRole
 
 
 class ChatMessageUpdate(BaseModel):
-    is_read: Optional[bool]
+    is_read: bool | None = None
 
 
 class ChatMessageResponse(ChatMessageBase):
     id: int
-    sender_id: Optional[int]
-    sender_student_id: Optional[int]
+    user_id: int  # ✅ Використовуємо user_id
+    role: UserRole
     sent_at: datetime
     is_read: bool
 
     class Config:
-        from_attributes = True
+        from_attributes = True  # ✅ Оновлено для Pydantic 2
 
 
 class ChatWithMessages(ChatResponse):

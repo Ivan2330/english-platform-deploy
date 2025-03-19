@@ -1,0 +1,95 @@
+/* Загальний фон */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #f3e7ff, #e1d8ff, #ffe3e3);
+    /* Градієнтний фон */
+}
+
+/* Блок логіна */
+.login-box {
+    text-align: center;
+    background-color: white;
+    padding: 60px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    width: 35vw;
+    max-width: 500px;
+    min-width: 380px;
+    border: 4px solid rgba(108, 99, 255, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Логотип */
+.login-logo {
+    width: 120px;
+    margin-bottom: 20px;
+}
+
+/* Заголовок */
+.login-title {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 25px;
+    color: black;
+}
+
+/* Контейнер для форми */
+.login-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Поля вводу */
+.login-input {
+    width: 90%;
+    padding: 15px;
+    margin: 10px 0;
+    border: 2px solid #6c63ff;
+    border-radius: 30px;
+    font-size: 16px;
+    text-align: center;
+    outline: none;
+    transition: all 0.3s ease-in-out;
+}
+
+/* При фокусі */
+.login-input:focus {
+    border-color: #5a54e8;
+    box-shadow: 0 0 8px rgba(92, 84, 232, 0.4);
+}
+
+/* Кнопка */
+.login-button {
+    width: 60%;
+    /* ВУЖЧА кнопка */
+    max-width: 200px;
+    /* Максимальна ширина */
+    padding: 14px;
+    margin-top: 20px;
+    background: linear-gradient(135deg, #6c63ff, #957DFF);
+    border: none;
+    border-radius: 30px;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    text-align: center;
+}
+
+/* Анімація при наведенні */
+.login-button:hover {
+    background: linear-gradient(135deg, #5a54e8, #8063ff);
+}
+
+/* Анімація при натисканні */
+.login-button:active {
+    transform: scale(0.96);
+}

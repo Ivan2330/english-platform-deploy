@@ -1,65 +1,56 @@
 from pydantic import BaseModel, EmailStr
-from enum import Enum
+from datetime import datetime
+from .users import UserCreate
+from app.models.users.users import UserRole, Subscription, EnglishLevel
 
 
-# Рівні підписок
-class Subscription(str, Enum):
-    GROUP = "group"
-    INDIVIDUAL_PREMIUM = "individual_premium"
-    INDIVIDUAL = "individual"
-    PERSONAL = "personal"
-    PERSONAL_PREMIUM = "personal_premium"
-
-class EnglishLevel(str, Enum):
-    A1 = "A1"
-    A2 = "A2"
-    B1 = "B1"
-    B2 = "B2"
-    C1 = "C1"
-    C2 = "C2"
-
-class StudentBase(BaseModel):
-    username: str
-    email: EmailStr
+class StudentCreate(UserCreate):  
     age: int
-    phone_number: str
-    profile_image: str | None
-    lesson_balance: str | None
-
-class StudentCreate(StudentBase):
-    password: str
-
-
-# Without level and Sub
-class StudentUpdate(BaseModel):
-    username: str | None
-    email: EmailStr | None
-    age: int | None
-    phone_number: str | None
-    profile_image: str | None
-    
-
-
-# Схема відповіді студента
-class StudentResponse(StudentBase):
-    id: int
-    average_mark: int | None
-    is_active: bool
-    created_at: str
-    updated_at: str
+    subscription_type: str = Subscription.GROUP.value  # ✅ Enum -> str
+    lesson_balance: int | None = None
+    level: str = EnglishLevel.A1.value  # ✅ Enum -> str
+    role: str = UserRole.STUDENT.value  # ✅ Enum -> str
+    profile_image: str | None = None  
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # ✅ Дозволяє працювати з ORM
 
 
-# 🛡️ Схема для оновлення підписки студента персоналом
+class StudentUpdate(BaseModel):
+    username: str | None = None
+    email: EmailStr | None = None
+    age: int | None = None
+    phone_number: str | None = None
+    profile_image: str | None = None
+    subscription_type: str | None = None  # ✅ Enum -> str
+    level: str | None = None  # ✅ Enum -> str
+
+
+class StudentResponse(BaseModel):
+    id: int
+    username: str
+    email: EmailStr
+    phone_number: str
+    age: int
+    profile_image: str | None = None
+    lesson_balance: int | None = None
+    subscription_type: str | None = None  # ✅ Enum -> str
+    role: str = UserRole.STUDENT.value  # ✅ Enum -> str
+    average_mark: int | None = None  # ✅ Додаємо `None`, щоб уникнути помилок
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class StudentSubscriptionUpdate(BaseModel):
-    subscription_type: Subscription
+    subscription_type: str  # ✅ Enum -> str
 
 
-# 🎓 Схема для оновлення рівня студента персоналом або автоматично
 class StudentLevelUpdate(BaseModel):
-    level: EnglishLevel
+    level: str  # ✅ Enum -> str
 
 
 class StudentBalanceUpdate(BaseModel):

@@ -4,40 +4,52 @@ from sqlalchemy.future import select
 from typing import List
 from app.core.database import get_async_session
 from app.models.classrooms.classroom_progress import ClassroomProgress
-from app.models.users.staff import Staff, Status
-from app.models.users.students import Student
+from app.models.users.users import User, Status
 from app.schemas.classrooms.classroom_progress import ClassroomProgressResponse, ClassroomProgressUpdate, ClassroomProgressCreate
-from app.api.users.auth import current_active_staff
-from app.core.cache import set_cache, get_cache
+from app.api.users.auth import current_active_user
+from app.core.cache import set_cache, get_cache, delete_cache
 
 router = APIRouter(prefix="/classroom-progress", tags=["Classroom Progress"])
 
-def is_teacher_or_admin(current_user: Staff):
-    if current_user.status not in [Status.ADMIN, Status.TEACHER]:
+def is_teacher_or_admin(current_user: User):
+    """Перевіряє, чи є користувач викладачем або адміністратором."""
+    if current_user.role != "staff" or current_user.status not in [Status.ADMIN, Status.TEACHER]:
         raise HTTPException(status_code=403, detail="User doesn't have access")
 
-# Create classroom progress (teacher or admin)
+
 @router.post("/", response_model=ClassroomProgressResponse)
 async def create_classroom_progress(
     progress: ClassroomProgressCreate,
     session: AsyncSession = Depends(get_async_session),
-    current_user: Staff = Depends(current_active_staff),
+    current_user: User = Depends(current_active_user),
 ):
     is_teacher_or_admin(current_user)
 
-    new_progress = ClassroomProgress(**progress.dict())
+    # Перевірка, чи існує користувач
+    user_result = await session.execute(select(User).where(User.id == progress.user_id))
+    user = user_result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    new_progress = ClassroomProgress(**progress.model_dump(), user_id=progress.user_id)
     session.add(new_progress)
     await session.commit()
     await session.refresh(new_progress)
+
+    # Видалення кешу для оновлення списку прогресів класу
+    await delete_cache(f"classroom_{progress.classroom_id}_progress")
+    
     return new_progress
 
-# Get all progress for a classroom
+
 @router.get("/classroom/{classroom_id}", response_model=List[ClassroomProgressResponse])
 async def list_classroom_progress(
     classroom_id: int,
     session: AsyncSession = Depends(get_async_session),
-    current_user: Staff = Depends(current_active_staff),
+    current_user: User = Depends(current_active_user),
 ):
+    is_teacher_or_admin(current_user)
+
     cache_key = f"classroom_{classroom_id}_progress"
     cached_data = await get_cache(cache_key)
     if cached_data:
@@ -45,16 +57,20 @@ async def list_classroom_progress(
 
     result = await session.execute(select(ClassroomProgress).where(ClassroomProgress.classroom_id == classroom_id))
     progress = result.scalars().all()
-    await set_cache(cache_key, progress, ttl=300)
-    return progress
 
-# Update classroom progress (teacher or admin)
+    # Конвертація у список Pydantic-схем перед кешуванням
+    progress_list = [ClassroomProgressResponse.from_orm(p) for p in progress]
+    await set_cache(cache_key, progress_list, ttl=600)
+    
+    return progress_list
+
+
 @router.put("/{progress_id}", response_model=ClassroomProgressResponse)
 async def update_classroom_progress(
     progress_id: int,
     progress: ClassroomProgressUpdate,
     session: AsyncSession = Depends(get_async_session),
-    current_user: Staff = Depends(current_active_staff),
+    current_user: User = Depends(current_active_user),
 ):
     is_teacher_or_admin(current_user)
 
@@ -69,14 +85,18 @@ async def update_classroom_progress(
     session.add(existing_progress)
     await session.commit()
     await session.refresh(existing_progress)
+
+    # Видалення кешу, оскільки дані змінилися
+    await delete_cache(f"classroom_{existing_progress.classroom_id}_progress")
+    
     return existing_progress
 
-# Delete classroom progress (teacher or admin)
+
 @router.delete("/{progress_id}")
 async def delete_classroom_progress(
     progress_id: int,
     session: AsyncSession = Depends(get_async_session),
-    current_user: Staff = Depends(current_active_staff),
+    current_user: User = Depends(current_active_user),
 ):
     is_teacher_or_admin(current_user)
 
@@ -87,4 +107,8 @@ async def delete_classroom_progress(
 
     await session.delete(progress)
     await session.commit()
+    
+    # Видалення кешу для всього класу, а не лише одного запису
+    await delete_cache(f"classroom_{progress.classroom_id}_progress")
+    
     return {"detail": "Classroom progress deleted successfully."}

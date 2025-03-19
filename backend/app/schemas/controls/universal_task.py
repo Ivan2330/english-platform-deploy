@@ -1,7 +1,7 @@
 from pydantic import BaseModel
-from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from typing import Dict
 
 
 class TaskType(str, Enum):
@@ -26,19 +26,19 @@ class Visibility(str, Enum):
 
 
 class UniversalTaskBase(BaseModel):
-    control_type: ControlType
-    task_type: TaskType
+    control_type: str = ControlType.GRAMMAR.value
+    task_type: str = TaskType.TRUE_FALSE.value
     title: str
-    description: Optional[str] = None
-    content: Optional[str] = None
-    media_url: Optional[str] = None
-    topic: Optional[str] = None
-    word_list: Optional[str] = None
-    correct_answer: Optional[str] = None
-    explanation: Optional[str] = None
-    options: Optional[str] = None
-    visibility: Optional[Visibility] = Visibility.GLOBAL
-    level: Optional[str] = None  # Рівень завдання
+    description: str | None = None
+    content: str | None = None
+    media_url: str | None = None
+    topic: str | None = None
+    word_list: str | None = None
+    correct_answer: str | None = None
+    explanation: str | None = None
+    options: Dict[str, str]  # ✅ Варіанти відповідей у JSON-форматі
+    visibility: str = Visibility.GLOBAL.value
+    level: str | None = None
 
 
 class UniversalTaskCreate(UniversalTaskBase):
@@ -46,26 +46,26 @@ class UniversalTaskCreate(UniversalTaskBase):
 
 
 class UniversalTaskUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    content: Optional[str] = None
-    media_url: Optional[str] = None
-    topic: Optional[str] = None
-    word_list: Optional[str] = None
-    correct_answer: Optional[str] = None
-    explanation: Optional[str] = None
-    options: Optional[str] = None
-    visibility: Optional[Visibility] = None
-    level: Optional[str] = None
+    title: str | None = None
+    description: str | None = None
+    content: str | None = None
+    media_url: str | None = None
+    topic: str | None = None
+    word_list: str | None = None
+    correct_answer: str | None = None
+    explanation: str | None = None
+    options: Dict[str, str] | None = None
+    visibility: str | None = None
+    level: str | None = None
 
 
 class UniversalTaskResponse(UniversalTaskBase):
     id: int
     created_by: int
-    classroom_id: Optional[int] = None
+    classroom_id: int | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
