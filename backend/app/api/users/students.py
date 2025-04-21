@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.core.database import get_async_session
 from app.models.users.users import User
 from app.schemas.users.students import (
-    StudentCreate, StudentResponse, StudentUpdate, 
+    StudentCreate, StudentResponse, StudentUpdate, StudentPhotoUpdate,
     StudentSubscriptionUpdate, StudentLevelUpdate, StudentBalanceUpdate
 )
 from app.api.users.auth import current_active_user, get_user_manager, UserManager
 from app.core.cache import get_cache, set_cache, delete_cache
+import os
+
 
 router = APIRouter(prefix="/students", tags=["Students"])
 

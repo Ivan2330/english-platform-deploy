@@ -5,7 +5,6 @@ from app.models.users.users import UserRole
 
 
 class ChatBase(BaseModel):
-    name: str | None = None  # Назва для групових чатів
     classroom_id: int
 
 
@@ -14,7 +13,7 @@ class ChatCreate(ChatBase):
 
 
 class ChatUpdate(BaseModel):
-    name: str | None = None
+    pass
 
 
 class ChatResponse(ChatBase):
@@ -22,7 +21,7 @@ class ChatResponse(ChatBase):
     created_at: datetime
 
     class Config:
-        from_attributes = True  # ✅ Оновлено для Pydantic 2
+        from_attributes = True
 
 
 class ChatMessageBase(BaseModel):
@@ -31,8 +30,7 @@ class ChatMessageBase(BaseModel):
 
 
 class ChatMessageCreate(ChatMessageBase):
-    user_id: int  # ✅ Використовуємо user_id замість sender_id і sender_student_id
-    role: UserRole
+    user_id: int
 
 
 class ChatMessageUpdate(BaseModel):
@@ -41,13 +39,13 @@ class ChatMessageUpdate(BaseModel):
 
 class ChatMessageResponse(ChatMessageBase):
     id: int
-    user_id: int  # ✅ Використовуємо user_id
-    role: UserRole
+    user_id: int
+    role: str
     sent_at: datetime
     is_read: bool
 
     class Config:
-        from_attributes = True  # ✅ Оновлено для Pydantic 2
+        from_attributes = True
 
 
 class ChatWithMessages(ChatResponse):

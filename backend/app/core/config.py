@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     redis_url: str
     secret_key: str
     algorithm: str = "HS256"
-    expire_token_minutes: int = 30
+    expire_token_minutes: int = 120
     OPENAI_API_KEY: str
     OPENAI_API_URL: str
     

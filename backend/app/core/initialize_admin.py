@@ -2,7 +2,7 @@ import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.core.database import get_async_session
-from app.models.users.users import User, UserRole, Status  # ✅ Імпортуємо Enum
+from app.models.users.users import User, UserRole, Status
 from fastapi_users.password import PasswordHelper
 
 async def ensure_admin():
@@ -20,15 +20,15 @@ async def ensure_admin():
             print("🚀 Створюємо нового адміністратора...")
 
             password_helper = PasswordHelper()
-            hashed_password = password_helper.hash("securepassword")
+            hashed_password = password_helper.hash("prime#1910")
 
             new_admin = User(
-                username="admin",
-                email="admin@example.com",
-                phone_number="1234567890",
+                username="Ivan Kozhevnyk",
+                email="my.primeacademy19@gmail.com",
+                phone_number="0991797047",
                 hashed_password=hashed_password,
-                role=UserRole.STAFF.value,  # ✅ Використовуємо Enum як string
-                status=Status.ADMIN.value,  # ✅ Використовуємо Enum як string
+                role=UserRole.STAFF.value,
+                status=Status.ADMIN.value,
                 is_admin=True,
                 is_verified=True,
                 is_active=True

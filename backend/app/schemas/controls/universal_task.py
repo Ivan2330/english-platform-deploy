@@ -2,30 +2,11 @@ from pydantic import BaseModel
 from datetime import datetime
 from enum import Enum
 from typing import Dict
-
-
-class TaskType(str, Enum):
-    MULTIPLE_CHOICE = "multiple_choice"
-    TRUE_FALSE = "true_false"
-    GAP_FILL = "gap_fill"
-    OPEN_TEXT = "open_text"
-
-
-class ControlType(str, Enum):
-    LISTENING = "listening"
-    READING = "reading"
-    WRITING = "writing"
-    VOCABULARY = "vocabulary"
-    GRAMMAR = "grammar"
-
-
-class Visibility(str, Enum):
-    GLOBAL = "global"
-    CLASS_SPECIFIC = "class_specific"
-    PRIVATE = "private"
+from app.models.controls.universal_task import ControlType, TaskType, Visibility
 
 
 class UniversalTaskBase(BaseModel):
+    lesson_id: int | None = None
     control_type: str = ControlType.GRAMMAR.value
     task_type: str = TaskType.TRUE_FALSE.value
     title: str
@@ -34,11 +15,7 @@ class UniversalTaskBase(BaseModel):
     media_url: str | None = None
     topic: str | None = None
     word_list: str | None = None
-    correct_answer: str | None = None
-    explanation: str | None = None
-    options: Dict[str, str]  # ✅ Варіанти відповідей у JSON-форматі
     visibility: str = Visibility.GLOBAL.value
-    level: str | None = None
 
 
 class UniversalTaskCreate(UniversalTaskBase):
@@ -52,11 +29,7 @@ class UniversalTaskUpdate(BaseModel):
     media_url: str | None = None
     topic: str | None = None
     word_list: str | None = None
-    correct_answer: str | None = None
-    explanation: str | None = None
-    options: Dict[str, str] | None = None
     visibility: str | None = None
-    level: str | None = None
 
 
 class UniversalTaskResponse(UniversalTaskBase):

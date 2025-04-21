@@ -8,13 +8,13 @@ from app.models.users.users import UserRole, Status, EnglishLevel
 class StaffCreate(UserCreate):
     username: str    
     phone_number: str
-    role: str = UserRole.STAFF.value  # ✅ Enum -> str
+    role: str = UserRole.STAFF.value
     status: str
     profile_image: str | None = None
     level: str
 
     class Config:
-        from_attributes = True  # ✅ Дозволяє працювати з ORM
+        from_attributes = True
     
 
 
@@ -23,8 +23,8 @@ class StaffUpdate(BaseModel):
     email: EmailStr | None = None
     phone_number: str | None = None
     profile_image: str | None = None
-    level: str | None = None  # ✅ Enum -> str
-    status: str | None = None  # ✅ Enum -> str
+    level: str | None = None
+    status: str | None = None
     is_active: bool | None = None
 
 
@@ -34,8 +34,8 @@ class StaffResponse(BaseModel):
     email: EmailStr
     phone_number: str
     profile_image: str | None = None
-    level: str | None = None  # ✅ Enum -> str
-    role: str  # ✅ Enum -> str
+    level: str | None = None
+    role: str
     status: str
     is_active: bool
     is_admin: bool
@@ -47,10 +47,14 @@ class StaffResponse(BaseModel):
 
 
 class StaffRoleUpdate(BaseModel):
-    status: str  # ✅ Enum -> str
+    status: str
     is_admin: bool
 
 
 class StaffLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class StaffPhotoUpdate(BaseModel):
+    profile_image: str

@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy.sql import func
 from typing import List
 from app.core.database import get_async_session
-from app.schemas.connection.call import(
+from app.schemas.connection.call import (
     CallCreate, CallResponse, CallUpdate,
     CallParticipantResponse, CallParticipantUpdate
 )
@@ -17,13 +17,13 @@ router = APIRouter(prefix="/calls", tags=["Calls"])
 
 
 def check_active(call: Call):
+    """Перевіряє, чи дзвінок активний."""
     if not call or call.status != "active":
         raise HTTPException(status_code=400, detail="Call is not active")
 
 
 def is_teacher_or_admin(current_user: User):
-    """Дозволяє доступ лише адміністраторам та викладачам через `users`."""
-    if current_user.role != "staff" or current_user.status not in [Status.ADMIN, Status.TEACHER]:
+    if str(current_user.role) != "staff" or str(current_user.status) not in ["admin", "teacher"]:
         raise HTTPException(status_code=403, detail="User doesn't have access")
 
 
@@ -36,7 +36,7 @@ async def create_call(
 ):
     is_teacher_or_admin(current_user)
 
-    new_call = Call(**call.model_dump(), created_by=current_user.id)  # ✅ Додаємо `created_by`
+    new_call = Call(**call.model_dump())
     db.add(new_call)
     await db.commit()
     await db.refresh(new_call)
@@ -47,14 +47,14 @@ async def create_call(
     return new_call
 
 
-# 🔹 Список дзвінків (для викладачів і студентів)
+# 🔹 Отримання списку дзвінків (без кешування)
 @router.get("/", response_model=List[CallResponse])
 async def list_calls(
     classroom_id: int | None = None,
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user),
 ):
-    query = select(Call)
+    query = select(Call).order_by(Call.created_at.desc())
     if classroom_id:
         query = query.filter(Call.classroom_id == classroom_id)
 
@@ -63,7 +63,7 @@ async def list_calls(
     return calls
 
 
-# 🔹 Інформація про дзвінок (для викладачів і студентів)
+# 🔹 Отримання інформації про дзвінок (кешується)
 @router.get("/{call_id}", response_model=CallResponse)
 async def get_call(
     call_id: int,
@@ -76,7 +76,8 @@ async def get_call(
         return cached_call
 
     call = await db.get(Call, call_id)
-    check_active(call)
+    if not call:
+        raise HTTPException(status_code=404, detail="Call not found")
 
     await set_cache(cache_key, CallResponse.model_validate(call).model_dump(), ttl=3600)
     return call
@@ -108,7 +109,7 @@ async def update_call(
     return call
 
 
-# 🔹 Додавання учасника (викладач або студент)
+# 🔹 Додавання учасника у дзвінок
 @router.post("/{call_id}/join", response_model=CallParticipantResponse, status_code=201)
 async def join_call(
     call_id: int,
@@ -118,18 +119,26 @@ async def join_call(
     call = await db.get(Call, call_id)
     check_active(call)
 
-    query = select(CallParticipant).filter(
-        CallParticipant.call_id == call_id,
-        CallParticipant.user_id == current_user.id
+    existing_participant = await db.execute(
+        select(CallParticipant).where(CallParticipant.call_id == call_id, CallParticipant.user_id == current_user.id)
     )
-    
-    existing_participant = (await db.execute(query)).scalars().first()
-    if existing_participant:
-        raise HTTPException(status_code=400, detail="You are already in this call")
+    existing = existing_participant.scalars().first()
+    if existing:
+        if existing.left_at is None:
+            raise HTTPException(status_code=400, detail="You are already in this call")
+        else:
+            existing.joined_at = func.now()
+            existing.left_at = None
+            await db.commit()
+            await db.refresh(existing)
+            return existing
 
+
+    role = "teacher" if current_user.role == "staff" else "student"
     new_participant = CallParticipant(
         call_id=call_id,
-        user_id=current_user.id,  # ✅ Використовуємо user_id замість leader_id
+        user_id=current_user.id,
+        role=role,
         joined_at=func.now(),
     )
     
@@ -139,8 +148,35 @@ async def join_call(
 
     return new_participant
 
+@router.get("/{call_id}/participants", response_model=List[CallParticipantResponse])
+async def get_call_participants(
+    call_id: int,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user),
+):
+    call = await db.get(Call, call_id)
+    if not call:
+        raise HTTPException(status_code=404, detail="Call not found")
 
-# 🔹 Оновлення статусу учасника дзвінка (доступ для викладачів)
+    result = await db.execute(select(CallParticipant).where(CallParticipant.call_id == call_id))
+    participants = result.scalars().all()
+    return participants
+
+
+# 🔹 Отримання конкретного учасника дзвінка
+@router.get("/{call_id}/participants/{participant_id}", response_model=CallParticipantResponse)
+async def get_call_participant(
+    call_id: int,
+    participant_id: int,
+    db: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user),
+):
+    participant = await db.get(CallParticipant, participant_id)
+    if not participant or participant.call_id != call_id:
+        raise HTTPException(status_code=404, detail="Participant not found in this call")
+
+    return participant
+# 🔹 Оновлення статусу учасника
 @router.put("/{call_id}/participants/{participant_id}", response_model=CallParticipantResponse)
 async def update_participant(
     call_id: int,
@@ -150,7 +186,7 @@ async def update_participant(
     current_user: User = Depends(current_active_user),
 ):
     is_teacher_or_admin(current_user)
-    
+
     participant = await db.get(CallParticipant, participant_id)
     if not participant or participant.call_id != call_id:
         raise HTTPException(status_code=404, detail="Participant not found")
@@ -164,24 +200,7 @@ async def update_participant(
     return participant
 
 
-@router.get("/{call_id}/participants", response_model=List[CallParticipantResponse])
-async def get_call_participants(
-    call_id: int,
-    db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(current_active_user),
-):
-    """
-    Отримання списку всіх учасників дзвінка
-    """
-    call = await db.get(Call, call_id)
-    if not call:
-        raise HTTPException(status_code=404, detail="Call not found")
-
-    result = await db.execute(select(CallParticipant).where(CallParticipant.call_id == call_id))
-    participants = result.scalars().all()
-    return participants
-
-
+# 🔹 Видалення учасника з дзвінка
 @router.delete("/{call_id}/participants/{user_id}", status_code=204)
 async def remove_participant(
     call_id: int,
@@ -189,9 +208,6 @@ async def remove_participant(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user),
 ):
-    """
-    Видалення учасника дзвінка (тільки для викладачів)
-    """
     is_teacher_or_admin(current_user)
 
     participant = await db.execute(select(CallParticipant).where(
@@ -208,7 +224,8 @@ async def remove_participant(
     return {"message": "Participant removed from call"}
 
 
-# 🔹 Вихід із дзвінка (студент або викладач може покинути дзвінок)
+from datetime import datetime, timezone
+
 @router.delete("/{call_id}/leave", status_code=204)
 async def leave_call(
     call_id: int,
@@ -224,10 +241,14 @@ async def leave_call(
     if not participant:
         raise HTTPException(status_code=404, detail="You are not in this call")
 
+    # ✅ Автоматично встановлюємо `left_at` перед видаленням
+    participant.left_at = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    await db.commit()
     await db.delete(participant)
     await db.commit()
 
-    # Перевіряємо, чи є ще учасники у дзвінку
+    # ✅ Перевіряємо, чи є ще учасники у дзвінку
     remaining_participants_query = select(CallParticipant).filter(CallParticipant.call_id == call_id)
     remaining_participants = (await db.execute(remaining_participants_query)).scalars().all()
     
@@ -235,10 +256,10 @@ async def leave_call(
         call = await db.get(Call, call_id)
         if call:
             call.status = "ended"
-            call.ended_at = func.now()
             await db.commit()
 
     return {"message": "You have left the call"}
+
 
 
 # 🔹 Видалення дзвінка (тільки для викладачів)
@@ -251,7 +272,8 @@ async def delete_call(
     is_teacher_or_admin(current_user)
 
     call = await db.get(Call, call_id)
-    check_active(call)
+    if not call:
+        raise HTTPException(status_code=404, detail="Call not found")
 
     await db.delete(call)
     await db.commit()

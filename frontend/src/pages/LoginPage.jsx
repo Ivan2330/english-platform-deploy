@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./LoginPage.css"; // Підключаємо стилі
+import "./LoginPage.css";
 
-import logo from "../assets/logo.svg"; // Логотип з Figma
+import logo from "../assets/my_logo-1.svg";
+// import "../assets/img_AdminDash/userAvatarNoPhoto.svg"
 
-const API_URL = "http://127.0.0.1:8000";
+import { API_URL } from "../../config";
 
 function LoginPage({ setUser }) {
   const [email, setEmail] = useState("");
@@ -30,7 +31,7 @@ function LoginPage({ setUser }) {
       });
 
       setUser(userResponse.data);
-      navigate("/");
+      navigate(userResponse.data.role === "staff" ? "/admin-dashboard" : "/student-dashboard");
     } catch (err) {
       setError("❌ Невірний email або пароль");
     }

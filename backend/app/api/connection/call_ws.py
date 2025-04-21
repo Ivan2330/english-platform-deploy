@@ -1,42 +1,63 @@
-from fastapi import WebSocket, WebSocketDisconnect, APIRouter, Depends, HTTPException
-from pydantic import BaseModel
-from typing import List, Dict, Any
+from fastapi import WebSocket, WebSocketDisconnect, APIRouter, Depends, HTTPException, Query
+from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.sql import func
+from pydantic import BaseModel
+from typing import Dict, Any
+from app.core.config import settings
 from app.core.database import get_async_session
 from app.models.connection.call import Call, CallParticipant
-from app.api.users.auth import current_active_user
 from app.models.users.users import User, Status
-from app.core.cache import get_cache, set_cache, delete_cache
+from app.core.cache import get_cache, set_cache
 import logging
+import json
 
 router = APIRouter(prefix="/ws/calls", tags=["WebSocket Calls"])
-
-active_connections: Dict[int, List[WebSocket]] = {}
 logger = logging.getLogger("websocket_calls")
+
 
 class WebSocketAction(BaseModel):
     action: str
     status: bool | None = None
     quality: str | None = None
+    candidate: dict | None = None
+    offer: dict | None = None
+    answer: dict | None = None
+
 
 def create_message(action: str, user_id: int, **kwargs) -> Dict[str, Any]:
-    message = {"action": action, "user": user_id}
-    message.update(kwargs)
-    return message
+    return {"action": action, "user": user_id, **kwargs}
+
+
+async def get_user_from_token(token: str, db: AsyncSession) -> User:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.secret_key,
+            algorithms=[settings.algorithm],
+            options={"verify_aud": False},
+        )
+        user_id = int(payload.get("sub"))
+        user = await db.get(User, user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+    except JWTError:
+        raise HTTPException(status_code=403, detail="Invalid token")
+
 
 async def get_cached_participant_status(call_id: int, user_id: int, db: AsyncSession):
     cache_key = f"call:{call_id}:participant:{user_id}"
     status = await get_cache(cache_key)
     if not status:
-        participant = await db.execute(
+        result = await db.execute(
             select(CallParticipant).filter(
                 CallParticipant.call_id == call_id,
                 CallParticipant.user_id == user_id
             )
         )
-        participant = participant.scalars().first()
+        participant = result.scalars().first()
         if not participant:
             raise HTTPException(status_code=404, detail="Participant not found")
         status = {
@@ -48,105 +69,137 @@ async def get_cached_participant_status(call_id: int, user_id: int, db: AsyncSes
         await set_cache(cache_key, status, ttl=1800)
     return status
 
+
 async def update_cached_participant_status(call_id: int, user_id: int, updates: Dict[str, Any]):
     cache_key = f"call:{call_id}:participant:{user_id}"
     status = await get_cache(cache_key)
     if status:
         status.update(updates)
-        await set_cache(cache_key, status, ttl=3600)
+        await set_cache(cache_key, status, ttl=1800)
 
-async def notify_participants(call_id: int, message: Dict[str, Any]):
-    """Відправка повідомлення всім учасникам дзвінка."""
-    connections = active_connections.get(call_id, [])
-    for connection in connections[:]:
-        try:
-            await connection.send_json(message)
-        except Exception as e:
-            logger.error(f"Error sending message to participant: {e}")
-            connections.remove(connection)
+
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[int, Dict[int, WebSocket]] = {}
+
+    async def connect(self, call_id: int, user_id: int, websocket: WebSocket):
+        await websocket.accept()
+        if call_id not in self.active_connections:
+            self.active_connections[call_id] = {}
+
+        if user_id in self.active_connections[call_id]:
+            try:
+                await self.active_connections[call_id][user_id].close()
+            except Exception as e:
+                logger.warning(f"[WS ERROR] closing previous WS of user {user_id}: {e}")
+
+        self.active_connections[call_id][user_id] = websocket
+        logger.info(f"[WS CONNECT] User {user_id} joined call {call_id}")
+
+    def disconnect(self, call_id: int, user_id: int):
+        if call_id in self.active_connections:
+            self.active_connections[call_id].pop(user_id, None)
+            if not self.active_connections[call_id]:
+                self.active_connections.pop(call_id)
+            logger.info(f"[WS DISCONNECT] User {user_id} removed from call {call_id}")
+
+    async def send_personal_message(self, message: dict, call_id: int, user_id: int):
+        if call_id in self.active_connections and user_id in self.active_connections[call_id]:
+            websocket = self.active_connections[call_id][user_id]
+            await websocket.send_json(message)
+
+    async def broadcast(self, call_id: int, message: dict, exclude_user_id: int | None = None):
+        if call_id in self.active_connections:
+            for uid, ws in self.active_connections[call_id].items():
+                if uid != exclude_user_id:
+                    try:
+                        await ws.send_json(message)
+                    except Exception as e:
+                        logger.warning(f"[WS ERROR] broadcast to {uid}: {e}")
+
+    def get_websocket(self, call_id: int, user_id: int) -> WebSocket | None:
+        return self.active_connections.get(call_id, {}).get(user_id)
+
+    def is_connected(self, call_id: int, user_id: int) -> bool:
+        return user_id in self.active_connections.get(call_id, {})
+
+
+connection_manager = ConnectionManager()
+
 
 @router.websocket("/{call_id}")
 async def websocket_endpoint(
     websocket: WebSocket,
     call_id: int,
+    token: str = Query(...),
     db: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(current_active_user),  # ✅ Використовуємо User замість Staff/Student
 ):
-    await websocket.accept()
+    try:
+        user = await get_user_from_token(token, db)
+    except HTTPException:
+        await websocket.close(code=1008)
+        return
+
+    call = await db.get(Call, call_id)
+    if not call or call.status != "active":
+        await websocket.close(code=1008, reason="Invalid or inactive call")
+        return
+
+    await connection_manager.connect(call_id, user.id, websocket)
+    logger.info(f"[WS] User {user.id} connected to call {call_id}")
 
     try:
-        call = await db.get(Call, call_id)
-        if not call:
-            await websocket.close(code=1008, reason="Call not found")
-            return
-
-        if call.status != "active":
-            await websocket.close(code=1008, reason="Call is not active")
-            return
-
-        if call_id not in active_connections:
-            active_connections[call_id] = []
-        active_connections[call_id].append(websocket)
-
-        participant_status = await get_cached_participant_status(call_id, current_user.id, db)
-
-        await notify_participants(call_id, create_message("join", current_user.id, **participant_status))
-
-        logger.info(f"User {current_user.id} joined call {call_id}")
+        participant_status = await get_cached_participant_status(call_id, user.id, db)
+        await connection_manager.broadcast(
+            call_id,
+            create_message("join", user.id, **participant_status),
+            exclude_user_id=user.id
+        )
 
         while True:
-            data = WebSocketAction.model_validate(await websocket.receive_json())
-            action = data.action
+            message = await websocket.receive_json()
+            data = WebSocketAction.model_validate(message)
 
-            if action == "toggle_mic":
-                updates = {"mic_status": data.status}
-                await update_cached_participant_status(call_id, current_user.id, updates)
-                await notify_participants(call_id, create_message("mic_status", current_user.id, status=data.status))
+            if data.action == "toggle_mic":
+                await update_cached_participant_status(call_id, user.id, {"mic_status": data.status})
+                await connection_manager.broadcast(call_id, create_message("mic_status", user.id, status=data.status))
 
-            elif action == "toggle_camera":
-                updates = {"camera_status": data.status}
-                await update_cached_participant_status(call_id, current_user.id, updates)
-                await notify_participants(call_id, create_message("camera_status", current_user.id, status=data.status))
+            elif data.action == "toggle_camera":
+                await update_cached_participant_status(call_id, user.id, {"camera_status": data.status})
+                await connection_manager.broadcast(call_id, create_message("camera_status", user.id, status=data.status))
 
-            elif action == "share_screen":
-                updates = {"screen_sharing": data.status}
-                await update_cached_participant_status(call_id, current_user.id, updates)
-                await notify_participants(call_id, create_message("screen_sharing", current_user.id, status=data.status))
+            elif data.action == "share_screen":
+                await update_cached_participant_status(call_id, user.id, {"screen_sharing": data.status})
+                await connection_manager.broadcast(call_id, create_message("screen_sharing", user.id, status=data.status))
 
-            elif action == "set_quality":
-                updates = {"video_quality": data.quality}
-                await update_cached_participant_status(call_id, current_user.id, updates)
-                await notify_participants(call_id, create_message("quality_change", current_user.id, quality=data.quality))
+            elif data.action == "set_quality":
+                await update_cached_participant_status(call_id, user.id, {"video_quality": data.quality})
+                await connection_manager.broadcast(call_id, create_message("quality_change", user.id, quality=data.quality))
 
-            elif action == "end_call":
-                if current_user.role == "staff" and current_user.status in [Status.ADMIN, Status.TEACHER]:
+            elif data.action == "end_call":
+                if user.role == "staff" and user.status in [Status.ADMIN, Status.TEACHER]:
                     call.status = "ended"
                     call.ended_at = func.now()
                     await db.commit()
-                    await notify_participants(call_id, create_message("call_ended", current_user.id))
+                    await connection_manager.broadcast(call_id, create_message("call_ended", user.id))
                     break
 
+            elif data.action in ["offer", "answer", "ice_candidate"]:
+                relay = {
+                    "action": data.action,
+                    "user": user.id,
+                    "candidate": data.candidate,
+                    "offer": data.offer,
+                    "answer": data.answer,
+                }
+                await connection_manager.broadcast(call_id, relay, exclude_user_id=user.id)
+
     except WebSocketDisconnect:
-        await notify_participants(call_id, create_message("leave", current_user.id))
-        if websocket in active_connections.get(call_id, []):
-            active_connections[call_id].remove(websocket)
-        remaining_participants = await db.execute(
-            select(CallParticipant).filter(CallParticipant.call_id == call_id)
-        )
-        if not remaining_participants.scalars().first():
-            call.status = "ended"
-            call.ended_at = func.now()
-            await db.commit()
-
+        logger.info(f"[DISCONNECT] User {user.id} left call {call_id}")
+        await connection_manager.broadcast(call_id, create_message("leave", user.id), exclude_user_id=user.id)
     except Exception as e:
-        logger.error(f"Unexpected error: {e}")
-        await websocket.close(code=1011, reason="Internal server error")
-
+        logger.error(f"[ERROR] {e}")
+        await websocket.close(code=1011, reason="Internal error")
     finally:
-        if websocket in active_connections.get(call_id, []):
-            active_connections[call_id].remove(websocket)
-        if not active_connections.get(call_id):
-            active_connections.pop(call_id, None)
-
-    logger.info(f"User {current_user.id} disconnected from call {call_id}")
-    await websocket.close()
+        connection_manager.disconnect(call_id, user.id)
+        logger.info(f"[CLEANUP] User {user.id} disconnected from call {call_id}")

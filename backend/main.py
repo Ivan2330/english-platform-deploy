@@ -17,11 +17,14 @@ from app.api.connection.call_ws import router as call_ws_router  # ✅ WebSocket
 from app.api.connection.chat import router as chat_router
 from app.api.connection.chat_ws import router as chat_ws_router  # ✅ WebSocket для чату
 from app.api.controls.task_result import router as task_result_router
+from app.api.controls.lessons import router as lesson_router
+from app.api.controls.questions import router as question_router
 from app.api.controls.universal_task import router as universal_task_router
 from app.api.controls.ai_feedback import router as ai_feedback_router
 from app.api.users.auth import fastapi_users, auth_backend
 from app.api.users.students import router as students_router
 from app.api.users.staff import router as staff_router
+from app.api.users.users import router as photo_router
 
 # Завантажуємо змінні середовища
 load_dotenv()
@@ -52,7 +55,7 @@ app.include_router(
 )
 
 app.include_router(
-    fastapi_users.get_register_router(UserResponse, UserCreate),  # ❗ Передаємо схеми
+    fastapi_users.get_register_router(UserResponse, UserCreate),
     prefix="/auth", 
     tags=["Auth"]
 )
@@ -74,7 +77,7 @@ app.include_router(
     prefix="/users", 
     tags=["Users"]
 )
-
+app.include_router(photo_router, prefix="/users", tags=["Users"])
 # ✅ **Роутери користувачів**
 app.include_router(students_router, prefix="/students", tags=["Students"])
 app.include_router(staff_router, prefix="/staff", tags=["Staff"])
@@ -88,12 +91,15 @@ app.include_router(classroom_task_router, prefix="/classroom-tasks", tags=["Clas
 app.include_router(call_router, prefix="/calls", tags=["Calls"])
 app.include_router(call_ws_router, prefix="/calls-ws", tags=["Calls WebSocket"])
 app.include_router(chat_router, prefix="/chats", tags=["Chats"])
-app.include_router(chat_ws_router, prefix="/chats-ws", tags=["Chats WebSocket"])
+app.include_router(chat_ws_router, prefix="/chat-ws", tags=["Chats WebSocket"])
 
 # ✅ **Роутери завдань та результатів**
 app.include_router(task_result_router, prefix="/task-results", tags=["Task Results"])
 app.include_router(universal_task_router, prefix="/universal-tasks", tags=["Universal Tasks"])
 app.include_router(ai_feedback_router, prefix="/ai-feedback", tags=["AI Feedback"])
+app.include_router(lesson_router, prefix="/lessons", tags=["Lessons"])
+app.include_router(question_router, prefix="/questions", tags=["Questions"])
+
 
 # ✅ **Перевірка підключення до Redis**
 from app.core.cache import set_cache, get_cache
@@ -115,3 +121,8 @@ print("🗄️ DB_URL:", os.getenv("DB_URL"))
 print("🔗 REDIS_URL:", os.getenv("REDIS_URL"))
 print("🤖 OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
 print("🌐 OPENAI_API_URL:", os.getenv("OPENAI_API_URL"))
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

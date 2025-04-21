@@ -10,28 +10,32 @@ class ClassroomType(str, Enum):
 
 
 class ClassroomBase(BaseModel):
-    name: str = Field(..., example="English for Beginners")
-    type: str = Field(..., example="group")
-    description: str | None = Field(None, example="This is a group class for beginners.")
+    name: str
+    type: str = ClassroomType.INDIVIDUAL.value
+    description: str | None = None
 
 
 class ClassroomCreate(ClassroomBase):
-    user_id: int = Field(..., example=1)  # ✅ Використовуємо user_id замість teacher_id
+    teacher_id: int
+    student_id: int | None = None
 
 
 class ClassroomUpdate(BaseModel):
-    name: str | None = Field(None, example="Updated Class Name")
-    description: str | None = Field(None, example="Updated description")
-    is_active: bool | None = Field(None, example=True)
+    name: str | None = None
+    teacher_id: int | None = None
+    student_id: int | None = None
+    description: str | None = None
+    is_active: bool | None = None
 
 
 class ClassroomResponse(ClassroomBase):
-    id: int = Field(..., example=1)
-    user_id: int = Field(..., example=1)  # ✅ Використовуємо user_id замість teacher_id
-    is_active: bool = Field(..., example=True)
-    students: List[int] | None = Field(None, example=[1, 2, 3])
-    created_at: datetime = Field(..., example="2024-01-01T12:00:00")
-    updated_at: datetime = Field(..., example="2024-01-10T15:30:00")
+    id: int
+    teacher_id: int
+    student_id: int | None = None
+    current_lesson_id: int | None = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True  # ✅ Оновлено для Pydantic 2

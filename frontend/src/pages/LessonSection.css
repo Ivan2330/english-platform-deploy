@@ -1,0 +1,297 @@
+.lesson-section {
+    background: #fff;
+    /* position: relative;
+left: 50%;
+transform: translateX(-50%); */
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    height: calc(100% - 10px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    font-family: 'Segoe UI', sans-serif;
+    /* margin-top: 16px; */
+    border-radius: 44px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-right: 10px;
+    /* Adds space between the content and the scrollbar */
+
+}
+
+.lesson-section::-webkit-scrollbar {
+    width: 10px;
+}
+
+.lesson-section::-webkit-scrollbar-track {
+    background: #f1f1f100;
+    /* Background of the scrollbar track */
+    border-radius: 10px;
+}
+
+.lesson-section::-webkit-scrollbar-thumb {
+    height: 1px;
+    background: #b6b9c9;
+    /* Color of the scrollbar thumb */
+    border-radius: 10px;
+}
+
+.section-image {
+    position: relative;
+
+    /* background: linear-gradient(135deg, #d0bfff, #a18cd1); */
+    background: linear-gradient(to right, #D0BFFF 0%, #7085F6 43%);
+    border-radius: 16px;
+    min-height: 160px;
+    /* height: clamp(100px,25.97vh,160px); */
+    min-width: 100%;
+    /* height: 186px; needs to be adaptive*/
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: clamp(20px, 3.333vh, 36px);
+}
+
+.lesson-section-img {
+    width: 82.222%;
+}
+
+
+
+
+
+.section-title {
+    font-size: 24px;
+    /* needs to be adaptive - think about it*/
+    font-weight: 600;
+    color: white;
+    background: rgba(0, 0, 0, 0.28);
+    padding: 10px 20px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.lesson-theory-section {}
+
+.theory-section-content {
+    /* background: white; */
+    margin-top: 20px;
+    margin-bottom: 40px;
+    border-radius: 30px;
+    padding: 20px;
+    /* box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.05); */
+    border: 3px solid #7085F6;
+}
+
+.theory-section-question {
+    font-size: 24px;
+    font-weight: 400;
+    /* margin-bottom: 10px; */
+    color: #6c63ff;
+    text-align: center;
+
+    padding-bottom: 15px;
+}
+
+.theory-section-question::after {
+    content: "";
+    display: block;
+    height: 1px;
+    background-color: #000;
+    /* width: 89.07%; */
+    width: 93%;
+    margin: 15px auto 15px auto;
+}
+
+.lesson-practice-section {
+    width: 100%;
+}
+
+.toggle-test-button {
+    /* margin-top: 63px; */
+
+    width: 82.407%;
+    font-size: 42px;
+    font-weight: 400;
+    height: clamp(80px, 9.259vh, 110px);
+    background-color: var(--deepPurple);
+    border-radius: 10px;
+    text-align: center;
+    vertical-align: middle;
+    color: white;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: all 0.8s ease-in-out;
+    margin-bottom: 33px;
+    cursor: pointer;
+}
+
+/* button hovering */
+.toggle-test-button:hover {
+    transform: scale(105%) translateX(-48%);
+    box-shadow: 1px 2px 5px 1px #6a7de9df;
+}
+
+
+
+.test-box {
+    border: 5px solid #7085F6;
+    border-radius: 64px;
+    padding: 36px 24px 28px 65px;
+    width: 100%;
+    font-size: 24px;
+}
+
+.options-container {
+    margin-right: 4.26%;
+    /* width: 100%; */
+    display: grid;
+    grid-template-columns: 40% 40%;
+    gap: 17px;
+    justify-content: space-between;
+    font-size: 20px;
+    margin-top: 26px;
+    margin-bottom: 29px;
+}
+
+.options-container div.option {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    border-radius: 20px;
+    width: 100%;
+    height: clamp(65px, 9.16vh, 120px);
+    background-color: var(--deepPurple);
+    cursor: pointer;
+    transition: .5s ease-out;
+}
+
+.options-container div.option:hover {
+    transform: scale(104%);
+}
+
+.options-container div.selected {
+    background-color: #1C274C;
+    border: 5px solid #2558ff;
+}
+
+.question-controls {
+    display: flex;
+    position: relative;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+
+}
+
+.question-controls button.previous-button-test,
+.question-controls button.next-button-test,
+.question-controls button.submit-test-button {
+    height: clamp(65px, 6.203vh, 80px);
+    aspect-ratio: 2.537;
+    background-color: #E3E7FF;
+    border: 5px solid var(--deepPurple);
+    border-radius: 30px;
+}
+button.previous-button-test{
+    order: 1;
+}
+button.next-button-test{
+    order: 2;
+}
+button.submit-test-button {
+    /* position: absolute;
+    left: 0; */
+    order: 0;
+    margin-right: auto;
+}
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+.options {
+display: flex;
+flex-wrap: wrap;
+gap: 10px;
+}
+
+.option-btn {
+background: #e6e0ff;
+color: #333;
+border: none;
+padding: 10px 15px;
+border-radius: 8px;
+cursor: pointer;
+transition: background 0.2s ease;
+}
+
+.option-btn:hover {
+background: #d2c4ff;
+}
+
+.option-btn.selected {
+background: #6c63ff;
+color: white;
+font-weight: 600;
+}
+
+.submit-button {
+background: #6c63ff;
+color: white;
+border: none;
+padding: 10px 20px;
+font-weight: bold;
+border-radius: 10px;
+cursor: pointer;
+margin-top: 20px;
+}
+
+.submit-button:hover {
+background: #574fcf;
+} */
+@media(max-width:1500px) {
+
+    .section-title,
+    .theory-section-question,
+    .theory-section-question,
+    .question-text {
+        font-size: 24px;
+    }
+}
+
+@media(min-width:2000px) {
+
+    .section-title,
+    .theory-section-question,
+    .theory-section-question,
+    .question-text {
+        font-size: 30px;
+    }
+
+}
+
+@media(max-width:950px) {
+    button.submit-test-button {
+        margin-right: 0;
+        order: 2;
+    }
+}
+
+@media(max-width:650px) {
+    .section-title {
+        font-size: 18px;
+
+    }
+}

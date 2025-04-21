@@ -1,0 +1,409 @@
+:root {
+    --deepPurple: #7085F6;
+    --lightPurple: #91A1F6;
+    --poppinsBig: 700;
+    --poppinsSmall: 400;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /* width: 100vw; */
+    width: 100%;
+    font-family: 'Poppins', sans-serif;
+    background-color: #fff;
+}
+
+button {
+    font-family: 'Poppins';
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+.student-dashboard-s {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+.dashboard-header-s {
+    min-width: 100vw;
+    /* height: 20.8vh; */
+    /* height: 20.37vh; */
+    height: clamp(180px, 20.37vh, 280px);
+    width: 100%;
+    background: 
+    
+    linear-gradient(-72deg, #FA9DF5 0%, rgba(250, 157, 245, 0) 56%),
+    linear-gradient(to top, #6879D4 0%,  rgba(112,133,246,0.0) 100%);
+    background-position: top right, bottom center;
+    
+    /* background:
+        linear-gradient(to bottom, #fff 0%, #faf9f9 100%),
+        linear-gradient(#fff, #cdd4fc),
+        linear-gradient(90deg, #6879D4 0%, rgba(112, 133, 246, 0.0) 100%),
+        linear-gradient(180deg, #FA9DF5 0%, #fa9df500 100%); */
+    display: flex;
+    justify-content: space-between;
+    /* padding-top: 35px; */
+    padding-left: 34px;
+    padding-right: 4.94%;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+    /* margin-bottom: -75px; */
+    margin-bottom: clamp(-75px,-3.9vw,-35px);
+
+}
+
+.dashboard-header-s span {
+    font-weight: var(--poppinsBig);
+    font-size: 24px;
+    color: black;
+    position: relative;
+    /* top: 35px; */
+    top: 15.901%;
+}
+
+.contact-btn {
+    position: relative;
+    top: 25%;
+    border-radius: 39px;
+    background-color: var(--deepPurple);
+    font-weight: var(--poppinsBig);
+    color: #fff;
+    font-weight: 700;
+    font-size: 24px;
+    /* width: calc((182px/1920px)*100%); */
+    width: clamp(180px,9.47vw,220px);
+    height: 55px;    
+    /* max-height: ; */
+    /* aspect-ratio: 3.309; */
+    transition: all 0.5s ease-in-out;
+    box-shadow: none;
+}
+.contact-btn-dropdown{
+    position: relative;
+}
+.contact-btn-dropdown-ul{
+    display: none;
+    position:absolute;
+    left: -50%;
+    transform: translateY(65px);
+    /* top: 54px; */
+    width: 365px;
+    height: 265px;
+    font-size: 24px;
+    /* font-weight: 700; */
+    background-color: #fff;
+    z-index: 2;
+    border-radius: 50px;
+    border: 1px solid #7085F6;
+    box-shadow: 0 2px 5px 1px rgb(173, 173, 173);
+}
+
+.contact-btn-dropdown-li{
+    /* margin-bottom: 48px; */
+    display: flex;
+    /* height: ; */
+    justify-content: start;
+gap: 9px;
+    align-items: center;
+    font-weight: 700;
+    /* width: 80%; */
+        
+}
+.contact-btn-dropdown-li:hover{
+    background-color: #D9D9D9;
+}
+.contact-btn-dropdown:hover .contact-btn-dropdown-ul{
+    display: flex;
+    flex-direction: column;
+    /* gap: 48px; */
+    padding-left: 16px;
+    padding-top:12px;
+    padding-bottom: 15px;
+    align-items: space-between;
+    justify-content: space-between;
+
+}
+
+.contact-btn-dropdown:hover .contact-btn{
+    box-shadow: inset 0 0 0 3px #7085F6,inset 0 10px 10px 0 rgba(0, 0, 0, 0.25);
+
+}
+.contact-btn-dropdown-li:nth-last-child(){
+    margin-bottom: 0;
+}
+
+
+
+
+
+/* dashboard content-s, name, photo, lessons, logo, update, delete, confirm photo */
+.dashboard-content-s {
+    /* height: 100%; */
+    width: 100%;
+    position:relative;
+    padding-left: 4.8%;
+    /* padding-left: 92px; */
+    padding-right: 12px;
+    /* width: 94.5833%; */
+    /* gap: 20px; */
+    display: flex; 
+    justify-content: space-between;
+    font-size: 24px;
+    
+    /* margin-top: clamp(-135px,-3.9vw,-75px); */
+    margin-bottom: clamp(75px,3.9vw,100px);
+
+}
+/* testing */
+
+.right-logo {
+    position: relative;
+    /* top: clamp(114px,5.9vw,130px); */
+    /* top: 94.5px; */
+    top: clamp(85px,4.922vw,104.5px);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    width: clamp(200px,14.84vw,316px);
+    
+    aspect-ratio: 0.89;
+    
+}
+
+.right-logo img {
+    width: 100%;
+    /* temporary */
+    /* max-width: 350px;
+    min-width: 200px; */
+    /* temporary end */
+    height: auto;
+    object-fit: contain;
+}
+
+.left-block{
+    /* width: 43.2819%; */
+    /* position: relative; */
+    width: 49.58%;
+    display: flex;
+    /* align-items: flex-start; */
+}
+
+.middle-block{
+    position: absolute;
+   
+    left: clamp(390px,25.69vw,541px);
+    /* left: clamp(383px,25.573vw,541px); */
+    
+    
+   
+    /* top: clamp(85px,20.8%,139px); */
+    top: clamp(85px,6vw,139px);
+    
+}
+.middle-block h2{
+    font-size: 40px;
+    font-weight: 700;
+    position: relative;
+    vertical-align: middle;
+    margin-bottom: clamp(15px,1.41vw,27px);  
+}
+
+
+
+.lesson-balance span{
+    padding: 9px 25px 9px 25px;
+    margin-left: 28px;
+    border: 4px solid #7085F6;
+    border-radius: 50px;
+    
+}
+.level-badge{
+    color: white; 
+    text-align: center;
+    vertical-align: middle;
+    border-radius: 25px;
+    padding: 3px 15px;
+    background-color: #7085F6;
+    margin-left: 27px;
+    box-shadow: inset 0 0 0 3px #91A1F6;
+
+}
+.level-badge img{
+    transform: translateY(10px);
+    margin-left: 3px;
+}
+/* dashboard navigation section */
+.dashboard-navigation-section{
+    font-size: 24px;
+    width: 100%;
+}
+.dashboard-navigation-section  button{
+    font-size: 24px;
+    
+}
+.dashboard-navigation{
+    margin: 0 auto;
+    transform: translateX(-14px);
+    display: flex;
+    gap:36px;
+    height: 46px;
+    margin-bottom: 49px;
+    border-bottom: 3px solid black;
+    width: 91.77%;
+    font-size: 46px;
+    /* font-size: 24px; */
+}
+
+.dashboard-navigation .nav-tab:first-child{
+    border-bottom: 8px solid black;
+}
+.dashboard-navigation .nav-tab-2{
+display: flex;
+align-items: center;
+}
+.dashboard-navigation .nav-tab-2 span{
+    display: none;
+    font-size: 12px;
+    /* width: 60%; */
+    /* height: 100%; */
+    color: white;
+    margin-left: 15px;
+    padding: 13px; 
+    background-color: red;
+}
+.dashboard-navigation .nav-tab-2:hover span{
+    display: inline-block;
+}
+
+.student-actions{
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);    
+    width: 91.77%;
+    /* width: 100%; */
+    display: flex;
+    justify-content: center;
+    
+}
+.student-actions-build{
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    display: flex;
+    justify-content: center;    
+    gap: 7.37% ;
+    flex-wrap: wrap;
+}
+.student-tile{
+    position: relative;
+    flex: 1;
+    /* width: 26%; */
+    
+    min-width: 200px;
+    max-width: 700px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 23px;
+}
+.student-tile-img{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    width: 100%;
+    aspect-ratio: 1.6733;
+    border-radius: 50px;
+    border: 4px solid #7085F6;
+    transition: all 0.3s;
+    
+}
+.student-tile-img:hover{
+    background-color: #D9D9D9;
+}
+.student-tile-img > img{
+    width: 26%;
+    aspect-ratio: 1;
+}
+.student-title-img-speaking-club:focus::after, .student-title-img-speaking-club:hover::after, .student-title-img-speaking-club:active::after{
+    content: "unfortunately not available right now"; 
+    font-size: 12px;
+    width: 60%;
+    color: white;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%);
+    padding: 13px;
+    background-color: red;
+}
+
+@media(max-width:1600px) {
+    .dashboard-content-s{
+        font-size: 20px;
+    }
+    .middle-block h2{
+        font-size: 36px;
+    }
+    .contact-btn {
+        font-size: 20px;
+        /* width: auto; */
+    }
+    .contact-btn-dropdown-ul{
+        font-size: 20px;
+    }
+    .lesson-balance span{
+        padding: 6px 16.6px;
+        margin-left: 16px;}
+}
+@media(max-width:1400px){
+    .student-actions-build{
+        flex-wrap: wrap;
+        justify-content: left;
+    }
+    .student-tile{
+        gap: 18px;
+    }
+
+}
+@media(max-width:1000px){
+    .dashboard-content-s{
+        font-size: 18px;
+    }
+    .middle-block h2{
+        font-size: 32px;
+    }
+    /* .student-tile{
+        gap: 15px;
+    } */
+    .student-tile{
+        gap: 15px;
+    }
+    .contact-btn-dropdown-ul{
+        width: 320px;
+        height: 220px;
+        font-size: 18px;
+        border-radius: 40px;
+
+    }
+    .contact-btn-dropdown-li img{
+        width: 60px;
+        height: 60px;
+    }
+}
+@media(max-width:1050px){
+    
+}
+@media(min-width:2133px){
+    .middle-block{
+        position: absolute;
+        left: clamp(541px,23.5vw,600px);
+    }
+}

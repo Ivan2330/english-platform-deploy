@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from typing import List
@@ -9,6 +9,7 @@ from app.api.users.auth import current_active_user
 from app.core.cache import get_cache, set_cache, delete_cache
 from app.api.users.auth import get_user_manager, UserManager
 import logging
+import os
 
 
 router = APIRouter(prefix="/staff", tags=["Staff"])
@@ -66,7 +67,7 @@ async def create_staff(
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"User creation failed: {str(e)}")
 
-    # ✅ Конвертуємо SQLAlchemy `User` у Pydantic `StaffResponse`
+    # ✅ Конвертуємо SQLAlchemy User у Pydantic StaffResponse
     staff_response = StaffResponse.model_validate(new_staff.__dict__)
 
     cache_key = f"users:{new_staff.id}"

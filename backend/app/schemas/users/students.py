@@ -6,14 +6,14 @@ from app.models.users.users import UserRole, Subscription, EnglishLevel
 
 class StudentCreate(UserCreate):  
     age: int
-    subscription_type: str = Subscription.GROUP.value  # ✅ Enum -> str
+    subscription_type: str = Subscription.GROUP.value
     lesson_balance: int | None = None
-    level: str = EnglishLevel.A1.value  # ✅ Enum -> str
-    role: str = UserRole.STUDENT.value  # ✅ Enum -> str
+    level: str = EnglishLevel.A1.value
+    role: str = UserRole.STUDENT.value
     profile_image: str | None = None  
 
     class Config:
-        from_attributes = True  # ✅ Дозволяє працювати з ORM
+        from_attributes = True
 
 
 class StudentUpdate(BaseModel):
@@ -22,8 +22,8 @@ class StudentUpdate(BaseModel):
     age: int | None = None
     phone_number: str | None = None
     profile_image: str | None = None
-    subscription_type: str | None = None  # ✅ Enum -> str
-    level: str | None = None  # ✅ Enum -> str
+    subscription_type: str | None = None
+    level: str | None = None
 
 
 class StudentResponse(BaseModel):
@@ -31,12 +31,13 @@ class StudentResponse(BaseModel):
     username: str
     email: EmailStr
     phone_number: str
+    level: str | None = None
     age: int
     profile_image: str | None = None
     lesson_balance: int | None = None
-    subscription_type: str | None = None  # ✅ Enum -> str
-    role: str = UserRole.STUDENT.value  # ✅ Enum -> str
-    average_mark: int | None = None  # ✅ Додаємо `None`, щоб уникнути помилок
+    subscription_type: str | None = None
+    role: str = UserRole.STUDENT.value
+    average_mark: int | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -46,12 +47,16 @@ class StudentResponse(BaseModel):
 
 
 class StudentSubscriptionUpdate(BaseModel):
-    subscription_type: str  # ✅ Enum -> str
+    subscription_type: str
 
 
 class StudentLevelUpdate(BaseModel):
-    level: str  # ✅ Enum -> str
+    level: str
 
 
 class StudentBalanceUpdate(BaseModel):
     lesson_balance: int
+
+
+class StudentPhotoUpdate(BaseModel):
+    profile_image: str
