@@ -9,7 +9,8 @@ COPY package.json package-lock.json* ./
 RUN npm install
 
 # 4. Копіюємо увесь код та збираємо фронт
-COPY . .
+COPY .env.production .env.production
+COPY . . 
 RUN npm run build
 
 # 5. Продакшн сервер — Nginx
