@@ -117,7 +117,7 @@ async def authenticated_route(user: User = Depends(fastapi_users.current_user(ac
 
 # ✅ **Логування змінних середовища**
 print("🔑 SECRET_KEY:", os.getenv("SECRET_KEY"))
-print("🗄️ DB_URL:", os.getenv("DB_URL"))
+print("🗄️ DATABASE_URL:", os.getenv("DATABASE_URL"))
 print("🔗 REDIS_URL:", os.getenv("REDIS_URL"))
 print("🤖 OPENAI_API_KEY:", os.getenv("OPENAI_API_KEY"))
 print("🌐 OPENAI_API_URL:", os.getenv("OPENAI_API_URL"))
