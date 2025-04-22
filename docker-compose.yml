@@ -17,7 +17,11 @@ services:
       - redis
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: "https://my-prime-academy.online"
+        VITE_WS_URL: "wss://my-prime-academy.online"
     container_name: frontend
     restart: always
     volumes:
