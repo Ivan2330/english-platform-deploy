@@ -76,7 +76,9 @@ services:
     container_name: postgres
     restart: always
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 2111
+      POSTGRES_DB: prime_platform_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
