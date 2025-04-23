@@ -31,7 +31,7 @@ services:
       - NODE_ENV=production
     expose:
       - 3000
-    command: npm run build
+    # command: npm run build
 
   nginx:
     image: nginx:latest
