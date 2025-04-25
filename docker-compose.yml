@@ -30,7 +30,9 @@ services:
     environment:
       - NODE_ENV=production
     expose:
-      - 3000
+      - 80
+    depends_on:
+      - backend
     # command: npm run build
 
   nginx:
@@ -81,8 +83,8 @@ services:
       POSTGRES_DB: prime_platform_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"
 
 volumes:
   postgres_data:
