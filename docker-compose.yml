@@ -51,16 +51,16 @@ services:
       - frontend
 
   certbot:
-  image: certbot/certbot
-  container_name: certbot
-  volumes:
-    - ./nginx/certbot/conf:/etc/letsencrypt
-    - ./nginx/certbot/www:/var/www/certbot
-  entrypoint: >
-    sh -c "while :; do
-           certbot renew --webroot -w /var/www/certbot --quiet --agree-tos
-           nginx -s reload 2>/dev/null || true
-           sleep 12h; done"
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./nginx/certbot/conf:/etc/letsencrypt
+      - ./nginx/certbot/www:/var/www/certbot
+    entrypoint: >
+      sh -c "while :; do
+            certbot renew --webroot -w /var/www/certbot --quiet --agree-tos
+            nginx -s reload 2>/dev/null || true
+            sleep 12h; done"
 
 
   redis:
