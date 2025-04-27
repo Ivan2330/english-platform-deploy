@@ -51,19 +51,17 @@ services:
       - frontend
 
   certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - ./nginx/certbot/conf:/etc/letsencrypt
-      - ./nginx/certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c '
-      certbot certonly --webroot \
-      --webroot-path=/var/www/certbot \
-      --email my.primeacademy19@gmail.com \
-      --agree-tos \
-      --no-eff-email \
-      -d my-prime-academy.online && \
-      crond -f'"
+  image: certbot/certbot
+  container_name: certbot
+  volumes:
+    - ./nginx/certbot/conf:/etc/letsencrypt
+    - ./nginx/certbot/www:/var/www/certbot
+  entrypoint: >
+    sh -c "while :; do
+           certbot renew --webroot -w /var/www/certbot --quiet --agree-tos
+           nginx -s reload 2>/dev/null || true
+           sleep 12h; done"
+
 
   redis:
     image: redis:7-alpine
