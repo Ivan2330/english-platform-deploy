@@ -46,6 +46,49 @@ async def ensure_admin() -> None:
             await session.execute(stmt)
             print("🎉 Новий адміністратор успішно створений!")
 
+STUDENT_USERNAME = "student_user"
+STUDENT_EMAIL = "student@example.com"
+STUDENT_PHONE = "+380991234567"
+STUDENT_PLAIN_PW = "Student#1234"
+STUDENT_SUBSCRIPTION = "individual"        # або Subscription.INDIVIDUAL.value
+STUDENT_LEVEL = "B1"                       # або EnglishLevel.A1.value
+
+async def ensure_student() -> None:
+    async for session in get_async_session():
+        async with session.begin():
+            # перевіряємо, чи є такий користувач за email чи username
+            stmt_sel = select(User).where(
+                (User.username == STUDENT_USERNAME) | (User.email == STUDENT_EMAIL)
+            )
+            exists = await session.scalar(stmt_sel)
+            if exists:
+                print("✅ Студент уже існує, пропускаємо створення.")
+                return
+
+            print("🚀 Створюємо нового студента…")
+            ph = PasswordHelper()
+            hashed_pw = ph.hash(STUDENT_PLAIN_PW)
+
+            stmt_ins = (
+                insert(User)
+                .values(
+                    username=STUDENT_USERNAME,
+                    email=STUDENT_EMAIL,
+                    phone_number=STUDENT_PHONE,
+                    hashed_password=hashed_pw,
+                    role=UserRole.STUDENT.value,
+                    subscription_type=STUDENT_SUBSCRIPTION,
+                    level=STUDENT_LEVEL,
+                    is_active=True,
+                    is_verified=False,   # можна змінити на True, якщо треба
+                    is_admin=False,
+                )
+                .on_conflict_do_nothing(index_elements=[User.email])
+            )
+            await session.execute(stmt_ins)
+            print("🎉 Новий студент успішно створений!")
+
 
 async def initialize_admin() -> None:
     await ensure_admin()
+    await ensure_student()
