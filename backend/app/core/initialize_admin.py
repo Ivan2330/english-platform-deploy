@@ -1,4 +1,4 @@
-from sqlalchemy import insert
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_async_session
