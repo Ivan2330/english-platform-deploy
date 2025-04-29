@@ -1,5 +1,7 @@
+
 /* Загальний фон */
 .login-container {
+
     display: flex;
     justify-content: center;
     align-items: center;
@@ -10,6 +12,7 @@
 
 /* Блок логіна */
 .login-box {
+    margin: auto;
     text-align: center;
     background-color: white;
     padding: 60px;
@@ -26,12 +29,14 @@
 
 /* Логотип */
 .login-logo {
-    width: 15vw;
+    /* width: 15vw; */
+    width: clamp(200px,15vw,320px);
     margin-bottom: 20px;
 }
 
 /* Заголовок */
 .login-title {
+    min-height: 380px;
     font-size: 32px;
     font-weight: bold;
     margin-bottom: 25px;
