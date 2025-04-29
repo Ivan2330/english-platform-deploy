@@ -43,7 +43,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     role = Column(String, nullable=False)
 
     # 🔹 Загальні поля
-    profile_image = Column(String(255), default=None)
+    profile_image = Column(String(255), default=None, nullable=True)
     is_active = Column(Boolean, default=True)
     last_login = Column(DateTime, default=func.now(), onupdate=func.now())
     created_at = Column(DateTime, default=func.now())

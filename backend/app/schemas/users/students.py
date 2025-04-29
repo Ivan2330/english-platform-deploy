@@ -32,7 +32,7 @@ class StudentResponse(BaseModel):
     email: EmailStr
     phone_number: str
     level: str | None = None
-    age: int
+    age: int | None = None
     profile_image: str | None = None
     lesson_balance: int | None = None
     subscription_type: str | None = None
