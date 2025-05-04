@@ -53,7 +53,7 @@ services:
       context: ./frontend
       args:
       # ← вставте свої production URL
-        VITE_API_URL: "https://my-prime-academy.online"
+        VITE_API_URL: "https://my-prime-academy.online/api"
         VITE_WS_URL: "wss://my-prime-academy.online"
     container_name: nginx
     restart: always
