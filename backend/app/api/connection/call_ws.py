@@ -11,7 +11,6 @@ from app.models.connection.call import Call, CallParticipant
 from app.models.users.users import User, Status
 from app.core.cache import get_cache, set_cache
 import logging
-import json
 
 router = APIRouter(prefix="/ws/calls", tags=["WebSocket Calls"])
 logger = logging.getLogger("websocket_calls")
@@ -87,6 +86,7 @@ class ConnectionManager:
         if call_id not in self.active_connections:
             self.active_connections[call_id] = {}
 
+        # замінюємо попередній WS того ж користувача, якщо він був
         if user_id in self.active_connections[call_id]:
             try:
                 await self.active_connections[call_id][user_id].close()
@@ -105,20 +105,16 @@ class ConnectionManager:
 
     async def send_personal_message(self, message: dict, call_id: int, user_id: int):
         if call_id in self.active_connections and user_id in self.active_connections[call_id]:
-            websocket = self.active_connections[call_id][user_id]
-            await websocket.send_json(message)
+            await self.active_connections[call_id][user_id].send_json(message)
 
     async def broadcast(self, call_id: int, message: dict, exclude_user_id: int | None = None):
         if call_id in self.active_connections:
             for uid, ws in self.active_connections[call_id].items():
-                if uid != exclude_user_id:
+                if exclude_user_id is None or uid != exclude_user_id:
                     try:
                         await ws.send_json(message)
                     except Exception as e:
                         logger.warning(f"[WS ERROR] broadcast to {uid}: {e}")
-
-    def get_websocket(self, call_id: int, user_id: int) -> WebSocket | None:
-        return self.active_connections.get(call_id, {}).get(user_id)
 
     def is_connected(self, call_id: int, user_id: int) -> bool:
         return user_id in self.active_connections.get(call_id, {})
