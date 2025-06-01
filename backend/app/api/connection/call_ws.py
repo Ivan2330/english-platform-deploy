@@ -1,4 +1,5 @@
 from fastapi import WebSocket, WebSocketDisconnect, APIRouter, Depends, HTTPException, Query
+from fastapi.websockets import WebSocketState
 from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -86,7 +87,6 @@ class ConnectionManager:
         if call_id not in self.active_connections:
             self.active_connections[call_id] = {}
 
-        # замінюємо попередній WS того ж користувача, якщо він був
         if user_id in self.active_connections[call_id]:
             try:
                 await self.active_connections[call_id][user_id].close()
@@ -101,20 +101,25 @@ class ConnectionManager:
             self.active_connections[call_id].pop(user_id, None)
             if not self.active_connections[call_id]:
                 self.active_connections.pop(call_id)
-            logger.info(f"[WS DISCONNECT] User {user_id} removed from call {call_id}")
+            logger.info(f"[WS DISCONNECT] User {user_id} disconnected from call {call_id}")
 
     async def send_personal_message(self, message: dict, call_id: int, user_id: int):
-        if call_id in self.active_connections and user_id in self.active_connections[call_id]:
-            await self.active_connections[call_id][user_id].send_json(message)
+        ws = self.active_connections.get(call_id, {}).get(user_id)
+        if ws and ws.client_state == WebSocketState.CONNECTED:
+            try:
+                await ws.send_json(message)
+            except Exception as e:
+                logger.warning(f"[WS ERROR] send to {user_id}: {e}")
 
     async def broadcast(self, call_id: int, message: dict, exclude_user_id: int | None = None):
         if call_id in self.active_connections:
-            for uid, ws in self.active_connections[call_id].items():
+            for uid, ws in list(self.active_connections[call_id].items()):
                 if exclude_user_id is None or uid != exclude_user_id:
-                    try:
-                        await ws.send_json(message)
-                    except Exception as e:
-                        logger.warning(f"[WS ERROR] broadcast to {uid}: {e}")
+                    if ws.client_state == WebSocketState.CONNECTED:
+                        try:
+                            await ws.send_json(message)
+                        except Exception as e:
+                            logger.warning(f"[WS ERROR] broadcast to {uid}: {e}")
 
     def is_connected(self, call_id: int, user_id: int) -> bool:
         return user_id in self.active_connections.get(call_id, {})
@@ -142,7 +147,6 @@ async def websocket_endpoint(
         return
 
     await connection_manager.connect(call_id, user.id, websocket)
-    logger.info(f"[WS] User {user.id} connected to call {call_id}")
 
     try:
         participant_status = await get_cached_participant_status(call_id, user.id, db)
@@ -155,6 +159,7 @@ async def websocket_endpoint(
         while True:
             message = await websocket.receive_json()
             data = WebSocketAction.model_validate(message)
+            logger.debug(f"[WS DATA] {data}")
 
             if data.action == "toggle_mic":
                 await update_cached_participant_status(call_id, user.id, {"mic_status": data.status})
@@ -194,8 +199,7 @@ async def websocket_endpoint(
         logger.info(f"[DISCONNECT] User {user.id} left call {call_id}")
         await connection_manager.broadcast(call_id, create_message("leave", user.id), exclude_user_id=user.id)
     except Exception as e:
-        logger.error(f"[ERROR] {e}")
+        logger.error(f"[WS FATAL ERROR] {e}")
         await websocket.close(code=1011, reason="Internal error")
     finally:
         connection_manager.disconnect(call_id, user.id)
-        logger.info(f"[CLEANUP] User {user.id} disconnected from call {call_id}")
