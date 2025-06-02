@@ -18,8 +18,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
   const mediaStreamRef = useRef(null);
   const socketRef = useRef(null);
   const peerConnectionRef = useRef(null);
-  const isMakingOffer = useRef(false);
-  const isSettingRemoteAnswerPending = useRef(false);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
@@ -36,6 +34,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
+        console.log("✅ Local media stream initialized");
       } catch (err) {
         console.error("Error accessing media devices:", err);
       }
@@ -93,29 +92,52 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
     pc.ontrack = ({ streams }) => {
       if (remoteVideoRef.current && streams[0]) {
+        console.log("📡 Remote stream received");
         remoteVideoRef.current.srcObject = streams[0];
       }
     };
 
     pc.onicecandidate = event => {
       if (event.candidate) {
+        console.log("📤 Sending ICE candidate");
         ws.send(JSON.stringify({ action: "ice_candidate", candidate: event.candidate, user: currentUserId }));
       }
     };
 
+    ws.onopen = () => {
+      console.log("✅ WebSocket connection opened");
+    };
+
+    ws.onerror = (e) => {
+      console.error("❌ WebSocket error:", e);
+    };
+
+    ws.onclose = () => {
+      console.warn("⚠️ WebSocket closed");
+    };
+
     ws.onmessage = async event => {
       const data = JSON.parse(event.data);
+      console.log("📨 WS MSG:", data);
       if (!pc) return;
 
       try {
+        if (data.action === "you_joined") {
+          console.log("👋 I joined, will try to initiate offer if needed");
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
+        }
+
         if (data.action === "join" && data.user !== currentUserId) {
-          isMakingOffer.current = true;
+          console.log("👤 Another user joined. Sending offer...");
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
         }
 
         if (data.action === "offer" && data.user !== currentUserId) {
+          console.log("📥 Received offer");
           await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
@@ -123,11 +145,16 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         }
 
         if (data.action === "answer" && data.user !== currentUserId) {
-          if (pc.signalingState === "stable") return;
+          if (pc.signalingState === "stable") {
+            console.log("✅ Skipping remote answer because already stable");
+            return;
+          }
+          console.log("📥 Received answer");
           await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
         }
 
         if (data.action === "ice_candidate" && data.user !== currentUserId && data.candidate) {
+          console.log("❄️ Received ICE candidate");
           await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
         }
       } catch (err) {
@@ -145,6 +172,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       audioTracks[0].enabled = newStatus;
       setMicOn(newStatus);
       socketRef.current?.send(JSON.stringify({ action: "toggle_mic", status: newStatus }));
+      console.log(`🎤 Mic ${newStatus ? "enabled" : "disabled"}`);
     }
   };
 
@@ -155,6 +183,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       videoTracks[0].enabled = newStatus;
       setCamOn(newStatus);
       socketRef.current?.send(JSON.stringify({ action: "toggle_camera", status: newStatus }));
+      console.log(`📷 Cam ${newStatus ? "enabled" : "disabled"}`);
     }
   };
 
