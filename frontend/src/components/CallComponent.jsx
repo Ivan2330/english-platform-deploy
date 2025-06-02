@@ -1,5 +1,3 @@
-// CallComponent.jsx — super‑verbose debug version v3 (fully removes early‑return, richer logs)
-
 import React, { useEffect, useRef, useState } from "react";
 import { WS_URL, API_URL } from "../../config";
 import axios from "axios";
@@ -11,30 +9,37 @@ import camera_off from "../assets/calls/camOFF.svg";
 import end_call from "../assets/calls/endCall.svg";
 
 /**
- * Повністю логована версія CallComponent.
- *  🔹 REST — створення/приєднання до дзвінка відразу (НЕ чекає камеру).
- *  🔹 WebSocket — сигналізація (token у query).
- *  🔹 WebRTC  — STUN Google; answer завжди ставимо.
- *  🔹 Console logs — emoji‑прапорці кожного кроку.
+ * CallComponent — fully‑logged WebRTC call for classrooms (v4).
+ * 
+ * ▸ REST  — create / join call immediately (doesn’t wait for camera).
+ * ▸ WS    — signalling (token via query‑param).
+ * ▸ WebRTC — STUN Google; uses Perfect‑Negotiation pattern,
+ *            teacher (staff) is always the "impolite" side (initiator).
+ * ▸ Console logs — emoji flags for every step.
  */
 
 const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
-  // ----- React state -----
+  // ------------------ React state ------------------
   const [callId, setCallId] = useState(null);
   const [micOn, setMicOn]   = useState(true);
   const [camOn, setCamOn]   = useState(true);
 
-  // ----- refs -----
+  // ------------------ refs ------------------
   const localVideoRef  = useRef(null);
   const remoteVideoRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const socketRef      = useRef(null);
   const pcRef          = useRef(null);
 
+  // perfect‑negotiation helpers
+  const makingOffer   = useRef(false);
+  const polite        = useRef(role !== "staff"); // teacher = impolite (initiator)
+  const pendingCands  = useRef([]);               // ICE that arrived before SDP
+
   const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
   const wsToken     = () => localStorage.getItem("token");
 
-  // ---------- 1. getUserMedia (асинхронно) ----------
+  // ---------- 1. getUserMedia ----------
   useEffect(() => {
     (async () => {
       try {
@@ -48,7 +53,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     })();
   }, []);
 
-  // ---------- 2. REST ініціалізація дзвінка (не чекаємо gUM) ----------
+  // ---------- 2. REST initialisation ----------
   useEffect(() => {
     (async () => {
       try {
@@ -75,11 +80,11 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     })();
   }, [classroomId, role, currentUserId]);
 
-  // ---------- 3. WebSocket + WebRTC ----------
+  // ---------- 3. WebSocket + WebRTC ----------
   useEffect(() => {
     if (!callId) return;
 
-    // 3.1 WS
+    // 3.1 WS connection
     const ws = new WebSocket(`${WS_URL}/calls-ws/ws/calls/${callId}?token=${wsToken()}`);
     socketRef.current = ws;
 
@@ -90,19 +95,17 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     pc.onconnectionstatechange   = () => console.log("🔗 state", pc.connectionState);
     pc.onicegatheringstatechange = () => console.log("🧊 gathering", pc.iceGatheringState);
 
-    // додати треки (якщо gUM вже є)
-    if (mediaStreamRef.current) {
-      console.log("🎞️ Adding tracks to PC");
-      mediaStreamRef.current.getTracks().forEach(t => pc.addTrack(t, mediaStreamRef.current));
-    } else {
-      // якщо gUM прийде пізніше
-      const interval = setInterval(() => {
-        if (mediaStreamRef.current) {
-          clearInterval(interval);
-          console.log("🎞️ Late gUM, add tracks");
-          mediaStreamRef.current.getTracks().forEach(t => pc.addTrack(t, mediaStreamRef.current));
-        }
-      }, 500);
+    // add tracks when gUM ready
+    const addTracks = () => {
+      if (mediaStreamRef.current) {
+        console.log("🎞️ Adding tracks to PC");
+        mediaStreamRef.current.getTracks().forEach(t => pc.addTrack(t, mediaStreamRef.current));
+        return true;
+      }
+      return false;
+    };
+    if (!addTracks()) {
+      const intv = setInterval(() => addTracks() && clearInterval(intv), 400);
     }
 
     pc.ontrack = ({ streams }) => {
@@ -117,7 +120,18 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       }
     };
 
-    // --- WS handlers ---
+    // perfect‑negotiation: fire onnegotiationneeded
+    pc.onnegotiationneeded = async () => {
+      try {
+        makingOffer.current = true;
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
+      } catch (err) { console.error(err); }
+      finally { makingOffer.current = false; }
+    };
+
+    // ----- WS handlers -----
     ws.onopen  = () => console.log("✅ WS open");
     ws.onerror = e => console.error("❌ WS error", e);
     ws.onclose = () => console.warn("⚠️ WS closed");
@@ -127,32 +141,67 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       console.log("📨", msg);
 
       try {
+        // 1️⃣ first user only waits
         if (msg.action === "you_joined") {
-          console.log("👋 I am first, making offer");
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
+          console.log("🟢 Alone in the call — wait for peer");
         }
-        if (msg.action === "join" && msg.user !== currentUserId) {
+
+        // 2️⃣ peer joined — we (teacher/first) create offer
+        if (msg.action === "join" && msg.user !== currentUserId && pc.signalingState === "stable") {
           console.log("🆕 peer joined, sending offer");
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
         }
+
+        // 3️⃣ incoming offer
         if (msg.action === "offer" && msg.user !== currentUserId) {
           console.log("↘️ offer", msg.user);
-          await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
+          const offerDesc = new RTCSessionDescription(msg.offer);
+
+          const readyForOffer = !makingOffer.current &&
+                                (pc.signalingState === "stable" || pc.signalingState === "have-remote-offer");
+          const offerCollision = (msg.offer && !readyForOffer);
+
+          polite.current = role !== "staff"; // staff remains impolite
+
+          if (offerCollision && !polite.current) {
+            console.log("⚔️  Impolite collision — ignoring offer");
+            return;
+          }
+
+          if (offerCollision && polite.current) {
+            console.log("🔄 Polite collision — rolling back local offer");
+            await pc.setLocalDescription({ type: "rollback" });
+          }
+
+          await pc.setRemoteDescription(offerDesc);
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           ws.send(JSON.stringify({ action: "answer", answer, user: currentUserId }));
+
+          // flush queued ICE
+          pendingCands.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
+          pendingCands.current = [];
         }
+
+        // 4️⃣ incoming answer
         if (msg.action === "answer" && msg.user !== currentUserId) {
           console.log("↘️ answer", msg.user);
           await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
+          pendingCands.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
+          pendingCands.current = [];
         }
+
+        // 5️⃣ incoming ICE
         if (msg.action === "ice_candidate" && msg.user !== currentUserId && msg.candidate) {
           console.log("❄️ ICE ←", msg.user);
-          await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
+          const cand = new RTCIceCandidate(msg.candidate);
+          if (pc.remoteDescription && pc.remoteDescription.type) {
+            await pc.addIceCandidate(cand);
+          } else {
+            pendingCands.current.push(cand);
+          }
         }
       } catch (err) {
         console.error("RTC error", err);
@@ -160,7 +209,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     };
 
     return () => ws.close();
-  }, [callId, currentUserId]);
+  }, [callId, currentUserId, role]);
 
   // ---------- helpers ----------
   const toggleMic = () => {
