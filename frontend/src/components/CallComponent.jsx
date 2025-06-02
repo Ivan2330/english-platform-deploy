@@ -4,7 +4,7 @@ import axios from "axios";
 import "../pages/CallComponent.css";
 import micro_on from "../assets/calls/micON.svg";
 import micro_off from "../assets/calls/micOFF.svg";
-camera_on from "../assets/calls/camON.svg";
+import camera_on from "../assets/calls/camON.svg";
 import camera_off from "../assets/calls/camOFF.svg";
 import end_call from "../assets/calls/endCall.svg";
 
