@@ -16,6 +16,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const mediaStreamRef = useRef(null);
+  const remoteStreamRef = useRef(new MediaStream());
   const socketRef = useRef(null);
   const pcRef = useRef(null);
 
@@ -93,9 +94,13 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       const interval = setInterval(() => addTracks() && clearInterval(interval), 400);
     }
 
-    pc.ontrack = ({ streams }) => {
-      console.log("📡 ontrack", streams);
-      if (remoteVideoRef.current && streams[0]) remoteVideoRef.current.srcObject = streams[0];
+    pc.ontrack = (event) => {
+      console.log("📡 ontrack fired", event);
+      remoteStreamRef.current.addTrack(event.track);
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStreamRef.current;
+        console.log("🎥 remoteVideoRef assigned stream", remoteStreamRef.current);
+      }
     };
 
     pc.onicecandidate = e => {
