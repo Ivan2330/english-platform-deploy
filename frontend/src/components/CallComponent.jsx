@@ -8,38 +8,25 @@ import camera_on from "../assets/calls/camON.svg";
 import camera_off from "../assets/calls/camOFF.svg";
 import end_call from "../assets/calls/endCall.svg";
 
-/**
- * CallComponent — fully‑logged WebRTC call for classrooms (v4).
- * 
- * ▸ REST  — create / join call immediately (doesn’t wait for camera).
- * ▸ WS    — signalling (token via query‑param).
- * ▸ WebRTC — STUN Google; uses Perfect‑Negotiation pattern,
- *            teacher (staff) is always the "impolite" side (initiator).
- * ▸ Console logs — emoji flags for every step.
- */
-
 const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
-  // ------------------ React state ------------------
   const [callId, setCallId] = useState(null);
-  const [micOn, setMicOn]   = useState(true);
-  const [camOn, setCamOn]   = useState(true);
+  const [micOn, setMicOn] = useState(true);
+  const [camOn, setCamOn] = useState(true);
 
-  // ------------------ refs ------------------
-  const localVideoRef  = useRef(null);
+  const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const mediaStreamRef = useRef(null);
-  const socketRef      = useRef(null);
-  const pcRef          = useRef(null);
+  const socketRef = useRef(null);
+  const pcRef = useRef(null);
 
-  // perfect‑negotiation helpers
-  const makingOffer   = useRef(false);
-  const polite        = useRef(role !== "staff"); // teacher = impolite (initiator)
-  const pendingCands  = useRef([]);               // ICE that arrived before SDP
+  const makingOffer = useRef(false);
+  const polite = useRef(role !== "staff");
+  const pendingIce = useRef([]);
+  const peerJoined = useRef(false);
 
   const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
-  const wsToken     = () => localStorage.getItem("token");
+  const wsToken = () => localStorage.getItem("token");
 
-  // ---------- 1. getUserMedia ----------
   useEffect(() => {
     (async () => {
       try {
@@ -53,7 +40,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     })();
   }, []);
 
-  // ---------- 2. REST initialisation ----------
   useEffect(() => {
     (async () => {
       try {
@@ -67,7 +53,10 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
           call = created;
           console.log("📞 Call created", call.id);
         }
-        if (!call) { console.log("⏳ Waiting for teacher to start call"); return; }
+        if (!call) {
+          console.log("⏳ Waiting for teacher to start call");
+          return;
+        }
 
         const { data: parts } = await axios.get(`${API_URL}/calls/calls/${call.id}/participants`, { headers });
         const me = parts.find(p => p.user_id === currentUserId && !p.left_at);
@@ -80,22 +69,18 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     })();
   }, [classroomId, role, currentUserId]);
 
-  // ---------- 3. WebSocket + WebRTC ----------
   useEffect(() => {
     if (!callId) return;
 
-    // 3.1 WS connection
     const ws = new WebSocket(`${WS_URL}/calls-ws/ws/calls/${callId}?token=${wsToken()}`);
     socketRef.current = ws;
 
-    // 3.2 PeerConnection
     const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
     pcRef.current = pc;
 
-    pc.onconnectionstatechange   = () => console.log("🔗 state", pc.connectionState);
+    pc.onconnectionstatechange = () => console.log("🔗 state", pc.connectionState);
     pc.onicegatheringstatechange = () => console.log("🧊 gathering", pc.iceGatheringState);
 
-    // add tracks when gUM ready
     const addTracks = () => {
       if (mediaStreamRef.current) {
         console.log("🎞️ Adding tracks to PC");
@@ -105,7 +90,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       return false;
     };
     if (!addTracks()) {
-      const intv = setInterval(() => addTracks() && clearInterval(intv), 400);
+      const interval = setInterval(() => addTracks() && clearInterval(interval), 400);
     }
 
     pc.ontrack = ({ streams }) => {
@@ -115,24 +100,27 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
     pc.onicecandidate = e => {
       if (e.candidate) {
-        console.log("📤 ICE", e.candidate.candidate);
+        console.log("📤 ICE", e.candidate);
         ws.send(JSON.stringify({ action: "ice_candidate", candidate: e.candidate, user: currentUserId }));
       }
     };
 
-    // perfect‑negotiation: fire onnegotiationneeded
     pc.onnegotiationneeded = async () => {
+      if (!peerJoined.current) return;
       try {
         makingOffer.current = true;
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
-      } catch (err) { console.error(err); }
-      finally { makingOffer.current = false; }
+        console.log("📤 offer (negotiationneeded)");
+      } catch (e) {
+        console.error("negotiationneeded error", e);
+      } finally {
+        makingOffer.current = false;
+      }
     };
 
-    // ----- WS handlers -----
-    ws.onopen  = () => console.log("✅ WS open");
+    ws.onopen = () => console.log("✅ WS open");
     ws.onerror = e => console.error("❌ WS error", e);
     ws.onclose = () => console.warn("⚠️ WS closed");
 
@@ -141,37 +129,33 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       console.log("📨", msg);
 
       try {
-        // 1️⃣ first user only waits
         if (msg.action === "you_joined") {
           console.log("🟢 Alone in the call — wait for peer");
         }
 
-        // 2️⃣ peer joined — we (teacher/first) create offer
-        if (msg.action === "join" && msg.user !== currentUserId && pc.signalingState === "stable") {
-          console.log("🆕 peer joined, sending offer");
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-          ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
+        if (msg.action === "join" && msg.user !== currentUserId) {
+          peerJoined.current = true;
+          if (pc.signalingState === "stable") {
+            console.log("🆕 peer joined, sending offer");
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
+          }
         }
 
-        // 3️⃣ incoming offer
         if (msg.action === "offer" && msg.user !== currentUserId) {
           console.log("↘️ offer", msg.user);
+          peerJoined.current = true;
           const offerDesc = new RTCSessionDescription(msg.offer);
+          const ready = !makingOffer.current && (pc.signalingState === "stable" || pc.signalingState === "have-remote-offer");
+          const collision = msg.offer && !ready;
 
-          const readyForOffer = !makingOffer.current &&
-                                (pc.signalingState === "stable" || pc.signalingState === "have-remote-offer");
-          const offerCollision = (msg.offer && !readyForOffer);
-
-          polite.current = role !== "staff"; // staff remains impolite
-
-          if (offerCollision && !polite.current) {
+          if (collision && !polite.current) {
             console.log("⚔️  Impolite collision — ignoring offer");
             return;
           }
-
-          if (offerCollision && polite.current) {
-            console.log("🔄 Polite collision — rolling back local offer");
+          if (collision && polite.current) {
+            console.log("🔄 Polite collision — rollback local offer");
             await pc.setLocalDescription({ type: "rollback" });
           }
 
@@ -179,39 +163,37 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           ws.send(JSON.stringify({ action: "answer", answer, user: currentUserId }));
-
-          // flush queued ICE
-          pendingCands.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
-          pendingCands.current = [];
+          pendingIce.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
+          pendingIce.current = [];
         }
 
-        // 4️⃣ incoming answer
         if (msg.action === "answer" && msg.user !== currentUserId) {
           console.log("↘️ answer", msg.user);
           await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
-          pendingCands.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
-          pendingCands.current = [];
+          pendingIce.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
+          pendingIce.current = [];
         }
 
-        // 5️⃣ incoming ICE
         if (msg.action === "ice_candidate" && msg.user !== currentUserId && msg.candidate) {
           console.log("❄️ ICE ←", msg.user);
           const cand = new RTCIceCandidate(msg.candidate);
           if (pc.remoteDescription && pc.remoteDescription.type) {
-            await pc.addIceCandidate(cand);
+            await pc.addIceCandidate(cand).catch(console.error);
           } else {
-            pendingCands.current.push(cand);
+            pendingIce.current.push(cand);
           }
         }
-      } catch (err) {
-        console.error("RTC error", err);
+      } catch (e) {
+        console.error("RTC error", e);
       }
     };
 
-    return () => ws.close();
+    return () => {
+      ws.close();
+      pc.close();
+    };
   }, [callId, currentUserId, role]);
 
-  // ---------- helpers ----------
   const toggleMic = () => {
     const track = mediaStreamRef.current?.getAudioTracks()[0];
     if (!track) return;
@@ -232,11 +214,12 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     socketRef.current?.send(JSON.stringify({ action: "end_call" }));
     socketRef.current?.close();
     mediaStreamRef.current?.getTracks().forEach(t => t.stop());
-    try { await axios.delete(`${API_URL}/calls/calls/${callId}/leave`, { headers: authHeaders() }); } catch {}
+    try {
+      await axios.delete(`${API_URL}/calls/calls/${callId}/leave`, { headers: authHeaders() });
+    } catch {}
     if (onLeave) onLeave();
   };
 
-  // ---------- render ----------
   if (!callId) return <p>🔌 Waiting for call...</p>;
 
   return (
@@ -244,7 +227,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       <h2>📞 Call in progress</h2>
       <div className="video-wrapper">
         <video ref={remoteVideoRef} autoPlay playsInline className="video" />
-        <video ref={localVideoRef}  autoPlay muted playsInline className="video" />
+        <video ref={localVideoRef} autoPlay muted playsInline className="video" />
       </div>
       <div className="button-group-actions">
         <button onClick={toggleMic}>{micOn ? <img src={micro_on} alt="mic on" /> : <img src={micro_off} alt="mic off" />}</button>
