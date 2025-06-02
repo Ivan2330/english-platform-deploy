@@ -121,6 +121,9 @@ class ConnectionManager:
                         except Exception as e:
                             logger.warning(f"[WS ERROR] broadcast to {uid}: {e}")
 
+    def connected_users_count(self, call_id: int) -> int:
+        return len(self.active_connections.get(call_id, {}))
+
     def is_connected(self, call_id: int, user_id: int) -> bool:
         return user_id in self.active_connections.get(call_id, {})
 
@@ -150,10 +153,16 @@ async def websocket_endpoint(
 
     try:
         participant_status = await get_cached_participant_status(call_id, user.id, db)
+
         await connection_manager.broadcast(
             call_id,
             create_message("join", user.id, **participant_status),
             exclude_user_id=user.id
+        )
+
+        # 🟢 Надсилаємо першому користувачу повідомлення, що він приєднався
+        await connection_manager.send_personal_message(
+            create_message("you_joined", user.id, **participant_status), call_id, user.id
         )
 
         while True:

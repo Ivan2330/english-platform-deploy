@@ -18,6 +18,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
   const mediaStreamRef = useRef(null);
   const socketRef = useRef(null);
   const peerConnectionRef = useRef(null);
+  const isCaller = useRef(false);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
@@ -26,7 +27,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
   const getToken = () => localStorage.getItem("token");
 
-  // --- 1. захоплюємо камеру/мікрофон ---
   useEffect(() => {
     const setupMedia = async () => {
       try {
@@ -42,7 +42,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     setupMedia();
   }, []);
 
-  // --- 2. REST‑логіка створення/долучення до дзвінка ---
   useEffect(() => {
     const initCall = async () => {
       try {
@@ -54,11 +53,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
         if (role === "staff") {
           if (!activeCall) {
-            const create = await axios.post(
-              `${API_URL}/calls/calls/`,
-              { classroom_id: classroomId, status: "active" },
-              { headers }
-            );
+            const create = await axios.post(`${API_URL}/calls/calls/`, { classroom_id: classroomId, status: "active" }, { headers });
             call = create.data;
           } else {
             call = activeCall;
@@ -78,16 +73,18 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
           await axios.post(`${API_URL}/calls/calls/${call.id}/join`, {}, { headers });
         }
 
+        if (res2.data.length > 0) {
+          isCaller.current = true;
+        }
+
         setCallId(call.id);
       } catch (err) {
         console.error("Call init error:", err);
       }
     };
-
     initCall();
   }, [classroomId, currentUserId, role]);
 
-  // --- 3. WebSocket + WebRTC ---
   useEffect(() => {
     if (!callId) return;
 
@@ -96,40 +93,27 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     socketRef.current = ws;
 
     const pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        // { urls: "turn:turn.my-prime-academy.online:3478", username: "webrtc", credential: "secret" }
-      ],
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
     peerConnectionRef.current = pc;
 
-    mediaStreamRef.current?.getTracks().forEach(track => {
-      pc.addTrack(track, mediaStreamRef.current);
-    });
+    mediaStreamRef.current?.getTracks().forEach(track => pc.addTrack(track, mediaStreamRef.current));
 
-    pc.ontrack = ({ track, streams }) => {
-      if (!remoteVideoRef.current) return;
-      if (remoteVideoRef.current.srcObject) {
-        remoteVideoRef.current.srcObject.addTrack(track);
-      } else {
+    pc.ontrack = ({ streams }) => {
+      if (remoteVideoRef.current && !remoteVideoRef.current.srcObject) {
         remoteVideoRef.current.srcObject = streams[0];
       }
     };
 
     pc.onicecandidate = event => {
       if (event.candidate) {
-        ws.send(
-          JSON.stringify({
-            action: "ice_candidate",
-            candidate: event.candidate,
-            user: currentUserId,
-          })
-        );
+        ws.send(JSON.stringify({ action: "ice_candidate", candidate: event.candidate, user: currentUserId }));
       }
     };
 
     ws.onmessage = async event => {
       const data = JSON.parse(event.data);
+      console.log("WS MSG:", data);
 
       if (data.action === "join" && data.user !== currentUserId) {
         const offer = await pc.createOffer();
@@ -152,8 +136,17 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         try {
           await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
         } catch (e) {
-          console.error("Error adding ICE candidate:", e);
+          console.error("ICE error:", e);
         }
+      }
+    };
+
+    ws.onopen = async () => {
+      // якщо ти приєднався і хтось був — ти створюєш offer
+      if (isCaller.current) {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
       }
     };
 
@@ -162,22 +155,21 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     };
   }, [callId, currentUserId]);
 
-  // --- 4. UI‑допоміжні дії ---
   const toggleMic = () => {
-    const audioTracks = mediaStreamRef.current?.getAudioTracks();
-    if (audioTracks?.length) {
-      const newStatus = !audioTracks[0].enabled;
-      audioTracks[0].enabled = newStatus;
+    const track = mediaStreamRef.current?.getAudioTracks()[0];
+    if (track) {
+      const newStatus = !track.enabled;
+      track.enabled = newStatus;
       setMicOn(newStatus);
       socketRef.current?.send(JSON.stringify({ action: "toggle_mic", status: newStatus }));
     }
   };
 
   const toggleCam = () => {
-    const videoTracks = mediaStreamRef.current?.getVideoTracks();
-    if (videoTracks?.length) {
-      const newStatus = !videoTracks[0].enabled;
-      videoTracks[0].enabled = newStatus;
+    const track = mediaStreamRef.current?.getVideoTracks()[0];
+    if (track) {
+      const newStatus = !track.enabled;
+      track.enabled = newStatus;
       setCamOn(newStatus);
       socketRef.current?.send(JSON.stringify({ action: "toggle_camera", status: newStatus }));
     }
@@ -186,13 +178,11 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
   const leaveCall = async () => {
     socketRef.current?.send(JSON.stringify({ action: "end_call" }));
     socketRef.current?.close();
-
     try {
       await axios.delete(`${API_URL}/calls/calls/${callId}/leave`, { headers: getAuthHeaders() });
     } catch (err) {
       console.error("Leave error:", err);
     }
-
     mediaStreamRef.current?.getTracks().forEach(track => track.stop());
     if (typeof onLeave === "function") onLeave();
   };
@@ -202,22 +192,14 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
   return (
     <div className="call-container">
       <h2>📞 Call in progress</h2>
-
       <div className="video-wrapper">
         <video ref={remoteVideoRef} autoPlay playsInline className="video" />
         <video ref={localVideoRef} autoPlay muted playsInline className="video" />
       </div>
-
       <div className="button-group-actions">
-        <button onClick={toggleMic}>
-          {micOn ? <img src={micro_on} alt="Mic ON" /> : <img src={micro_off} alt="Mic OFF" />}
-        </button>
-        <button onClick={toggleCam}>
-          {camOn ? <img src={camera_on} alt="Cam ON" /> : <img src={camera_off} alt="CAM OFF" />}
-        </button>
-        <button onClick={leaveCall}>
-          <img src={end_call} alt="End CALL" />
-        </button>
+        <button onClick={toggleMic}>{micOn ? <img src={micro_on} /> : <img src={micro_off} />}</button>
+        <button onClick={toggleCam}>{camOn ? <img src={camera_on} /> : <img src={camera_off} />}</button>
+        <button onClick={leaveCall}><img src={end_call} /></button>
       </div>
     </div>
   );
