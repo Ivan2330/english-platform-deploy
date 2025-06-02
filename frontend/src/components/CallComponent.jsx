@@ -4,7 +4,7 @@ import axios from "axios";
 import "../pages/CallComponent.css";
 import micro_on from "../assets/calls/micON.svg";
 import micro_off from "../assets/calls/micOFF.svg";
-import camera_on from "../assets/calls/camON.svg";
+camera_on from "../assets/calls/camON.svg";
 import camera_off from "../assets/calls/camOFF.svg";
 import end_call from "../assets/calls/endCall.svg";
 
@@ -34,9 +34,9 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
-        console.log("✅ Local media stream initialized");
+        console.log("✅ Local media stream initialized", stream);
       } catch (err) {
-        console.error("Error accessing media devices:", err);
+        console.error("❌ Error accessing media devices:", err);
       }
     };
     setupMedia();
@@ -86,35 +86,30 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     });
     peerConnectionRef.current = pc;
 
+    console.log("📺 Adding tracks to PeerConnection:");
     mediaStreamRef.current?.getTracks().forEach(track => {
+      console.log("🔹 Adding track:", track.kind);
       pc.addTrack(track, mediaStreamRef.current);
     });
 
-    pc.ontrack = ({ streams }) => {
+    pc.ontrack = ({ streams, track }) => {
+      console.log("📡 ontrack triggered, streams:", streams);
       if (remoteVideoRef.current && streams[0]) {
-        console.log("📡 Remote stream received");
+        console.log("🟢 Setting remote video stream");
         remoteVideoRef.current.srcObject = streams[0];
       }
     };
 
     pc.onicecandidate = event => {
       if (event.candidate) {
-        console.log("📤 Sending ICE candidate");
+        console.log("📤 Sending ICE candidate", event.candidate);
         ws.send(JSON.stringify({ action: "ice_candidate", candidate: event.candidate, user: currentUserId }));
       }
     };
 
-    ws.onopen = () => {
-      console.log("✅ WebSocket connection opened");
-    };
-
-    ws.onerror = (e) => {
-      console.error("❌ WebSocket error:", e);
-    };
-
-    ws.onclose = () => {
-      console.warn("⚠️ WebSocket closed");
-    };
+    ws.onopen = () => console.log("✅ WebSocket connection opened");
+    ws.onerror = (e) => console.error("❌ WebSocket error:", e);
+    ws.onclose = () => console.warn("⚠️ WebSocket closed");
 
     ws.onmessage = async event => {
       const data = JSON.parse(event.data);
@@ -123,7 +118,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
       try {
         if (data.action === "you_joined") {
-          console.log("👋 I joined, will try to initiate offer if needed");
+          console.log("👋 I joined, initiating offer");
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
@@ -146,7 +141,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
         if (data.action === "answer" && data.user !== currentUserId) {
           if (pc.signalingState === "stable") {
-            console.log("✅ Skipping remote answer because already stable");
+            console.log("✅ Skipping remote answer, state stable");
             return;
           }
           console.log("📥 Received answer");
