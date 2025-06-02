@@ -1,3 +1,5 @@
+// CallComponent.jsx — суперлогована версія v2 (фікс "Skipping remote answer")
+
 import React, { useEffect, useRef, useState } from "react";
 import { WS_URL, API_URL } from "../../config";
 import axios from "axios";
@@ -8,192 +10,190 @@ import camera_on from "../assets/calls/camON.svg";
 import camera_off from "../assets/calls/camOFF.svg";
 import end_call from "../assets/calls/endCall.svg";
 
+/**
+ * Мета компонента — створити WebRTC‑дзвінок teacher ↔ student через
+ *   • REST‑ендпоїнти /calls
+ *   • WebSocket сигнальний канал
+ *   • STUN google
+ *
+ * У цій версії ми ЗНИМАЄМО перевірку `signalingState === "stable"` для answer‑пакетів.
+ * Через неї peer A ігнорував answer від peer B, тому зʼєднання не переходило у "connected".
+ */
+
 const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
+  // ---------- state ----------
   const [callId, setCallId] = useState(null);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
 
+  // ---------- refs ----------
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const socketRef = useRef(null);
-  const peerConnectionRef = useRef(null);
+  const pcRef = useRef(null);
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem("token");
-    return { Authorization: `Bearer ${token}` };
-  };
+  const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
+  const wsToken = () => localStorage.getItem("token");
 
-  const getToken = () => localStorage.getItem("token");
-
+  // ---------- 1. getUserMedia ----------
   useEffect(() => {
-    const setupMedia = async () => {
+    (async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         mediaStreamRef.current = stream;
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-        console.log("✅ Local media stream initialized", stream);
-      } catch (err) {
-        console.error("❌ Error accessing media devices:", err);
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+        console.log("✅ Local media stream", stream.getTracks().map(t => t.kind));
+      } catch (e) {
+        console.error("❌ getUserMedia() failed", e);
       }
-    };
-    setupMedia();
+    })();
   }, []);
 
+  // ---------- 2. REST‑ініціалізація дзвінка ----------
   useEffect(() => {
-    const initCall = async () => {
+    if (!mediaStreamRef.current) return; // чекаємо камеру/мік
+
+    (async () => {
       try {
-        const headers = getAuthHeaders();
-        const res = await axios.get(`${API_URL}/calls/calls/?classroom_id=${classroomId}`, { headers });
-        const activeCall = res.data.find(c => c.status === "active");
-        let call = activeCall;
+        const headers = authHeaders();
+        // 2.1 Перевіряємо активний дзвінок у класі
+        const { data: calls } = await axios.get(`${API_URL}/calls/calls/?classroom_id=${classroomId}`, { headers });
+        let call = calls.find(c => c.status === "active");
 
-        if (role === "staff" && !activeCall) {
-          const create = await axios.post(
-            `${API_URL}/calls/calls/`,
-            { classroom_id: classroomId, status: "active" },
-            { headers }
-          );
-          call = create.data;
+        // 2.2 Викладач створює, студент — лише приєднується
+        if (!call && role === "staff") {
+          const { data: created } = await axios.post(`${API_URL}/calls/calls/`, { classroom_id: classroomId, status: "active" }, { headers });
+          call = created;
+          console.log("📞 Call created", call.id);
         }
+        if (!call) return; // студент, а активного дзвінка немає
 
-        if (!call) return;
-
-        const res2 = await axios.get(`${API_URL}/calls/calls/${call.id}/participants`, { headers });
-        const existing = res2.data.find(p => p.user_id === currentUserId);
-        if (!existing || existing.left_at !== null) {
-          await axios.post(`${API_URL}/calls/calls/${call.id}/join`, {}, { headers });
-        }
+        // 2.3 Долучаємось як participant (idempotent)
+        const { data: parts } = await axios.get(`${API_URL}/calls/calls/${call.id}/participants`, { headers });
+        const me = parts.find(p => p.user_id === currentUserId && !p.left_at);
+        if (!me) await axios.post(`${API_URL}/calls/calls/${call.id}/join`, {}, { headers });
 
         setCallId(call.id);
-      } catch (err) {
-        console.error("Call init error:", err);
+      } catch (e) {
+        console.error("REST init error", e);
       }
-    };
-    initCall();
-  }, [classroomId, currentUserId, role]);
+    })();
+  }, [classroomId, role, currentUserId]);
 
+  // ---------- 3. WebSocket + WebRTC ----------
   useEffect(() => {
     if (!callId) return;
-    const token = getToken();
-    const ws = new WebSocket(`${WS_URL}/calls-ws/ws/calls/${callId}?token=${token}`);
+
+    // 3.1 WebSocket — сигнальний канал
+    const ws = new WebSocket(`${WS_URL}/calls-ws/ws/calls/${callId}?token=${wsToken()}`);
     socketRef.current = ws;
 
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-    });
-    peerConnectionRef.current = pc;
+    // 3.2 PeerConnection
+    const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+    pcRef.current = pc;
 
-    console.log("📺 Adding tracks to PeerConnection:");
-    mediaStreamRef.current?.getTracks().forEach(track => {
-      console.log("🔹 Adding track:", track.kind);
-      pc.addTrack(track, mediaStreamRef.current);
+    // – логування станів –
+    pc.onconnectionstatechange = () => console.log("🔗 PC state", pc.connectionState);
+    pc.onicegatheringstatechange = () => console.log("🧊 ICE gathering", pc.iceGatheringState);
+
+    // 3.3 Додаємо треки
+    console.log("🎞️ addTrack:");
+    mediaStreamRef.current.getTracks().forEach(t => {
+      console.log("  •", t.kind);
+      pc.addTrack(t, mediaStreamRef.current);
     });
 
-    pc.ontrack = ({ streams, track }) => {
-      console.log("📡 ontrack triggered, streams:", streams);
-      if (remoteVideoRef.current && streams[0]) {
-        console.log("🟢 Setting remote video stream");
-        remoteVideoRef.current.srcObject = streams[0];
+    // 3.4 Remote media
+    pc.ontrack = ({ streams }) => {
+      console.log("📡 ontrack", streams);
+      if (remoteVideoRef.current && streams[0]) remoteVideoRef.current.srcObject = streams[0];
+    };
+
+    // 3.5 ICE
+    pc.onicecandidate = e => {
+      if (e.candidate) {
+        console.log("📤 ICE → WS", e.candidate.candidate);
+        ws.send(JSON.stringify({ action: "ice_candidate", candidate: e.candidate, user: currentUserId }));
       }
     };
 
-    pc.onicecandidate = event => {
-      if (event.candidate) {
-        console.log("📤 Sending ICE candidate", event.candidate);
-        ws.send(JSON.stringify({ action: "ice_candidate", candidate: event.candidate, user: currentUserId }));
-      }
-    };
+    // 3.6 WS events
+    ws.onopen = () => console.log("✅ WS open");
+    ws.onerror = e => console.error("❌ WS error", e);
+    ws.onclose = () => console.warn("⚠️ WS closed");
 
-    ws.onopen = () => console.log("✅ WebSocket connection opened");
-    ws.onerror = (e) => console.error("❌ WebSocket error:", e);
-    ws.onclose = () => console.warn("⚠️ WebSocket closed");
-
-    ws.onmessage = async event => {
-      const data = JSON.parse(event.data);
-      console.log("📨 WS MSG:", data);
-      if (!pc) return;
+    ws.onmessage = async ({ data }) => {
+      const msg = JSON.parse(data);
+      console.log("📨", msg);
 
       try {
-        if (data.action === "you_joined") {
-          console.log("👋 I joined, initiating offer");
+        if (msg.action === "you_joined") {
+          // Перший у дзвінку генерує offer
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
         }
-
-        if (data.action === "join" && data.user !== currentUserId) {
-          console.log("👤 Another user joined. Sending offer...");
+        if (msg.action === "join" && msg.user !== currentUserId) {
+          console.log("🆕 peer joined, send offer");
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
           ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
         }
-
-        if (data.action === "offer" && data.user !== currentUserId) {
-          console.log("📥 Received offer");
-          await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+        if (msg.action === "offer" && msg.user !== currentUserId) {
+          console.log("↘️ offer from", msg.user);
+          await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           ws.send(JSON.stringify({ action: "answer", answer, user: currentUserId }));
         }
-
-        if (data.action === "answer" && data.user !== currentUserId) {
-          if (pc.signalingState === "stable") {
-            console.log("✅ Skipping remote answer, state stable");
-            return;
-          }
-          console.log("📥 Received answer");
-          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        if (msg.action === "answer" && msg.user !== currentUserId) {
+          console.log("↘️ answer from", msg.user);
+          // 🟢 ФІКС – ЗАВЖДИ встановлюємо remoteDescription
+          await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
         }
-
-        if (data.action === "ice_candidate" && data.user !== currentUserId && data.candidate) {
-          console.log("❄️ Received ICE candidate");
-          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        if (msg.action === "ice_candidate" && msg.user !== currentUserId && msg.candidate) {
+          console.log("❄️ ICE from", msg.user);
+          await pc.addIceCandidate(new RTCIceCandidate(msg.candidate));
         }
       } catch (err) {
-        console.error("WebRTC error:", err);
+        console.error("RTC handling error", err);
       }
     };
 
     return () => ws.close();
   }, [callId, currentUserId]);
 
+  // ---------- 4. helpers ----------
   const toggleMic = () => {
-    const audioTracks = mediaStreamRef.current?.getAudioTracks();
-    if (audioTracks?.length) {
-      const newStatus = !audioTracks[0].enabled;
-      audioTracks[0].enabled = newStatus;
-      setMicOn(newStatus);
-      socketRef.current?.send(JSON.stringify({ action: "toggle_mic", status: newStatus }));
-      console.log(`🎤 Mic ${newStatus ? "enabled" : "disabled"}`);
+    const audioTrack = mediaStreamRef.current?.getAudioTracks()[0];
+    if (audioTrack) {
+      audioTrack.enabled = !audioTrack.enabled;
+      setMicOn(audioTrack.enabled);
+      socketRef.current?.send(JSON.stringify({ action: "toggle_mic", status: audioTrack.enabled }));
+      console.log("🎤 mic", audioTrack.enabled);
     }
   };
 
   const toggleCam = () => {
-    const videoTracks = mediaStreamRef.current?.getVideoTracks();
-    if (videoTracks?.length) {
-      const newStatus = !videoTracks[0].enabled;
-      videoTracks[0].enabled = newStatus;
-      setCamOn(newStatus);
-      socketRef.current?.send(JSON.stringify({ action: "toggle_camera", status: newStatus }));
-      console.log(`📷 Cam ${newStatus ? "enabled" : "disabled"}`);
+    const videoTrack = mediaStreamRef.current?.getVideoTracks()[0];
+    if (videoTrack) {
+      videoTrack.enabled = !videoTrack.enabled;
+      setCamOn(videoTrack.enabled);
+      socketRef.current?.send(JSON.stringify({ action: "toggle_camera", status: videoTrack.enabled }));
+      console.log("📸 cam", videoTrack.enabled);
     }
   };
 
   const leaveCall = async () => {
     socketRef.current?.send(JSON.stringify({ action: "end_call" }));
     socketRef.current?.close();
-    try {
-      await axios.delete(`${API_URL}/calls/calls/${callId}/leave`, { headers: getAuthHeaders() });
-    } catch (err) {
-      console.error("Leave error:", err);
-    }
-    mediaStreamRef.current?.getTracks().forEach(track => track.stop());
-    if (typeof onLeave === "function") onLeave();
+    mediaStreamRef.current?.getTracks().forEach(t => t.stop());
+    try { await axios.delete(`${API_URL}/calls/calls/${callId}/leave`, { headers: authHeaders() }); } catch {}
+    if (onLeave) onLeave();
   };
 
+  // ---------- UI ----------
   if (!callId) return <p>🔌 Waiting for call...</p>;
 
   return (
@@ -205,7 +205,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       </div>
       <div className="button-group-actions">
         <button onClick={toggleMic}>{micOn ? <img src={micro_on} alt="Mic ON" /> : <img src={micro_off} alt="Mic OFF" />}</button>
-        <button onClick={toggleCam}>{camOn ? <img src={camera_on} alt="Cam ON" /> : <img src={camera_off} alt="CAM OFF" />}</button>
+        <button onClick={toggleCam}>{camOn ? <img src={camera_on} alt="Cam ON" /> : <img src={camera_off} alt="Cam OFF" />}</button>
         <button onClick={leaveCall}><img src={end_call} alt="End CALL" /></button>
       </div>
     </div>
