@@ -18,7 +18,8 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
   const mediaStreamRef = useRef(null);
   const socketRef = useRef(null);
   const peerConnectionRef = useRef(null);
-  const isCaller = useRef(false);
+  const isMakingOffer = useRef(false);
+  const isSettingRemoteAnswerPending = useRef(false);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("token");
@@ -46,35 +47,25 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     const initCall = async () => {
       try {
         const headers = getAuthHeaders();
-        let call;
-
         const res = await axios.get(`${API_URL}/calls/calls/?classroom_id=${classroomId}`, { headers });
         const activeCall = res.data.find(c => c.status === "active");
+        let call = activeCall;
 
-        if (role === "staff") {
-          if (!activeCall) {
-            const create = await axios.post(`${API_URL}/calls/calls/`, { classroom_id: classroomId, status: "active" }, { headers });
-            call = create.data;
-          } else {
-            call = activeCall;
-          }
-        } else {
-          if (!activeCall) {
-            console.warn("No active call");
-            return;
-          }
-          call = activeCall;
+        if (role === "staff" && !activeCall) {
+          const create = await axios.post(
+            `${API_URL}/calls/calls/`,
+            { classroom_id: classroomId, status: "active" },
+            { headers }
+          );
+          call = create.data;
         }
+
+        if (!call) return;
 
         const res2 = await axios.get(`${API_URL}/calls/calls/${call.id}/participants`, { headers });
         const existing = res2.data.find(p => p.user_id === currentUserId);
-
         if (!existing || existing.left_at !== null) {
           await axios.post(`${API_URL}/calls/calls/${call.id}/join`, {}, { headers });
-        }
-
-        if (res2.data.length > 0) {
-          isCaller.current = true;
         }
 
         setCallId(call.id);
@@ -87,7 +78,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
   useEffect(() => {
     if (!callId) return;
-
     const token = getToken();
     const ws = new WebSocket(`${WS_URL}/calls-ws/ws/calls/${callId}?token=${token}`);
     socketRef.current = ws;
@@ -97,10 +87,12 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     });
     peerConnectionRef.current = pc;
 
-    mediaStreamRef.current?.getTracks().forEach(track => pc.addTrack(track, mediaStreamRef.current));
+    mediaStreamRef.current?.getTracks().forEach(track => {
+      pc.addTrack(track, mediaStreamRef.current);
+    });
 
     pc.ontrack = ({ streams }) => {
-      if (remoteVideoRef.current && !remoteVideoRef.current.srcObject) {
+      if (remoteVideoRef.current && streams[0]) {
         remoteVideoRef.current.srcObject = streams[0];
       }
     };
@@ -113,63 +105,54 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
     ws.onmessage = async event => {
       const data = JSON.parse(event.data);
-      console.log("WS MSG:", data);
+      if (!pc) return;
 
-      if (data.action === "join" && data.user !== currentUserId) {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
-      }
-
-      if (data.action === "offer" && data.user !== currentUserId) {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        ws.send(JSON.stringify({ action: "answer", answer, user: currentUserId }));
-      }
-
-      if (data.action === "answer" && data.user !== currentUserId) {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-      }
-
-      if (data.action === "ice_candidate" && data.user !== currentUserId && data.candidate) {
-        try {
-          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } catch (e) {
-          console.error("ICE error:", e);
+      try {
+        if (data.action === "join" && data.user !== currentUserId) {
+          isMakingOffer.current = true;
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+          ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
         }
+
+        if (data.action === "offer" && data.user !== currentUserId) {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.offer));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          ws.send(JSON.stringify({ action: "answer", answer, user: currentUserId }));
+        }
+
+        if (data.action === "answer" && data.user !== currentUserId) {
+          if (pc.signalingState === "stable") return;
+          await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        }
+
+        if (data.action === "ice_candidate" && data.user !== currentUserId && data.candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        }
+      } catch (err) {
+        console.error("WebRTC error:", err);
       }
     };
 
-    ws.onopen = async () => {
-      // якщо ти приєднався і хтось був — ти створюєш offer
-      if (isCaller.current) {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
-      }
-    };
-
-    return () => {
-      ws.close();
-    };
+    return () => ws.close();
   }, [callId, currentUserId]);
 
   const toggleMic = () => {
-    const track = mediaStreamRef.current?.getAudioTracks()[0];
-    if (track) {
-      const newStatus = !track.enabled;
-      track.enabled = newStatus;
+    const audioTracks = mediaStreamRef.current?.getAudioTracks();
+    if (audioTracks?.length) {
+      const newStatus = !audioTracks[0].enabled;
+      audioTracks[0].enabled = newStatus;
       setMicOn(newStatus);
       socketRef.current?.send(JSON.stringify({ action: "toggle_mic", status: newStatus }));
     }
   };
 
   const toggleCam = () => {
-    const track = mediaStreamRef.current?.getVideoTracks()[0];
-    if (track) {
-      const newStatus = !track.enabled;
-      track.enabled = newStatus;
+    const videoTracks = mediaStreamRef.current?.getVideoTracks();
+    if (videoTracks?.length) {
+      const newStatus = !videoTracks[0].enabled;
+      videoTracks[0].enabled = newStatus;
       setCamOn(newStatus);
       socketRef.current?.send(JSON.stringify({ action: "toggle_camera", status: newStatus }));
     }
@@ -197,9 +180,9 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         <video ref={localVideoRef} autoPlay muted playsInline className="video" />
       </div>
       <div className="button-group-actions">
-        <button onClick={toggleMic}>{micOn ? <img src={micro_on} /> : <img src={micro_off} />}</button>
-        <button onClick={toggleCam}>{camOn ? <img src={camera_on} /> : <img src={camera_off} />}</button>
-        <button onClick={leaveCall}><img src={end_call} /></button>
+        <button onClick={toggleMic}>{micOn ? <img src={micro_on} alt="Mic ON" /> : <img src={micro_off} alt="Mic OFF" />}</button>
+        <button onClick={toggleCam}>{camOn ? <img src={camera_on} alt="Cam ON" /> : <img src={camera_off} alt="CAM OFF" />}</button>
+        <button onClick={leaveCall}><img src={end_call} alt="End CALL" /></button>
       </div>
     </div>
   );
