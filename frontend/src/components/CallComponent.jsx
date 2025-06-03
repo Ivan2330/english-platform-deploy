@@ -122,6 +122,16 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       if (incomingStream && remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = incomingStream;
         console.log("🎥 Assigned remote stream:", incomingStream.id);
+
+        const label = document.createElement("div");
+        label.innerText = `Remote Stream ID: ${incomingStream.id}`;
+        label.style.position = "absolute";
+        label.style.top = "5px";
+        label.style.left = "5px";
+        label.style.color = "red";
+        label.style.fontSize = "14px";
+        label.style.fontWeight = "bold";
+        remoteVideoRef.current.parentElement.appendChild(label);
       }
     };
 
