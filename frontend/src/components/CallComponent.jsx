@@ -120,9 +120,13 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       }
 
       if (incomingStream && remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = incomingStream;
-        remoteVideoRef.current.play().catch(e => console.warn("🔁 play() error:", e));
-        console.log("🎥 Assigned remote stream:", incomingStream.id);
+        if (remoteVideoRef.current.srcObject !== incomingStream) {
+          remoteVideoRef.current.srcObject = incomingStream;
+          remoteVideoRef.current.play().catch(e => console.warn("🔁 play() error:", e));
+          console.log("🎥 Assigned remote stream:", incomingStream.id);
+        } else {
+          console.log("♻️ Duplicate ontrack — already attached.");
+        }
 
         const label = document.createElement("div");
         label.innerText = `Remote Stream ID: ${incomingStream.id}`;
