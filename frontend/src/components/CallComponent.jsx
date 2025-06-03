@@ -104,13 +104,18 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
     pc.ontrack = (event) => {
       console.log("📡 ontrack fired", event);
-      if (event.streams && event.streams[0]) {
-        remoteVideoRef.current.srcObject = event.streams[0];
-        console.log("🎥 remoteVideoRef assigned stream", event.streams[0]);
 
-        if (remoteVideoRef.current.srcObject === localVideoRef.current.srcObject) {
-          console.warn("⚠️ Remote video is same as local video!");
-        }
+      const incomingStream = event.streams[0];
+      const localStream = mediaStreamRef.current;
+
+      if (incomingStream && localStream && incomingStream.id === localStream.id) {
+        console.warn("🛑 Ignoring mirrored local stream!");
+        return;
+      }
+
+      if (incomingStream && remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = incomingStream;
+        console.log("🎥 Assigned remote stream:", incomingStream.id);
       }
     };
 
