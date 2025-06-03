@@ -87,7 +87,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       ]
     });
     pcRef.current = pc;
-    window.pcRef = pc; // for console debugging
+    window.pcRef = pc;
 
     pc.onconnectionstatechange = () => console.log("🔗 state", pc.connectionState);
     pc.onicegatheringstatechange = () => console.log("🧊 gathering", pc.iceGatheringState);
@@ -128,7 +128,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       if (incomingStream && remoteVideoRef.current) {
         if (remoteVideoRef.current.srcObject !== incomingStream) {
           remoteVideoRef.current.srcObject = incomingStream;
-
+          remoteVideoRef.current.load();
           remoteVideoRef.current.onloadedmetadata = () => {
             remoteVideoRef.current.play().catch(e => console.warn("🔁 play() error (onloadedmetadata):", e));
           };
