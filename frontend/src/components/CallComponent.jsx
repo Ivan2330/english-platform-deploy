@@ -128,7 +128,19 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       if (incomingStream && remoteVideoRef.current) {
         if (remoteVideoRef.current.srcObject !== incomingStream) {
           remoteVideoRef.current.srcObject = incomingStream;
-          remoteVideoRef.current.play().catch(e => console.warn("🔁 play() error:", e));
+
+    // ▶ гарантує запуск після завантаження метаданих
+          remoteVideoRef.current.onloadedmetadata = () => {
+            remoteVideoRef.current.play().catch(e => console.warn("🔁 play() error (onloadedmetadata):", e));
+          };
+
+    // 🕒 резервна спроба, якщо metadata не спрацює
+          setTimeout(() => {
+            if (remoteVideoRef.current.paused || remoteVideoRef.current.readyState < 2) {
+              remoteVideoRef.current.play().catch(e => console.warn("🔁 fallback play() error:", e));
+            }
+          }, 800);
+
           console.log("🎥 Assigned remote stream:", incomingStream.id);
         } else {
           console.log("♻️ Duplicate ontrack — already attached.");
