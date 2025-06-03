@@ -128,10 +128,11 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       if (incomingStream && remoteVideoRef.current) {
         if (remoteVideoRef.current.srcObject !== incomingStream) {
           remoteVideoRef.current.srcObject = incomingStream;
-          remoteVideoRef.current.load();
-          remoteVideoRef.current.onloadedmetadata = () => {
-            remoteVideoRef.current.play().catch(e => console.warn("🔁 play() error (onloadedmetadata):", e));
-          };
+          remoteVideoRef.current.play().then(() => {
+            console.log("▶️ remoteVideo.play() success");
+          }).catch(e => {
+            console.warn("🔁 remoteVideo.play() error:", e);
+          });
 
           setTimeout(() => {
             if (remoteVideoRef.current.paused || remoteVideoRef.current.readyState < 2) {
