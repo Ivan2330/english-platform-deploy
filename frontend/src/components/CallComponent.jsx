@@ -114,8 +114,8 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       const incomingStream = event.streams[0];
       const localStream = mediaStreamRef.current;
 
-      if (incomingStream && localStream && incomingStream.id === localStream.id) {
-        console.warn("🛑 Ignoring mirrored local stream!");
+      if (incomingStream && localStream && incomingStream === localStream) {
+        console.warn("🛑 Ignoring mirrored local stream (same object)!");
         return;
       }
 
@@ -132,6 +132,14 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         label.style.fontSize = "14px";
         label.style.fontWeight = "bold";
         remoteVideoRef.current.parentElement.appendChild(label);
+
+        setTimeout(() => {
+          if (remoteVideoRef.current?.srcObject) {
+            console.log("✅ Remote video source OK");
+          } else {
+            console.warn("🚫 Remote video not attached properly");
+          }
+        }, 1000);
       }
     };
 
