@@ -76,7 +76,16 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     const ws = new WebSocket(`${WS_URL}/calls-ws/ws/calls/${callId}?token=${wsToken()}`);
     socketRef.current = ws;
 
-    const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+    const pc = new RTCPeerConnection({
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        {
+          urls: "turn:my-prime-academy.online:3478",
+          username: "Prime#1910",
+          credential: "Prime#1910Academy"
+        }
+      ]
+    });
     pcRef.current = pc;
 
     pc.onconnectionstatechange = () => console.log("🔗 state", pc.connectionState);
