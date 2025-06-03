@@ -121,6 +121,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
       if (incomingStream && remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = incomingStream;
+        remoteVideoRef.current.play().catch(e => console.warn("🔁 play() error:", e));
         console.log("🎥 Assigned remote stream:", incomingStream.id);
 
         const label = document.createElement("div");
