@@ -34,6 +34,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         mediaStreamRef.current = stream;
         if (localVideoRef.current) localVideoRef.current.srcObject = stream;
         console.log("✅ gUM", stream.getTracks().map(t => t.kind));
+        stream.getTracks().forEach(t => console.log("Local Track:", t.kind, t.id, t.enabled));
       } catch (e) {
         console.error("❌ gUM", e);
       }
@@ -93,7 +94,10 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     const addTracks = () => {
       if (mediaStreamRef.current) {
         console.log("🎞️ Adding tracks to PC");
-        mediaStreamRef.current.getTracks().forEach(t => pc.addTrack(t, mediaStreamRef.current));
+        mediaStreamRef.current.getTracks().forEach(t => {
+          console.log("➡️ Adding local track", t.kind, t.id, t.enabled);
+          pc.addTrack(t, mediaStreamRef.current);
+        });
         return true;
       }
       return false;
@@ -104,6 +108,8 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
     pc.ontrack = (event) => {
       console.log("📡 ontrack fired", event);
+      console.log("📦 Streams received:", event.streams.map(s => s.id));
+      event.streams.forEach(s => console.log("📺 Remote stream tracks:", s.getTracks().map(t => `${t.kind} (${t.id})`)));
 
       const incomingStream = event.streams[0];
       const localStream = mediaStreamRef.current;
