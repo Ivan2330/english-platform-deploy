@@ -133,13 +133,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
           }).catch(e => {
             console.warn("🔁 remoteVideo.play() error:", e);
           });
-
-          setTimeout(() => {
-            if (remoteVideoRef.current.paused || remoteVideoRef.current.readyState < 2) {
-              remoteVideoRef.current.play().catch(e => console.warn("🔁 fallback play() error:", e));
-            }
-          }, 800);
-
           console.log("🎥 Assigned remote stream:", incomingStream.id);
         } else {
           console.log("♻️ Duplicate ontrack — already attached.");
