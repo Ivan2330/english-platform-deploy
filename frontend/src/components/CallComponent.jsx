@@ -240,8 +240,8 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     <div className="call-container">
       <h2>📞 Call in progress</h2>
       <div className="video-wrapper">
-        <video ref={remoteVideoRef} autoPlay playsInline className="video" />
-        <video ref={localVideoRef} autoPlay muted playsInline className="video" />
+        <video ref={remoteVideoRef} autoPlay playsInline className="video remote" />
+        <video ref={localVideoRef} autoPlay muted playsInline className="video local" />
       </div>
       <div className="button-group-actions">
         <button onClick={toggleMic}>{micOn ? <img src={micro_on} alt="mic on" /> : <img src={micro_off} alt="mic off" />}</button>
