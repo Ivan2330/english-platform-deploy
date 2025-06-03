@@ -16,7 +16,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
   const mediaStreamRef = useRef(null);
-  const remoteStreamRef = useRef(new MediaStream());
   const socketRef = useRef(null);
   const pcRef = useRef(null);
 
@@ -105,10 +104,13 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
     pc.ontrack = (event) => {
       console.log("📡 ontrack fired", event);
-      remoteStreamRef.current.addTrack(event.track);
-      if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = remoteStreamRef.current;
-        console.log("🎥 remoteVideoRef assigned stream", remoteStreamRef.current);
+      if (event.streams && event.streams[0]) {
+        remoteVideoRef.current.srcObject = event.streams[0];
+        console.log("🎥 remoteVideoRef assigned stream", event.streams[0]);
+
+        if (remoteVideoRef.current.srcObject === localVideoRef.current.srcObject) {
+          console.warn("⚠️ Remote video is same as local video!");
+        }
       }
     };
 
