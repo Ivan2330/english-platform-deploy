@@ -114,8 +114,14 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       const incomingStream = event.streams[0];
       const localStream = mediaStreamRef.current;
 
-      if (incomingStream && localStream && incomingStream === localStream) {
-        console.warn("🛑 Ignoring mirrored local stream (same object)!");
+      if (
+        incomingStream &&
+        remoteVideoRef.current &&
+        incomingStream.getTracks().every(t =>
+          mediaStreamRef.current?.getTracks().some(localTrack => localTrack.id === t.id)
+        )
+      ) {
+        console.warn("🛑 Ignoring mirrored local stream (matched by tracks)!");
         return;
       }
 
