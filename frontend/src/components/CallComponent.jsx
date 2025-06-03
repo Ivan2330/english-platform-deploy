@@ -87,6 +87,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       ]
     });
     pcRef.current = pc;
+    window.pcRef = pc; // for console debugging
 
     pc.onconnectionstatechange = () => console.log("🔗 state", pc.connectionState);
     pc.onicegatheringstatechange = () => console.log("🧊 gathering", pc.iceGatheringState);
@@ -112,7 +113,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       event.streams.forEach(s => console.log("📺 Remote stream tracks:", s.getTracks().map(t => `${t.kind} (${t.id})`)));
 
       const incomingStream = event.streams[0];
-      const localStream = mediaStreamRef.current;
 
       if (
         incomingStream &&
@@ -129,12 +129,10 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         if (remoteVideoRef.current.srcObject !== incomingStream) {
           remoteVideoRef.current.srcObject = incomingStream;
 
-    // ▶ гарантує запуск після завантаження метаданих
           remoteVideoRef.current.onloadedmetadata = () => {
             remoteVideoRef.current.play().catch(e => console.warn("🔁 play() error (onloadedmetadata):", e));
           };
 
-    // 🕒 резервна спроба, якщо metadata не спрацює
           setTimeout(() => {
             if (remoteVideoRef.current.paused || remoteVideoRef.current.readyState < 2) {
               remoteVideoRef.current.play().catch(e => console.warn("🔁 fallback play() error:", e));
