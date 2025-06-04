@@ -111,28 +111,27 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       console.log("📡 ontrack fired", event);
       const incomingStream = event.streams[0];
 
-      if (
-        incomingStream &&
-        remoteVideoRef.current &&
-        incomingStream.getTracks().every(t =>
-          mediaStreamRef.current?.getTracks().some(localTrack => localTrack.id === t.id)
-        )
-      ) {
-        console.warn("🛑 Ignoring mirrored local stream (matched by tracks)!");
-        return;
-      }
-
       if (incomingStream && remoteVideoRef.current) {
-        if (remoteVideoRef.current.srcObject !== incomingStream) {
-          remoteVideoRef.current.srcObject = incomingStream;
-          remoteVideoRef.current.muted = true;
+        remoteVideoRef.current.srcObject = incomingStream;
+        remoteVideoRef.current.muted = true;
 
-          remoteVideoRef.current.onloadedmetadata = () => {
-            remoteVideoRef.current.play().catch(e => console.warn("🔁 onloadedmetadata play() error", e));
-          };
+        remoteVideoRef.current.onloadedmetadata = () => {
+          remoteVideoRef.current.play().then(() => console.log("▶️ remote play ok"))
+            .catch(e => console.warn("🔁 onloadedmetadata play() error", e));
+        };
 
-          console.log("🎥 Assigned remote stream:", incomingStream.id);
-        }
+        setTimeout(() => {
+          const r = remoteVideoRef.current;
+          if (r && (r.readyState === 0 || r.videoWidth === 0)) {
+            const currentStream = r.srcObject;
+            r.srcObject = null;
+            r.srcObject = currentStream;
+            r.play().then(() => console.log("🔁 Retried remote video play"))
+              .catch(e => console.warn("🔁 Retry play error:", e));
+          }
+        }, 1500);
+
+        console.log("🎥 Assigned remote stream:", incomingStream.id);
       }
     };
 
