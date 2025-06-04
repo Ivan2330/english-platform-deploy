@@ -126,17 +126,10 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         if (remoteVideoRef.current.srcObject !== incomingStream) {
           remoteVideoRef.current.srcObject = incomingStream;
           remoteVideoRef.current.muted = true;
-          remoteVideoRef.current.play().catch(e => console.warn("🔁 play() error:", e));
 
-          setTimeout(() => {
-            const currentStream = remoteVideoRef.current?.srcObject;
-            if (currentStream && remoteVideoRef.current) {
-              remoteVideoRef.current.srcObject = null;
-              remoteVideoRef.current.srcObject = currentStream;
-              remoteVideoRef.current.play().catch(e => console.warn("🔁 Retry play failed:", e));
-              console.log("🔁 Re-applied remote stream after delay");
-            }
-          }, 2000);
+          remoteVideoRef.current.onloadedmetadata = () => {
+            remoteVideoRef.current.play().catch(e => console.warn("🔁 onloadedmetadata play() error", e));
+          };
 
           console.log("🎥 Assigned remote stream:", incomingStream.id);
         }
