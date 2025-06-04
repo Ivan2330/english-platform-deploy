@@ -109,9 +109,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
     pc.ontrack = (event) => {
       console.log("📡 ontrack fired", event);
-      console.log("📦 Streams received:", event.streams.map(s => s.id));
-      event.streams.forEach(s => console.log("📺 Remote stream tracks:", s.getTracks().map(t => `${t.kind} (${t.id})`)));
-
       const incomingStream = event.streams[0];
 
       if (
@@ -129,33 +126,20 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         if (remoteVideoRef.current.srcObject !== incomingStream) {
           remoteVideoRef.current.srcObject = incomingStream;
           remoteVideoRef.current.muted = true;
-          remoteVideoRef.current.play().then(() => {
-            console.log("▶️ remoteVideo.play() success");
-          }).catch(e => {
-            console.warn("🔁 remoteVideo.play() error:", e);
-          });
+          remoteVideoRef.current.play().catch(e => console.warn("🔁 play() error:", e));
+
+          setTimeout(() => {
+            const currentStream = remoteVideoRef.current?.srcObject;
+            if (currentStream && remoteVideoRef.current) {
+              remoteVideoRef.current.srcObject = null;
+              remoteVideoRef.current.srcObject = currentStream;
+              remoteVideoRef.current.play().catch(e => console.warn("🔁 Retry play failed:", e));
+              console.log("🔁 Re-applied remote stream after delay");
+            }
+          }, 2000);
+
           console.log("🎥 Assigned remote stream:", incomingStream.id);
-        } else {
-          console.log("♻️ Duplicate ontrack — already attached.");
         }
-
-        const label = document.createElement("div");
-        label.innerText = `Remote Stream ID: ${incomingStream.id}`;
-        label.style.position = "absolute";
-        label.style.top = "5px";
-        label.style.left = "5px";
-        label.style.color = "red";
-        label.style.fontSize = "14px";
-        label.style.fontWeight = "bold";
-        remoteVideoRef.current.parentElement.appendChild(label);
-
-        setTimeout(() => {
-          if (remoteVideoRef.current?.srcObject) {
-            console.log("✅ Remote video source OK");
-          } else {
-            console.warn("🚫 Remote video not attached properly");
-          }
-        }, 1000);
       }
     };
 
@@ -226,6 +210,14 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
           ws.send(JSON.stringify({ action: "answer", answer, user: currentUserId }));
           pendingIce.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
           pendingIce.current = [];
+
+          setTimeout(() => {
+            const sender = pc.getSenders().find(s => s.track?.kind === 'video');
+            if (sender?.requestKeyFrame) {
+              sender.requestKeyFrame();
+              console.log("📡 Forced keyframe");
+            }
+          }, 1000);
         }
 
         if (msg.action === "answer" && msg.user !== currentUserId) {
