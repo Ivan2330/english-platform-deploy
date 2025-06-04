@@ -128,6 +128,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       if (incomingStream && remoteVideoRef.current) {
         if (remoteVideoRef.current.srcObject !== incomingStream) {
           remoteVideoRef.current.srcObject = incomingStream;
+          remoteVideoRef.current.muted = true;
           remoteVideoRef.current.play().then(() => {
             console.log("▶️ remoteVideo.play() success");
           }).catch(e => {
