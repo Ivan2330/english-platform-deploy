@@ -114,45 +114,19 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
       console.log("📡 ontrack triggered, tracks:", incoming.getTracks().map(t => t.kind));
 
-      incoming.getTracks().forEach(track => {
-        remoteStream.current.addTrack(track);
-      });
+      video.srcObject = incoming;
 
-      setTimeout(() => {
-        video.srcObject = remoteStream.current;
-        video.muted = true;
+      const handleLoaded = () => {
+        console.log("📸 loadedmetadata: video dimensions", video.videoWidth, video.videoHeight);
         video.play()
-          .then(() => console.log("✅ video started after DOM delay"))
-          .catch(e => console.warn("❌ delayed play failed:", e));
-      }, 0);
-
-      const checkReady = () => {
-        console.log("📏 Checking video...", video.videoWidth, video.readyState, video.paused);
-        if (video.readyState >= 3 && video.videoWidth > 0) {
-          video.play()
-            .then(() => console.log("▶️ remote video playing"))
-            .catch(e => console.error("❌ video play error:", e));
-        } else {
-          setTimeout(checkReady, 300);
-        }
+          .then(() => console.log("▶️ remote video playing"))
+          .catch(e => console.error("❌ video play error:", e));
       };
-      checkReady();
 
-      setTimeout(() => {
-        if (video.videoWidth === 0) {
-          console.warn("🔁 video width=0 — trying soft retry");
-
-          video.pause();
-          video.srcObject = null;
-
-          setTimeout(() => {
-            video.srcObject = remoteStream.current;
-            video.play()
-              .then(() => console.log("✅ Soft retry success"))
-              .catch(err => console.warn("⚠️ Soft retry failed:", err));
-          }, 200);
-        }
-      }, 3000);
+      video.onloadedmetadata = handleLoaded;
+      video.onloadeddata = () => {
+        console.log("📷 onloadeddata: dimensions", video.videoWidth, video.videoHeight);
+      };
 
       setTimeout(() => {
         console.log("🧪 FINAL CHECK —", {
