@@ -19,6 +19,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
   const socketRef = useRef(null);
   const pcRef = useRef(null);
 
+  const remoteStream = useRef(new MediaStream());
   const makingOffer = useRef(false);
   const polite = useRef(role !== "staff");
   const pendingIce = useRef([]);
@@ -34,7 +35,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         mediaStreamRef.current = stream;
         if (localVideoRef.current) localVideoRef.current.srcObject = stream;
         console.log("✅ gUM", stream.getTracks().map(t => t.kind));
-        stream.getTracks().forEach(t => console.log("Local Track:", t.kind, t.id, t.enabled));
       } catch (e) {
         console.error("❌ gUM", e);
       }
@@ -45,19 +45,14 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     (async () => {
       try {
         const headers = authHeaders();
-        console.log("🔄 Checking active call for classroom", classroomId);
         const { data: calls } = await axios.get(`${API_URL}/calls/calls/?classroom_id=${classroomId}`, { headers });
         let call = calls.find(c => c.status === "active");
 
         if (!call && role === "staff") {
           const { data: created } = await axios.post(`${API_URL}/calls/calls/`, { classroom_id: classroomId, status: "active" }, { headers });
           call = created;
-          console.log("📞 Call created", call.id);
         }
-        if (!call) {
-          console.log("⏳ Waiting for teacher to start call");
-          return;
-        }
+        if (!call) return;
 
         const { data: parts } = await axios.get(`${API_URL}/calls/calls/${call.id}/participants`, { headers });
         const me = parts.find(p => p.user_id === currentUserId && !p.left_at);
@@ -87,74 +82,30 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       ]
     });
     pcRef.current = pc;
-    window.pcRef = pc;
 
-    pc.onconnectionstatechange = () => console.log("🔗 state", pc.connectionState);
-    pc.onicegatheringstatechange = () => console.log("🧊 gathering", pc.iceGatheringState);
+    remoteVideoRef.current.srcObject = remoteStream.current;
 
     const addTracks = () => {
-      if (mediaStreamRef.current) {
-        console.log("🎞️ Adding tracks to PC");
-        mediaStreamRef.current.getTracks().forEach(t => {
-          console.log("➡️ Adding local track", t.kind, t.id, t.enabled);
-          pc.addTrack(t, mediaStreamRef.current);
-        });
-        return true;
-      }
-      return false;
+      if (!mediaStreamRef.current) return false;
+      mediaStreamRef.current.getTracks().forEach(track => {
+        if (!pc.getSenders().find(s => s.track?.id === track.id)) {
+          pc.addTrack(track, mediaStreamRef.current);
+        }
+      });
+      return true;
     };
     if (!addTracks()) {
       const interval = setInterval(() => addTracks() && clearInterval(interval), 400);
     }
 
-    pc.ontrack = (event) => {
-      console.log("📡 ontrack fired", event);
-      const incomingStream = event.streams[0];
-
-      if (incomingStream && remoteVideoRef.current) {
-        const video = remoteVideoRef.current;
-        if (video.srcObject !== incomingStream) {
-          video.srcObject = incomingStream;
-          video.muted = true;
-
-          const waitUntilReady = () => {
-            if (video.readyState >= 3 && video.videoWidth > 0) {
-              video.play().then(() => console.log("▶️ remote play ok")).catch(e => console.warn("❌ play() error:", e));
-            } else {
-              console.log("⏳ Waiting for remote video readiness...");
-              setTimeout(waitUntilReady, 300);
-            }
-          };
-          waitUntilReady();
-
-          setTimeout(() => {
-            const video = remoteVideoRef.current;
-            if (video && video.videoWidth === 0) {
-              console.warn("🔁 Forcing video reload due to size=0");
-              const currentStream = video.srcObject;
-              video.srcObject = null;
-              video.load(); // cleanup
-              video.srcObject = currentStream;
-              video.muted = true;
-              video.play().then(() => {
-                console.log("✅ Forced play successful after reload");
-              }).catch(err => {
-                console.warn("❌ Forced play failed:", err);
-              });
-            }
-          }, 3000);
-
-
-          console.log("🎥 Assigned remote stream:", incomingStream.id);
-        } else {
-          console.log("♻️ Already assigned");
-        }
-      }
+    pc.ontrack = event => {
+      event.streams[0].getTracks().forEach(track => {
+        remoteStream.current.addTrack(track);
+      });
     };
 
     pc.onicecandidate = e => {
       if (e.candidate) {
-        console.log("📤 ICE", e.candidate);
         ws.send(JSON.stringify({ action: "ice_candidate", candidate: e.candidate, user: currentUserId }));
       }
     };
@@ -166,7 +117,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
-        console.log("📤 offer (negotiationneeded)");
       } catch (e) {
         console.error("negotiationneeded error", e);
       } finally {
@@ -174,23 +124,16 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       }
     };
 
-    ws.onopen = () => console.log("✅ WS open");
-    ws.onerror = e => console.error("❌ WS error", e);
-    ws.onclose = () => console.warn("⚠️ WS closed");
-
     ws.onmessage = async ({ data }) => {
       const msg = JSON.parse(data);
-      console.log("📨", msg);
-
       try {
         if (msg.action === "you_joined") {
-          console.log("🟢 Alone in the call — wait for peer");
+          console.log("🟢 Alone — wait for peer");
         }
 
         if (msg.action === "join" && msg.user !== currentUserId) {
           peerJoined.current = true;
           if (pc.signalingState === "stable") {
-            console.log("🆕 peer joined, sending offer");
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
@@ -198,20 +141,13 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         }
 
         if (msg.action === "offer" && msg.user !== currentUserId) {
-          console.log("↘️ offer", msg.user);
           peerJoined.current = true;
           const offerDesc = new RTCSessionDescription(msg.offer);
           const ready = !makingOffer.current && (pc.signalingState === "stable" || pc.signalingState === "have-remote-offer");
           const collision = msg.offer && !ready;
 
-          if (collision && !polite.current) {
-            console.log("⚔️  Impolite collision — ignoring offer");
-            return;
-          }
-          if (collision && polite.current) {
-            console.log("🔄 Polite collision — rollback local offer");
-            await pc.setLocalDescription({ type: "rollback" });
-          }
+          if (collision && !polite.current) return;
+          if (collision && polite.current) await pc.setLocalDescription({ type: "rollback" });
 
           await pc.setRemoteDescription(offerDesc);
           const answer = await pc.createAnswer();
@@ -219,34 +155,24 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
           ws.send(JSON.stringify({ action: "answer", answer, user: currentUserId }));
           pendingIce.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
           pendingIce.current = [];
-
-          setTimeout(() => {
-            const sender = pc.getSenders().find(s => s.track?.kind === 'video');
-            if (sender?.requestKeyFrame) {
-              sender.requestKeyFrame();
-              console.log("📡 Forced keyframe");
-            }
-          }, 1000);
         }
 
         if (msg.action === "answer" && msg.user !== currentUserId) {
-          console.log("↘️ answer", msg.user);
           await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
           pendingIce.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
           pendingIce.current = [];
         }
 
         if (msg.action === "ice_candidate" && msg.user !== currentUserId && msg.candidate) {
-          console.log("❄️ ICE ←", msg.user);
           const cand = new RTCIceCandidate(msg.candidate);
-          if (pc.remoteDescription && pc.remoteDescription.type) {
+          if (pc.remoteDescription?.type) {
             await pc.addIceCandidate(cand).catch(console.error);
           } else {
             pendingIce.current.push(cand);
           }
         }
       } catch (e) {
-        console.error("RTC error", e);
+        console.error("WebRTC error", e);
       }
     };
 
@@ -254,7 +180,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       ws.close();
       pc.close();
     };
-  }, [callId, currentUserId, role]);
+  }, [callId]);
 
   const toggleMic = () => {
     const track = mediaStreamRef.current?.getAudioTracks()[0];
