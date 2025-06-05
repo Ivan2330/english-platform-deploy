@@ -214,7 +214,11 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         }
 
         if (msg.action === "answer" && msg.user !== currentUserId) {
-          await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
+          if (!pc.localDescription || pc.localDescription.type !== "offer") {
+            console.warn("⏳ Ignoring early answer — no local offer yet");
+            return;
+          }
+$1await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
           pendingIce.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
           pendingIce.current = [];
         }
