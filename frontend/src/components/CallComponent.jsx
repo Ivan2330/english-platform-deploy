@@ -218,7 +218,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
             console.warn("⏳ Ignoring early answer — no local offer yet");
             return;
           }
-$1await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
+await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
           pendingIce.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
           pendingIce.current = [];
         }
