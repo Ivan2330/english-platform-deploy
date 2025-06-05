@@ -18,8 +18,8 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
   const mediaStreamRef = useRef(null);
   const socketRef = useRef(null);
   const pcRef = useRef(null);
-
   const remoteStream = useRef(new MediaStream());
+
   const makingOffer = useRef(false);
   const polite = useRef(role !== "staff");
   const pendingIce = useRef([]);
@@ -34,9 +34,9 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         mediaStreamRef.current = stream;
         if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-        console.log("✅ gUM", stream.getTracks().map(t => t.kind));
+        console.log("✅ Local media acquired", stream.getTracks().map(t => `${t.kind} (${t.id})`));
       } catch (e) {
-        console.error("❌ gUM", e);
+        console.error("❌ Failed to acquire media:", e);
       }
     })();
   }, []);
@@ -45,22 +45,29 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     (async () => {
       try {
         const headers = authHeaders();
+        console.log("🔄 Checking for active call...");
         const { data: calls } = await axios.get(`${API_URL}/calls/calls/?classroom_id=${classroomId}`, { headers });
         let call = calls.find(c => c.status === "active");
 
         if (!call && role === "staff") {
           const { data: created } = await axios.post(`${API_URL}/calls/calls/`, { classroom_id: classroomId, status: "active" }, { headers });
           call = created;
+          console.log("📞 Call created:", call.id);
         }
-        if (!call) return;
+
+        if (!call) {
+          console.log("⏳ Waiting for staff to start call");
+          return;
+        }
 
         const { data: parts } = await axios.get(`${API_URL}/calls/calls/${call.id}/participants`, { headers });
         const me = parts.find(p => p.user_id === currentUserId && !p.left_at);
         if (!me) await axios.post(`${API_URL}/calls/calls/${call.id}/join`, {}, { headers });
 
         setCallId(call.id);
+        console.log("✅ Joined call:", call.id);
       } catch (e) {
-        console.error("REST init error", e);
+        console.error("❌ Call init error:", e);
       }
     })();
   }, [classroomId, role, currentUserId]);
@@ -82,6 +89,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       ]
     });
     pcRef.current = pc;
+    window.pcRef = pc;
 
     remoteVideoRef.current.srcObject = remoteStream.current;
 
@@ -90,6 +98,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       mediaStreamRef.current.getTracks().forEach(track => {
         if (!pc.getSenders().find(s => s.track?.id === track.id)) {
           pc.addTrack(track, mediaStreamRef.current);
+          console.log("🎞️ Added local track:", track.kind, track.id);
         }
       });
       return true;
@@ -98,14 +107,47 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
       const interval = setInterval(() => addTracks() && clearInterval(interval), 400);
     }
 
-    pc.ontrack = event => {
-      event.streams[0].getTracks().forEach(track => {
+    pc.ontrack = (event) => {
+      const video = remoteVideoRef.current;
+      const incoming = event.streams?.[0];
+      if (!incoming || !video) return;
+
+      console.log("📡 ontrack triggered, tracks:", incoming.getTracks().map(t => t.kind));
+
+      incoming.getTracks().forEach(track => {
         remoteStream.current.addTrack(track);
       });
+
+      video.srcObject = remoteStream.current;
+      video.muted = true;
+
+      const checkReady = () => {
+        console.log("📏 Checking video...", video.videoWidth, video.readyState, video.paused);
+        if (video.readyState >= 3 && video.videoWidth > 0) {
+          video.play()
+            .then(() => console.log("▶️ remote video playing"))
+            .catch(e => console.error("❌ video play error:", e));
+        } else {
+          setTimeout(checkReady, 300);
+        }
+      };
+      checkReady();
+
+      setTimeout(() => {
+        if (video.videoWidth === 0) {
+          console.warn("🔁 video width=0, reloading...");
+          const temp = video.srcObject;
+          video.srcObject = null;
+          video.load();
+          video.srcObject = temp;
+          video.play().then(() => console.log("✅ Forced play")).catch(e => console.warn("⚠️ reload play fail:", e));
+        }
+      }, 3000);
     };
 
     pc.onicecandidate = e => {
       if (e.candidate) {
+        console.log("📤 Sending ICE:", e.candidate);
         ws.send(JSON.stringify({ action: "ice_candidate", candidate: e.candidate, user: currentUserId }));
       }
     };
@@ -126,10 +168,9 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
     ws.onmessage = async ({ data }) => {
       const msg = JSON.parse(data);
+      console.log("📨 WS msg:", msg);
       try {
-        if (msg.action === "you_joined") {
-          console.log("🟢 Alone — wait for peer");
-        }
+        if (msg.action === "you_joined") console.log("🟢 Waiting for peer");
 
         if (msg.action === "join" && msg.user !== currentUserId) {
           peerJoined.current = true;
@@ -172,7 +213,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
           }
         }
       } catch (e) {
-        console.error("WebRTC error", e);
+        console.error("RTC message error:", e);
       }
     };
 
