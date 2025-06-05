@@ -118,8 +118,13 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         remoteStream.current.addTrack(track);
       });
 
-      video.srcObject = remoteStream.current;
-      video.muted = true;
+      setTimeout(() => {
+        video.srcObject = remoteStream.current;
+        video.muted = true;
+        video.play()
+          .then(() => console.log("✅ video started after DOM delay"))
+          .catch(e => console.warn("❌ delayed play failed:", e));
+      }, 0);
 
       const checkReady = () => {
         console.log("📏 Checking video...", video.videoWidth, video.readyState, video.paused);
