@@ -135,14 +135,29 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
       setTimeout(() => {
         if (video.videoWidth === 0) {
-          console.warn("🔁 video width=0, reloading...");
-          const temp = video.srcObject;
+          console.warn("🔁 video width=0 — trying soft retry");
+
+          video.pause();
           video.srcObject = null;
-          video.load();
-          video.srcObject = temp;
-          video.play().then(() => console.log("✅ Forced play")).catch(e => console.warn("⚠️ reload play fail:", e));
+
+          setTimeout(() => {
+            video.srcObject = remoteStream.current;
+            video.play()
+              .then(() => console.log("✅ Soft retry success"))
+              .catch(err => console.warn("⚠️ Soft retry failed:", err));
+          }, 200);
         }
       }, 3000);
+
+      setTimeout(() => {
+        console.log("🧪 FINAL CHECK —", {
+          videoWidth: video?.videoWidth,
+          readyState: video?.readyState,
+          paused: video?.paused,
+          srcObject: video?.srcObject,
+          tracks: video?.srcObject?.getTracks().map(t => `${t.kind} ${t.readyState}`)
+        });
+      }, 6000);
     };
 
     pc.onicecandidate = e => {
