@@ -127,6 +127,24 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
           };
           waitUntilReady();
 
+          setTimeout(() => {
+            const video = remoteVideoRef.current;
+            if (video && video.videoWidth === 0) {
+              console.warn("🔁 Forcing video reload due to size=0");
+              const currentStream = video.srcObject;
+              video.srcObject = null;
+              video.load(); // cleanup
+              video.srcObject = currentStream;
+              video.muted = true;
+              video.play().then(() => {
+                console.log("✅ Forced play successful after reload");
+              }).catch(err => {
+                console.warn("❌ Forced play failed:", err);
+              });
+            }
+          }, 3000);
+
+
           console.log("🎥 Assigned remote stream:", incomingStream.id);
         } else {
           console.log("♻️ Already assigned");
