@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.sql import func
 from pydantic import BaseModel
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from app.core.config import settings
 from app.core.database import get_async_session
 from app.models.connection.call import Call, CallParticipant
@@ -16,19 +16,17 @@ import logging
 router = APIRouter(prefix="/ws/calls", tags=["WebSocket Calls"])
 logger = logging.getLogger("websocket_calls")
 
-
 class WebSocketAction(BaseModel):
     action: str
-    status: bool | None = None
-    quality: str | None = None
-    candidate: dict | None = None
-    offer: dict | None = None
-    answer: dict | None = None
-
+    status: Optional[bool] = None
+    quality: Optional[str] = None
+    candidate: Optional[dict] = None
+    offer: Optional[dict] = None
+    answer: Optional[dict] = None
+    recipient_id: Optional[int] = None
 
 def create_message(action: str, user_id: int, **kwargs) -> Dict[str, Any]:
     return {"action": action, "user": user_id, **kwargs}
-
 
 async def get_user_from_token(token: str, db: AsyncSession) -> User:
     try:
@@ -45,7 +43,6 @@ async def get_user_from_token(token: str, db: AsyncSession) -> User:
         return user
     except JWTError:
         raise HTTPException(status_code=403, detail="Invalid token")
-
 
 async def get_cached_participant_status(call_id: int, user_id: int, db: AsyncSession):
     cache_key = f"call:{call_id}:participant:{user_id}"
@@ -69,14 +66,12 @@ async def get_cached_participant_status(call_id: int, user_id: int, db: AsyncSes
         await set_cache(cache_key, status, ttl=1800)
     return status
 
-
 async def update_cached_participant_status(call_id: int, user_id: int, updates: Dict[str, Any]):
     cache_key = f"call:{call_id}:participant:{user_id}"
     status = await get_cache(cache_key)
     if status:
         status.update(updates)
         await set_cache(cache_key, status, ttl=1800)
-
 
 class ConnectionManager:
     def __init__(self):
@@ -121,15 +116,7 @@ class ConnectionManager:
                         except Exception as e:
                             logger.warning(f"[WS ERROR] broadcast to {uid}: {e}")
 
-    def connected_users_count(self, call_id: int) -> int:
-        return len(self.active_connections.get(call_id, {}))
-
-    def is_connected(self, call_id: int, user_id: int) -> bool:
-        return user_id in self.active_connections.get(call_id, {})
-
-
 connection_manager = ConnectionManager()
-
 
 @router.websocket("/{call_id}")
 async def websocket_endpoint(
@@ -160,7 +147,6 @@ async def websocket_endpoint(
             exclude_user_id=user.id
         )
 
-        # 🟢 Надсилаємо першому користувачу повідомлення, що він приєднався
         await connection_manager.send_personal_message(
             create_message("you_joined", user.id, **participant_status), call_id, user.id
         )
@@ -168,7 +154,6 @@ async def websocket_endpoint(
         while True:
             message = await websocket.receive_json()
             data = WebSocketAction.model_validate(message)
-            logger.debug(f"[WS DATA] {data}")
 
             if data.action == "toggle_mic":
                 await update_cached_participant_status(call_id, user.id, {"mic_status": data.status})
@@ -202,10 +187,12 @@ async def websocket_endpoint(
                     "offer": data.offer,
                     "answer": data.answer,
                 }
-                await connection_manager.broadcast(call_id, relay, exclude_user_id=user.id)
+                if data.recipient_id:
+                    await connection_manager.send_personal_message(relay, call_id, data.recipient_id)
+                else:
+                    await connection_manager.broadcast(call_id, relay, exclude_user_id=user.id)
 
     except WebSocketDisconnect:
-        logger.info(f"[DISCONNECT] User {user.id} left call {call_id}")
         await connection_manager.broadcast(call_id, create_message("leave", user.id), exclude_user_id=user.id)
     except Exception as e:
         logger.error(f"[WS FATAL ERROR] {e}")

@@ -45,27 +45,21 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     (async () => {
       try {
         const headers = authHeaders();
-        console.log("🔄 Checking for active call...");
         const { data: calls } = await axios.get(`${API_URL}/calls/calls/?classroom_id=${classroomId}`, { headers });
         let call = calls.find(c => c.status === "active");
 
         if (!call && role === "staff") {
           const { data: created } = await axios.post(`${API_URL}/calls/calls/`, { classroom_id: classroomId, status: "active" }, { headers });
           call = created;
-          console.log("📞 Call created:", call.id);
         }
 
-        if (!call) {
-          console.log("⏳ Waiting for staff to start call");
-          return;
-        }
+        if (!call) return;
 
         const { data: parts } = await axios.get(`${API_URL}/calls/calls/${call.id}/participants`, { headers });
         const me = parts.find(p => p.user_id === currentUserId && !p.left_at);
         if (!me) await axios.post(`${API_URL}/calls/calls/${call.id}/join`, {}, { headers });
 
         setCallId(call.id);
-        console.log("✅ Joined call:", call.id);
       } catch (e) {
         console.error("❌ Call init error:", e);
       }
@@ -81,11 +75,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
     const pc = new RTCPeerConnection({
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
-        {
-          urls: "turn:my-prime-academy.online:3478",
-          username: "Prime#1910",
-          credential: "Prime#1910Academy"
-        }
+        { urls: "turn:my-prime-academy.online:3478", username: "Prime#1910", credential: "Prime#1910Academy" }
       ]
     });
     pcRef.current = pc;
@@ -118,7 +108,6 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
       if (!video.srcObject) {
         video.srcObject = remoteStream.current;
-
         video.onloadedmetadata = () => {
           video.play()
             .then(() => console.log("▶️ Remote video playing"))
