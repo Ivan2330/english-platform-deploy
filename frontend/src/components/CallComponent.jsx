@@ -112,19 +112,20 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
       if (!video.srcObject) {
         video.srcObject = remoteStream.current;
-
-        video.onloadedmetadata = () => {
-          video.play()
-            .then(() => console.log("▶️ Remote video playing"))
-            .catch(e => console.error("❌ video play error (metadata):", e));
-        };
-
-        setTimeout(() => {
-          video.play().catch(e => console.error("❌ video play retry:", e));
-        }, 1000);
       }
 
+      video.onloadedmetadata = () => {
+        video.play()
+          .then(() => console.log("▶️ Remote video playing"))
+          .catch(e => console.error("❌ video play error (metadata):", e));
+      };
+
+      setTimeout(() => {
+        video.play().catch(e => console.error("❌ video play retry:", e));
+      }, 1000);
+
       console.log("📡 ontrack triggered");
+
       setTimeout(() => {
         console.log("🧪 FINAL CHECK —", {
           videoWidth: video?.videoWidth,
@@ -133,6 +134,22 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
           srcObject: video?.srcObject,
           tracks: video?.srcObject?.getTracks().map(t => `${t.kind} ${t.readyState}`)
         });
+
+        const statsInterval = setInterval(() => {
+          pc.getStats(null).then(stats => {
+            stats.forEach(report => {
+              if (report.type === "inbound-rtp" && report.kind === "video") {
+                console.log("📊 Video stats:", {
+                  framesDecoded: report.framesDecoded,
+                  framesDropped: report.framesDropped,
+                  framesPerSecond: report.framesPerSecond,
+                });
+              }
+            });
+          });
+        }, 5000);
+        setTimeout(() => clearInterval(statsInterval), 20000);
+
       }, 5000);
     };
 
