@@ -103,16 +103,25 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
       if (!incomingStream || !video) return;
 
+      if (event.track.kind === "video") {
+        console.log("🎥 Incoming video track:", event.track.id);
+      }
+
       event.track && !remoteStream.current.getTracks().some(t => t.id === event.track.id) &&
         remoteStream.current.addTrack(event.track);
 
       if (!video.srcObject) {
         video.srcObject = remoteStream.current;
+
         video.onloadedmetadata = () => {
           video.play()
             .then(() => console.log("▶️ Remote video playing"))
-            .catch(e => console.error("❌ video play error:", e));
+            .catch(e => console.error("❌ video play error (metadata):", e));
         };
+
+        setTimeout(() => {
+          video.play().catch(e => console.error("❌ video play retry:", e));
+        }, 1000);
       }
 
       console.log("📡 ontrack triggered");
