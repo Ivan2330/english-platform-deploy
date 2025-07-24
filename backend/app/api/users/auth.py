@@ -39,7 +39,7 @@ class UserManager(BaseUserManager[User, int]):  # ✅ Використовуєм
     async def on_after_request_verify(self, user: User, token: str, request: Optional[Request] = None):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
     
-    def parse_id(self, user_id: str) -> int:  # ✅ Виправлена помилка!
+    def parse_id(self, user_id: str) -> int:  
         return int(user_id)
 
 # 🛠️ Функція для отримання UserManager

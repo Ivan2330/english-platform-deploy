@@ -109,25 +109,24 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
 
     pc.ontrack = (event) => {
       const video = remoteVideoRef.current;
-      const incoming = event.streams?.[0];
-      if (!incoming || !video) return;
+      const incomingStream = event.streams?.[0];
 
-      console.log("📡 ontrack triggered, tracks:", incoming.getTracks().map(t => t.kind));
+      if (!incomingStream || !video) return;
 
-      video.srcObject = incoming;
+      event.track && !remoteStream.current.getTracks().some(t => t.id === event.track.id) &&
+        remoteStream.current.addTrack(event.track);
 
-      const handleLoaded = () => {
-        console.log("📸 loadedmetadata: video dimensions", video.videoWidth, video.videoHeight);
-        video.play()
-          .then(() => console.log("▶️ remote video playing"))
-          .catch(e => console.error("❌ video play error:", e));
-      };
+      if (!video.srcObject) {
+        video.srcObject = remoteStream.current;
 
-      video.onloadedmetadata = handleLoaded;
-      video.onloadeddata = () => {
-        console.log("📷 onloadeddata: dimensions", video.videoWidth, video.videoHeight);
-      };
+        video.onloadedmetadata = () => {
+          video.play()
+            .then(() => console.log("▶️ Remote video playing"))
+            .catch(e => console.error("❌ video play error:", e));
+        };
+      }
 
+      console.log("📡 ontrack triggered");
       setTimeout(() => {
         console.log("🧪 FINAL CHECK —", {
           videoWidth: video?.videoWidth,
@@ -136,7 +135,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
           srcObject: video?.srcObject,
           tracks: video?.srcObject?.getTracks().map(t => `${t.kind} ${t.readyState}`)
         });
-      }, 6000);
+      }, 5000);
     };
 
     pc.onicecandidate = e => {
@@ -197,7 +196,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
             console.warn("⏳ Ignoring early answer — no local offer yet");
             return;
           }
-await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
+          await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
           pendingIce.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
           pendingIce.current = [];
         }
@@ -220,6 +219,11 @@ await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
       pc.close();
     };
   }, [callId]);
+
+  useEffect(() => {
+    window.localVideoRef = localVideoRef;
+    window.remoteVideoRef = remoteVideoRef;
+  }, []);
 
   const toggleMic = () => {
     const track = mediaStreamRef.current?.getAudioTracks()[0];
