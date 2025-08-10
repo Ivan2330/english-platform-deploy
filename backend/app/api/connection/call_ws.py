@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.sql import func
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from app.core.config import settings
 from app.core.database import get_async_session
 from app.models.connection.call import Call, CallParticipant
@@ -56,26 +56,37 @@ async def get_cached_participant_status(call_id: int, user_id: int, db: AsyncSes
         )
         participant = result.scalars().first()
         if not participant:
-            raise HTTPException(status_code=404, detail="Participant not found")
-        status = {
-            "mic_status": participant.mic_status,
-            "camera_status": participant.camera_status,
-            "screen_sharing": participant.screen_sharing,
-            "video_quality": participant.video_quality,
-        }
+            # створимо дефолт — не блокуємо WS
+            status = {
+                "mic_status": True,
+                "camera_status": True,
+                "screen_sharing": False,
+                "video_quality": "auto",
+            }
+        else:
+            status = {
+                "mic_status": participant.mic_status,
+                "camera_status": participant.camera_status,
+                "screen_sharing": participant.screen_sharing,
+                "video_quality": participant.video_quality,
+            }
         await set_cache(cache_key, status, ttl=1800)
     return status
 
 async def update_cached_participant_status(call_id: int, user_id: int, updates: Dict[str, Any]):
     cache_key = f"call:{call_id}:participant:{user_id}"
-    status = await get_cache(cache_key)
-    if status:
-        status.update(updates)
-        await set_cache(cache_key, status, ttl=1800)
+    status = await get_cache(cache_key) or {}
+    status.update({k: v for k, v in updates.items() if v is not None})
+    await set_cache(cache_key, status, ttl=1800)
 
 class ConnectionManager:
     def __init__(self):
+        # active_connections[call_id][user_id] = WebSocket
         self.active_connections: Dict[int, Dict[int, WebSocket]] = {}
+
+    def list_peers(self, call_id: int, exclude_user_id: Optional[int] = None) -> List[int]:
+        peers = list(self.active_connections.get(call_id, {}).keys())
+        return [p for p in peers if p != exclude_user_id]
 
     async def connect(self, call_id: int, user_id: int, websocket: WebSocket):
         await websocket.accept()
@@ -125,12 +136,14 @@ async def websocket_endpoint(
     token: str = Query(...),
     db: AsyncSession = Depends(get_async_session),
 ):
+    # 1) auth
     try:
         user = await get_user_from_token(token, db)
     except HTTPException:
         await websocket.close(code=1008)
         return
 
+    # 2) call existence
     call = await db.get(Call, call_id)
     if not call or call.status != "active":
         await websocket.close(code=1008, reason="Invalid or inactive call")
@@ -139,14 +152,24 @@ async def websocket_endpoint(
     await connection_manager.connect(call_id, user.id, websocket)
 
     try:
+        # 3) my status + peers list
         participant_status = await get_cached_participant_status(call_id, user.id, db)
 
+        # peers already online (даємо на клієнт одразу user_id учасників)
+        peers = connection_manager.list_peers(call_id, exclude_user_id=user.id)
+        await connection_manager.send_personal_message(
+            create_message("peers", user.id, peers=peers, **participant_status),
+            call_id, user.id
+        )
+
+        # всім іншим — що приєднався новий
         await connection_manager.broadcast(
             call_id,
             create_message("join", user.id, **participant_status),
             exclude_user_id=user.id
         )
 
+        # собі — “you_joined”
         await connection_manager.send_personal_message(
             create_message("you_joined", user.id, **participant_status), call_id, user.id
         )
@@ -172,7 +195,10 @@ async def websocket_endpoint(
                 await connection_manager.broadcast(call_id, create_message("quality_change", user.id, quality=data.quality))
 
             elif data.action == "end_call":
-                if user.role == "staff" and user.status in [Status.ADMIN, Status.TEACHER]:
+                # уніфікуємо enum → str
+                role_str = str(getattr(user, "role", "")).lower()
+                status_str = str(getattr(user, "status", "")).lower()
+                if role_str == "staff" and status_str in ["admin", "teacher"]:
                     call.status = "ended"
                     call.ended_at = func.now()
                     await db.commit()
@@ -180,13 +206,14 @@ async def websocket_endpoint(
                     break
 
             elif data.action in ["offer", "answer", "ice_candidate"]:
-                relay = {
-                    "action": data.action,
-                    "user": user.id,
-                    "candidate": data.candidate,
-                    "offer": data.offer,
-                    "answer": data.answer,
-                }
+                relay = {"action": data.action, "user": user.id}
+                if data.candidate is not None:
+                    relay["candidate"] = data.candidate
+                if data.offer is not None:
+                    relay["offer"] = data.offer
+                if data.answer is not None:
+                    relay["answer"] = data.answer
+
                 if data.recipient_id:
                     await connection_manager.send_personal_message(relay, call_id, data.recipient_id)
                 else:
