@@ -1,130 +1,155 @@
+/* Контейнер дзвінка в правій панелі: старт від верху */
+.call-container{
+  width:100%;
+  display:flex; flex-direction:column; align-items:stretch;
+  gap:10px; background:transparent; border:none; padding:0;
+}
+
+/* Дві великі “картки‑відео”, зверху вниз */
+.video-wrapper{
+  display:grid;
+  grid-template-rows: 1fr 1fr;
+  gap:12px;
+  width:100%;
+  min-height: 56vh;   /* високі блоки під відео */
+}
+
+/* верхнє — ТИ, нижнє — інша людина */
+.video.local, .video.remote{
+  width:100%;
+  aspect-ratio: 16 / 9;
+  background:#000;
+  border-radius:16px;
+  border:1px solid rgba(0,0,0,.08);
+  object-fit:cover;
+}
+.video.local{ order:0 }   /* ти зверху */
+.video.remote{ order:1 }  /* співрозмовник знизу */
+
+/* панель кнопок — проста, під відео, по центру */
+.button-group-actions{
+  position:static;
+  margin-top:8px;
+  display:flex; gap:10px; justify-content:center; align-items:center;
+  padding:6px 10px; border-radius:999px;
+  background:#f7f8ff;
+  border:1px solid #dfe3ff;
+}
+.button-group-actions button{
+  width:44px; height:44px; padding:6px;
+  border-radius:999px; background:#fff; border:1px solid #e5e7ff;
+  display:grid; place-items:center;
+  transition:.15s transform, .15s box-shadow;
+}
+.button-group-actions button:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgba(112,133,246,.18);
+}
+.button-group-actions img{ width:100%; height:100% }
+
+@media (max-width:1200px){
+  .video.local, .video.remote{ border-radius:12px }
+}
+@media (max-width:900px){
+  .video.local, .video.remote{ border-radius:10px }
+}
+video{ display:block; }
+/* Контейнер дзвінка в правій панелі: старт від верху */
 .call-container {
-    position: relative;
     width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 1rem;
-    background: #fdfdfd;
-    border: 2px solid #aaa;
+    align-items: stretch;
+    gap: 10px;
+    background: transparent;
+    border: none;
+    padding: 0;
 }
 
+/* Дві великі “картки‑відео”, зверху вниз */
 .video-wrapper {
-    position: relative;
-    width: 95%;
-    min-height: 220px;
-    /* ← забезпечує видимість блоку, навіть без відео */
-    background: #f9f9f9;
-    /* тимчасово — щоб бачити межі */
-    border-radius: 1rem;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    min-height: 56vh;
+    /* високі блоки під відео */
 }
 
+/* верхнє — ТИ, нижнє — інша людина */
+.video.local,
 .video.remote {
     width: 100%;
-    height: auto;
-    max-height: 400px;
-    min-height: 180px;
-    /* ← ключове! навіть якщо нема stream — блок видимий */
-    border-radius: 52px;
-    display: block;
-    object-fit: contain;
-    background-color: #000;
-    /* для контрасту */
+    aspect-ratio: 16 / 9;
+    background: #000;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, .08);
+    object-fit: cover;
 }
 
 .video.local {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 25%;
-    max-width: 200px;
-    border-radius: 12px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    border: 4px solid blue;
-    background-color: #cce0ff;
-    z-index: 2;
+    order: 0
 }
 
+/* ти зверху */
+.video.remote {
+    order: 1
+}
+
+/* співрозмовник знизу */
+
+/* панель кнопок — проста, під відео, по центру */
 .button-group-actions {
-    width: 100%;
-    position: absolute;
-    bottom: 36px;
-    left: 10%;
+    position: static;
+    margin-top: 8px;
     display: flex;
-    justify-content: start;
-    gap: 20px;
-    z-index: 5;
-    background-color: rgba(255, 255, 255, 0.8);
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #f7f8ff;
+    border: 1px solid #dfe3ff;
 }
 
 .button-group-actions button {
-    background-color: transparent;
-    width: clamp(30px, 13%, 80px);
-    cursor: pointer;
-    transition: background-color 0.2s;
-    border: 2px dashed #888;
+    width: 44px;
+    height: 44px;
+    padding: 6px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #e5e7ff;
+    display: grid;
+    place-items: center;
+    transition: .15s transform, .15s box-shadow;
+}
+
+.button-group-actions button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px rgba(112, 133, 246, .18);
 }
 
 .button-group-actions img {
     width: 100%;
-    height: 100%;
+    height: 100%
 }
 
-@media(max-width:1600px) {
-    .button-group-actions img {
-        width: 90%;
-        height: 90%;
-    }
+@media (max-width:1200px) {
 
-    .button-group-actions {
-        bottom: 30px;
-    }
-}
-
-@media(max-width:1200px) {
-    .button-group-actions img {
-        width: 80%;
-        height: 80%;
-    }
-
-    .button-group-actions {
-        left: 15%;
-        bottom: 30px;
-    }
-
+    .video.local,
     .video.remote {
-        border-radius: 8px;
-    }
-
-    .video.local {
-        width: 30%;
-        max-width: 160px;
-        border-radius: 8px;
+        border-radius: 12px
     }
 }
 
-@media(max-width:900px) {
-    .call-container h2 {
-        font-size: 18px;
-    }
+@media (max-width:900px) {
 
-    .button-group-actions {
-        gap: 10px;
-    }
-
+    .video.local,
     .video.remote {
-        border-radius: 4px;
-    }
-
-    .video.local {
-        width: 35%;
-        max-width: 140px;
-        border-radius: 4px;
+        border-radius: 10px
     }
 }
 
 video {
     display: block;
-    visibility: visible;
-    opacity: 1;
 }

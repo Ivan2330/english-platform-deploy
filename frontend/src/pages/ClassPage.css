@@ -39,10 +39,8 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-left: 16px;
-  padding-right: 26px;
+  padding: 0 26px 0 16px;
   background: linear-gradient(to right, #7085F6 0%, #FFA4FD 100%);
-  font-weight: 400;
 }
 
 .header button:first-of-type {
@@ -63,16 +61,14 @@ body {
   aspect-ratio: 1
 }
 
-/* Main layout
-   — трохи вужчий центр, більше місця зліва */
+/* Layout: трохи вужчий центр */
 .main-content {
   width: 100%;
   flex: 1;
   display: grid;
+  overflow: hidden;
   grid-template-columns: 18% 54% 28%;
   gap: 0;
-  /* шви робимо тінями/лініями, а не gap'ом */
-  overflow: hidden;
 }
 
 @media (max-width:1100px) {
@@ -84,13 +80,11 @@ body {
 /* LEFT panel */
 .left-panel {
   margin-top: 12px;
-  padding-left: 20px;
-  /* трохи більший відступ з краю сторінки */
+  padding-left: 22px;
   position: relative;
   overflow: hidden;
 }
 
-/* тонкий роздільник справа (в бік центру) */
 .left-panel::after {
   content: "";
   position: absolute;
@@ -104,10 +98,9 @@ body {
 }
 
 .chat-toggle {
-  margin-left: 0;
-  width: clamp(75px, 3.9063vw, 105px);
+  width: clamp(75px, 3.9vw, 105px);
   min-width: 75px;
-  aspect-ratio: 1;
+  aspect-ratio: 1
 }
 
 .chat-toggle img {
@@ -127,7 +120,6 @@ body {
   color: #fff;
   font-size: clamp(12px, 1.5vw, 18px);
   padding: 10px 14px;
-  margin-left: 0;
   border-radius: 10px;
   min-width: 120px;
   max-width: 92%;
@@ -148,19 +140,18 @@ body {
   border: 2px solid #7085F6
 }
 
-/* CENTER panel — прибираємо рамку, лишаємо чистий блок */
+/* CENTER panel — без інсет‑рамки */
 .center-panel {
   margin-top: 16px;
   background: #fff;
   border: none;
   box-shadow: none;
-  /* ← прибрали синю “рамку” */
   padding: 28px 20px;
   border-radius: 28px;
-  /* м’який радіус без інсету */
   display: flex;
   justify-content: center;
   align-items: flex-start;
+  /* старт вище центру */
   overflow-y: auto;
   min-height: 420px;
 }
@@ -169,12 +160,15 @@ body {
 .right-panel {
   position: relative;
   overflow: hidden;
-  display: grid;
-  /* дає просте центрування placeholder'а */
-  place-items: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  /* дзвінки стартують зверху */
+  padding-top: 16px;
+  /* той самий верхній відступ, що й у центру */
 }
 
-/* тонкий роздільник зліва (в бік центру) */
+/* тонкий роздільник зліва */
 .right-panel::before {
   content: "";
   position: absolute;
@@ -187,23 +181,23 @@ body {
   opacity: .65;
 }
 
-/* плейсхолдер дзвінка — строго по центру вертикально */
+/* Стартова панель — трохи вище центру */
 .placeholder-box {
-  margin-top: 0;
-  /* прибрали зсув вниз */
   width: 100%;
-  min-height: 100%;
+  min-height: 60vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 22px;
   padding: 20px;
+  transform: translateY(-6%);
+  /* підняли вище центру */
 }
 
 .placeholder-box img {
   width: clamp(180px, 50%, 320px);
-  margin: 0 auto;
+  margin: 0 auto
 }
 
 .placeholder-box button {
@@ -216,17 +210,17 @@ body {
   border: 10px solid #7085F6;
   border-radius: 25px;
   padding: 10px;
-  transition: .25s;
+  transition: .2s;
   background: #fff;
   color: #1b1b1b;
 }
 
 .placeholder-box button:hover {
-  transform: scale(1.025);
+  transform: scale(1.02);
   box-shadow: 0 4px 12px rgba(112, 133, 246, .35)
 }
 
-/* Lesson card / placeholder */
+/* Плейсхолдер центру */
 .lesson-placeholder {
   color: #7085F6;
   border: 1px dashed rgba(112, 133, 246, .5);
