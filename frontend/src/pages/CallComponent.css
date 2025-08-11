@@ -1,84 +1,30 @@
 /* Контейнер дзвінка в правій панелі: старт від верху */
-.call-container{
-  width:100%;
-  display:flex; flex-direction:column; align-items:stretch;
-  gap:10px; background:transparent; border:none; padding:0;
-}
-
-/* Дві великі “картки‑відео”, зверху вниз */
-.video-wrapper{
-  display:grid;
-  grid-template-rows: 1fr 1fr;
-  gap:12px;
-  width:100%;
-  min-height: 56vh;   /* високі блоки під відео */
-}
-
-/* верхнє — ТИ, нижнє — інша людина */
-.video.local, .video.remote{
-  width:100%;
-  aspect-ratio: 16 / 9;
-  background:#000;
-  border-radius:16px;
-  border:1px solid rgba(0,0,0,.08);
-  object-fit:cover;
-}
-.video.local{ order:0 }   /* ти зверху */
-.video.remote{ order:1 }  /* співрозмовник знизу */
-
-/* панель кнопок — проста, під відео, по центру */
-.button-group-actions{
-  position:static;
-  margin-top:8px;
-  display:flex; gap:10px; justify-content:center; align-items:center;
-  padding:6px 10px; border-radius:999px;
-  background:#f7f8ff;
-  border:1px solid #dfe3ff;
-}
-.button-group-actions button{
-  width:44px; height:44px; padding:6px;
-  border-radius:999px; background:#fff; border:1px solid #e5e7ff;
-  display:grid; place-items:center;
-  transition:.15s transform, .15s box-shadow;
-}
-.button-group-actions button:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 6px 12px rgba(112,133,246,.18);
-}
-.button-group-actions img{ width:100%; height:100% }
-
-@media (max-width:1200px){
-  .video.local, .video.remote{ border-radius:12px }
-}
-@media (max-width:900px){
-  .video.local, .video.remote{ border-radius:10px }
-}
-video{ display:block; }
-/* Контейнер дзвінка в правій панелі: старт від верху */
 .call-container {
     width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    align-items: center;
+    gap: 12px;
     background: transparent;
     border: none;
     padding: 0;
 }
 
-/* Дві великі “картки‑відео”, зверху вниз */
+/* Дві великі картки-відео одна під одною.
+   Вузькіші за панель: мають бокові відступи через width:86% */
 .video-wrapper {
     display: grid;
     grid-template-rows: 1fr 1fr;
-    gap: 12px;
-    width: 100%;
+    gap: 14px;
+    width: 86%;
+    margin: 0 auto;
     min-height: 56vh;
-    /* високі блоки під відео */
+    /* достатня висота під дві плитки */
 }
 
-/* верхнє — ТИ, нижнє — інша людина */
-.video.local,
-.video.remote {
+/* Верхнє — remote (інша людина), нижнє — local (ти) */
+.video.remote,
+.video.local {
     width: 100%;
     aspect-ratio: 16 / 9;
     background: #000;
@@ -87,69 +33,106 @@ video{ display:block; }
     object-fit: cover;
 }
 
-.video.local {
-    order: 0
-}
-
-/* ти зверху */
 .video.remote {
-    order: 1
+    order: 0;
 }
 
-/* співрозмовник знизу */
+/* інша людина зверху */
+.video.local {
+    order: 1;
+}
 
-/* панель кнопок — проста, під відео, по центру */
+/* ти знизу */
+
+/* Панель керування: приклеєна під відео, тієї ж ширини, рівні іконки */
 .button-group-actions {
     position: static;
-    margin-top: 8px;
+    width: 86%;
+    margin: 4px auto 0 auto;
     display: flex;
-    gap: 10px;
-    justify-content: center;
     align-items: center;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: #f7f8ff;
-    border: 1px solid #dfe3ff;
+    justify-content: center;
+    gap: 0;
+    /* керуємо відступами самі */
+    padding: 12px 8px;
+    background: #0b0b0f;
+    border: 1px solid #1a1a25;
+    border-radius: 0 0 16px 16px;
+    /* відчуття “приробленої” нижньої панелі */
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
 }
 
+/* Кнопки — однакова висота й вирівнювання по центру */
 .button-group-actions button {
-    width: 44px;
-    height: 44px;
-    padding: 6px;
-    border-radius: 999px;
-    background: #fff;
-    border: 1px solid #e5e7ff;
+    width: 64px;
+    height: 48px;
+    padding: 8px;
     display: grid;
     place-items: center;
-    transition: .15s transform, .15s box-shadow;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: transform .12s ease, opacity .12s ease;
+    outline: none;
 }
 
+/* Тонкі вертикальні роздільники між кнопками (між першою/другою та другою/третьою) */
+.button-group-actions button:not(:last-child) {
+    position: relative;
+}
+
+.button-group-actions button:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    right: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 22px;
+    background: rgba(255, 255, 255, .22);
+}
+
+/* Ховер без “стрибків” */
 .button-group-actions button:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 12px rgba(112, 133, 246, .18);
+    opacity: .92;
 }
 
+/* Іконки-ізображення всередині кнопок */
 .button-group-actions img {
     width: 100%;
-    height: 100%
+    height: 100%;
+    object-fit: contain;
+    filter: invert(1);
+    /* білі іконки на темному тлі */
 }
 
+/* Невеликі адаптивні правки */
 @media (max-width:1200px) {
 
-    .video.local,
-    .video.remote {
+    .video.remote,
+    .video.local {
         border-radius: 12px
+    }
+
+    .button-group-actions {
+        border-radius: 0 0 12px 12px
     }
 }
 
 @media (max-width:900px) {
 
-    .video.local,
-    .video.remote {
+    .video.remote,
+    .video.local {
         border-radius: 10px
+    }
+
+    .button-group-actions {
+        border-radius: 0 0 10px 10px
     }
 }
 
+/* Стандартизація відео-елемента */
 video {
     display: block;
 }
