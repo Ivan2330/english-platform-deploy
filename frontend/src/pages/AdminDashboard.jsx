@@ -67,6 +67,10 @@ const AdminDashboardPage = () => {
             <li className="button-group-li">
               <button onClick={() => navigate("/create-task")}>Create Task</button>
             </li>
+            {/* ✅ нова кнопка для конструктора уроків */}
+            <li className="button-group-li">
+              <button onClick={() => navigate("/lesson-builder")}>Lesson Builder</button>
+            </li>
           </ul>
 
           <ul className="button-group-r">

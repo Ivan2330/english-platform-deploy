@@ -1,0 +1,173 @@
+.ac-wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 24px
+}
+
+h2 {
+    margin: 0 0 16px;
+    color: #2a2140
+}
+
+.alert {
+    margin: 10px 0;
+    padding: 10px 12px;
+    border-radius: 10px
+}
+
+.alert.success {
+    background: #f0f9ff;
+    border: 1px solid #c3e7ff;
+    color: #0b5a8a
+}
+
+.alert.error {
+    background: #fff5f5;
+    border: 1px solid #ffd1d1;
+    color: #8a0b1a
+}
+
+.ac-table {
+    background: #fff;
+    border: 1px solid #ece7ff;
+    border-radius: 16px;
+    overflow: hidden
+}
+
+.thead,
+.trow {
+    display: grid;
+    grid-template-columns: 1.4fr .7fr .9fr 1.4fr 1fr
+}
+
+.thead>div,
+.trow>div {
+    padding: 12px
+}
+
+.thead {
+    background: #f8f6ff;
+    color: #3B2B66;
+    font-weight: 700
+}
+
+.trow:nth-child(even) {
+    background: #fcfbff
+}
+
+.cell-nowrap .name {
+    font-weight: 700;
+    color: #2a2140
+}
+
+.cell-nowrap .meta {
+    font-size: 12px;
+    color: #6d5a98
+}
+
+.loading,
+.empty {
+    padding: 14px;
+    color: #6d5a98
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end
+}
+
+.btn {
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-weight: 600
+}
+
+.btn.small {
+    padding: 6px 10px
+}
+
+.btn.primary {
+    background: #7c3aed;
+    color: #fff
+}
+
+.btn.ghost {
+    background: transparent;
+    border-color: #7c3aed;
+    color: #7c3aed
+}
+
+.btn.danger {
+    background: #feebee;
+    color: #a3102a;
+    border-color: #ffd1d9
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 10, 40, .55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 100
+}
+
+.modal-card {
+    background: #fff;
+    border-radius: 16px;
+    max-width: 720px;
+    width: 100%;
+    padding: 16px;
+    border: 1px solid #ece7ff
+}
+
+.modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px
+}
+
+.modal-head h3 {
+    margin: 0;
+    color: #3B2B66
+}
+
+.modal-head .x {
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    cursor: pointer
+}
+
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-weight: 600;
+    color: #3B2B66
+}
+
+input,
+select {
+    padding: 10px 12px;
+    border: 1px solid #dcd3ff;
+    border-radius: 10px
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px
+}

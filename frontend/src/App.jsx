@@ -9,6 +9,10 @@ import { getUser } from "./api/auth";
 import ClassPage from "./pages/ClassPage";
 import CreateUserPage from "./pages/CreateUserPage";
 import UsersListPage from "./pages/UsersListPage";
+import CreateClassPage from "./pages/CreateClassPage";
+import AllClassesPage from "./pages/AllClassesPage";
+import LessonBuilderPage from "./pages/LessonBuilderPage";
+
 
 function App() {
   const [user, setUser] = useState(null);
@@ -47,6 +51,9 @@ function App() {
               <Route path="/create-user" element={<CreateUserPage />} />
               <Route path="/users" element={<UsersListPage />} />
               <Route path="/classroom/:id" element={<ClassPage />} />
+              <Route path="/create-class" element={<CreateClassPage />} />
+              <Route path="/all-classes" element={<AllClassesPage />} />
+              <Route path="/lesson-builder" element={<LessonBuilderPage />} />
             </>
           ) : (
             <>
