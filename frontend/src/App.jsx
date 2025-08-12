@@ -2,7 +2,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import LoginPage from "./pages/LoginPage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
+import AdminDashboardPage from "./pages/AdminDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { getUser } from "./api/auth";
@@ -43,7 +43,7 @@ function App() {
         <Route element={<ProtectedRoute user={user} />}>
           {user?.role === "staff" && user?.status === "admin" ? (
             <>
-              <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
+              <Route path="/admin-dashboard" element={<AdminDashboard />} />
               <Route path="/create-user" element={<CreateUserPage />} />
               <Route path="/users" element={<UsersListPage />} />
               <Route path="/classroom/:id" element={<ClassPage />} />
