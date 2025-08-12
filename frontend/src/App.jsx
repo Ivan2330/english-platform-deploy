@@ -2,13 +2,13 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import LoginPage from "./pages/LoginPage";
-import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import StudentDashboard from "./pages/StudentDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { getUser } from "./api/auth";
-import ClassPage from "./pages/ClassPage"; // 👈 додано
-
-
+import ClassPage from "./pages/ClassPage";
+import CreateUserPage from "./pages/CreateUserPage";
+import UsersListPage from "./pages/UsersListPage";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -21,6 +21,7 @@ function App() {
         if (token) {
           const response = await getUser(token);
           setUser(response.data);
+          localStorage.setItem("user", JSON.stringify(response.data));
         }
       } catch (error) {
         console.error("Помилка отримання користувача", error);
@@ -38,19 +39,23 @@ function App() {
     <Router>
       <Routes>
         <Route path="/login" element={<LoginPage setUser={setUser} />} />
+
         <Route element={<ProtectedRoute user={user} />}>
           {user?.role === "staff" && user?.status === "admin" ? (
             <>
-              <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/admin-dashboard" element={<AdminDashboardPage />} />
+              <Route path="/create-user" element={<CreateUserPage />} />
+              <Route path="/users" element={<UsersListPage />} />
               <Route path="/classroom/:id" element={<ClassPage />} />
             </>
           ) : (
             <>
               <Route path="/student-dashboard" element={<StudentDashboard />} />
-              <Route path="/classroom/:id" element={<ClassPage/>} />
+              <Route path="/classroom/:id" element={<ClassPage />} />
             </>
           )}
         </Route>
+
         <Route path="*" element={<LoginPage setUser={setUser} />} />
       </Routes>
     </Router>
