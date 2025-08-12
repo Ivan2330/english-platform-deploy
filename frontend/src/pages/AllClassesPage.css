@@ -171,3 +171,9 @@ select {
     gap: 12px;
     margin-top: 14px
 }
+
+.student-inline {
+    display: flex;
+    align-items: center;
+    gap: 8px
+}
