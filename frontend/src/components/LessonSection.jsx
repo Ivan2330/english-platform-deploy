@@ -71,7 +71,7 @@ const LessonSection = ({ section, currentUser }) => {
 
   const currentQuestion = questions[currentQuestionIndex];
   const heroImage =
-    section.control_type === 'speaking' ? speaking_page : grammar_time; // ✅ вибір картинки
+    section.control_type === 'reading' ? speaking_page : grammar_time; // ✅ вибір картинки
 
   return (
     <div className="lesson-section">
@@ -82,7 +82,7 @@ const LessonSection = ({ section, currentUser }) => {
       {/* ✅ картинка залежно від типу секції */}
       <img
         src={heroImage}
-        alt={section.control_type === 'speaking' ? 'Speaking lesson' : 'Grammar lesson'}
+        alt={section.control_type === 'reading' ? 'Speaking lesson' : 'Grammar lesson'}
         className="lesson-section-img"
       />
 
