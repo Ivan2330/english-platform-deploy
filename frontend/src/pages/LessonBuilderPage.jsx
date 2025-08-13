@@ -14,7 +14,7 @@ import "./LessonBuilderPage.css";
  */
 const PATHS = {
   lessons: `${API_URL}/lessons/lessons`,
-  tasks: `${API_URL}/tasks/tasks`,
+  tasks: `${API_URL}/universal-tasks/tasks`,
   questions: `${API_URL}/questions/questions`,
 };
 
