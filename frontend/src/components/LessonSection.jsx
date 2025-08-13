@@ -4,8 +4,11 @@ import axios from 'axios';
 import { API_URL } from "../../config";
 import '../pages/LessonSection.css';
 import grammar_time from '../assets/grammar_time.png';
+import speaking_page from '../assets/Speaking_Page.png'; // ✅ додали картинку для speaking
 import TestResultModal from '../components/TestResultModal';
 import SectionContent from './SectionContent';
+
+const SUPPORTED_TYPES = ['grammar', 'speaking']; // ✅ підтримуємо обидва типи
 
 const LessonSection = ({ section, currentUser }) => {
   const [questions, setQuestions] = useState([]);
@@ -16,18 +19,21 @@ const LessonSection = ({ section, currentUser }) => {
   const [results, setResults] = useState([]);
 
   useEffect(() => {
-    if (section?.control_type === 'grammar') {
+    if (section && SUPPORTED_TYPES.includes(section.control_type)) {
       fetchQuestions();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section]);
 
   const fetchQuestions = async () => {
     try {
-      const res = await axios.get(`${API_URL}/questions/questions/tasks/${section.id}/questions/`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      setQuestions(res.data.sort((a, b) => a.order - b.order));
+      const res = await axios.get(
+        `${API_URL}/questions/questions/tasks/${section.id}/questions/`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+      setQuestions((res.data || []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
+      setCurrentQuestionIndex(0);
+      setAnswers({});
     } catch (err) {
       console.error('Error fetching questions:', err);
     }
@@ -60,23 +66,31 @@ const LessonSection = ({ section, currentUser }) => {
     );
   }
 
-  if (section.control_type !== 'grammar') return null;
+  // показуємо лише для grammar або speaking
+  if (!SUPPORTED_TYPES.includes(section.control_type)) return null;
 
   const currentQuestion = questions[currentQuestionIndex];
+  const heroImage =
+    section.control_type === 'speaking' ? speaking_page : grammar_time; // ✅ вибір картинки
 
   return (
     <div className="lesson-section">
       <div className="section-image">
         <h2 className="section-title">{section.title}</h2>
       </div>
-      <img src={grammar_time} alt="Learning topic" className="lesson-section-img"/>
 
+      {/* ✅ картинка залежно від типу секції */}
+      <img
+        src={heroImage}
+        alt={section.control_type === 'speaking' ? 'Speaking lesson' : 'Grammar lesson'}
+        className="lesson-section-img"
+      />
+
+      {/* ✅ markdown-контент і опис — однаково для обох типів */}
       <section className="lesson-theory-section">
-        {/* Markdown-rendered content */}
         <div className="theory-section-content">
           <SectionContent content={section.content} />
         </div>
-        {/* Опис можна залишити як є, або теж markdown */}
         {section.description && (
           <div className="theory-section-question">
             <SectionContent content={section.description} />
@@ -84,6 +98,7 @@ const LessonSection = ({ section, currentUser }) => {
         )}
       </section>
 
+      {/* ✅ тести — однакова логіка для grammar та speaking */}
       <section className="lesson-practice-section">
         <button onClick={() => setShowTest(!showTest)} className="toggle-test-button">
           {showTest ? 'Hide Test' : 'Start Test'}
@@ -108,9 +123,11 @@ const LessonSection = ({ section, currentUser }) => {
               <button
                 onClick={() => setCurrentQuestionIndex(i => Math.max(i - 1, 0))}
                 disabled={currentQuestionIndex === 0}
-                className="previous-button-test">
+                className="previous-button-test"
+              >
                 ⬅ Previous
               </button>
+
               <button
                 onClick={() =>
                   setCurrentQuestionIndex(i =>
@@ -118,9 +135,11 @@ const LessonSection = ({ section, currentUser }) => {
                   )
                 }
                 disabled={currentQuestionIndex === questions.length - 1}
-                className="next-button-test">
+                className="next-button-test"
+              >
                 Next ➡
               </button>
+
               {currentQuestionIndex === questions.length - 1 && (
                 <button onClick={sendAnswers} className="submit-test-button">✅ Submit</button>
               )}
