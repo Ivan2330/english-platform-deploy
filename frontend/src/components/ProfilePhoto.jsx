@@ -18,25 +18,24 @@ const ProfilePhoto = () => {
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
-  // Нормалізація URL: додаємо базу для /static/... і форсимо https
+  // Робимо абсолютний HTTPS‑URL (щоб не було mixed content)
   const toAbsoluteHttps = (url) => {
     if (!url) return null;
     let out = url;
 
-    // якщо в БД збережено відносний шлях (/static/...)
+    // Якщо бек зберігає відносний шлях типу /static/...
     if (out.startsWith("/")) {
       const base = (API_URL || window.location.origin).replace(/\/$/, "");
       out = `${base}${out}`;
     }
-
-    // уникнути mixed content
+    // Якщо http:// на https‑сторінці — форсимо https://
     if (/^http:\/\//i.test(out) && window.location.protocol === "https:") {
       out = out.replace(/^http:\/\//i, "https://");
     }
     return out;
   };
 
-  // Показати поточне фото, якщо є в user у localStorage
+  // Підтягнути фото з localStorage.user (щоб не мигало після перезавантаження)
   useEffect(() => {
     try {
       const raw = localStorage.getItem("user");
@@ -46,59 +45,68 @@ const ProfilePhoto = () => {
           setPhotoUrl(toAbsoluteHttps(u.profile_image));
         }
       }
-    } catch (_) {
+    } catch {
       /* ignore */
     }
   }, []);
 
   const handleFileChange = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setSelectedFile(file);
-    setShowEditor(true);
+    const file = event.target.files && event.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setShowEditor(true);
+    }
   };
 
   const handleSave = async () => {
     if (!editorRef.current) return;
 
     const canvas = editorRef.current.getImageScaledToCanvas();
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
 
-      const formData = new FormData();
-      // Імʼя файлу допоможе бекенду визначити тип за потреби
-      const fileWithName = new File([blob], "avatar.png", { type: blob.type || "image/png" });
-      formData.append("file", fileWithName);
+    canvas.toBlob(
+      async (blob) => {
+        if (!blob) return;
 
-      try {
-        const response = await axios.patch(`${API_URL}/users/me/photo`, formData, {
-          headers: {
-            ...headers,
-            "Content-Type": "multipart/form-data",
-          },
-        });
+        // Надішлемо як file з ім'ям, не «безіменний blob»
+        const fileWithName = new File([blob], "avatar.png", { type: blob.type || "image/png" });
+        const formData = new FormData();
+        formData.append("file", fileWithName);
 
-        // бек повертає абсолютний URL — але все одно нормалізуємо
-        const url = toAbsoluteHttps(response.data?.photo_url);
-        setPhotoUrl(url);
-        setShowEditor(false);
-
-        // оновимо локального юзера, щоб фото зʼявлялось після перезавантаження
         try {
-          const raw = localStorage.getItem("user");
-          if (raw) {
-            const u = JSON.parse(raw);
-            // збережемо відносний шлях теж, якщо треба. Але є абсолютний — ок.
-            u.profile_image = url;
-            localStorage.setItem("user", JSON.stringify(u));
+          const response = await axios.patch(`${API_URL}/users/me/photo`, formData, {
+            headers: {
+              ...headers,
+              "Content-Type": "multipart/form-data",
+            },
+          });
+
+          // нормалізуємо URL і додаємо cache‑buster, щоб браузер не показував старе
+          const rawUrl = response.data?.photo_url;
+          const url = toAbsoluteHttps(rawUrl);
+          const busted = url ? `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}` : null;
+
+          setPhotoUrl(busted);
+          setShowEditor(false);
+
+          // оновимо localStorage.user, щоб фото було і після reload
+          try {
+            const raw = localStorage.getItem("user");
+            if (raw) {
+              const u = JSON.parse(raw);
+              // збережемо абсолютний URL (без cache‑buster, щоб не розросталось)
+              u.profile_image = url;
+              localStorage.setItem("user", JSON.stringify(u));
+            }
+          } catch {
+            /* ignore */
           }
-        } catch (_) {
-          /* ignore */
+        } catch (error) {
+          console.error("Upload failed:", error);
         }
-      } catch (error) {
-        console.error("Upload failed:", error);
-      }
-    }, "image/png", 0.92);
+      },
+      "image/png",
+      0.92
+    );
   };
 
   const handleDelete = async () => {
@@ -115,7 +123,7 @@ const ProfilePhoto = () => {
           u.profile_image = null;
           localStorage.setItem("user", JSON.stringify(u));
         }
-      } catch (_) {
+      } catch {
         /* ignore */
       }
     } catch (error) {
@@ -173,7 +181,7 @@ const ProfilePhoto = () => {
         style={{ display: "none" }}
         onChange={handleFileChange}
       />
-      <button onClick={() => fileInputRef.current?.click()} className="update-photo">
+      <button onClick={() => fileInputRef.current.click()} className="update-photo">
         Update Photo
       </button>
       <button onClick={handleDelete} className="delete-photo">
