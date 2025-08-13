@@ -19,7 +19,7 @@ const ProfilePhoto = () => {
   const fileInputRef = useRef(null);
 
   const token = localStorage.getItem("token");
-  const headers = { Authorization: Bearer ${token} };
+  const headers = { Authorization: `Bearer ${token}` };
 
   // нормалізація URL: робимо абсолютний + HTTPS, щоб не було mixed content
   const toAbsoluteHttps = (url) => {
