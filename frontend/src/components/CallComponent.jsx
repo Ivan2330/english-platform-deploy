@@ -350,7 +350,7 @@ const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
         const { data: calls } = await axios.get(`${API_URL}/calls/calls/?classroom_id=${classroomId}`, { headers });
         let call = calls.find(c => c.status === "active");
 
-        if (!call && role === "staff") {
+        if (!call) {
           const { data: created } = await axios.post(`${API_URL}/calls/calls/`, { classroom_id: classroomId, status: "active" }, { headers });
           call = created;
           log("Created call:", call.id);

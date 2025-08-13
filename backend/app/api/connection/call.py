@@ -34,7 +34,7 @@ async def create_call(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user),
 ):
-    is_teacher_or_admin(current_user)
+    # is_teacher_or_admin(current_user)
 
     new_call = Call(**call.model_dump())
     db.add(new_call)
