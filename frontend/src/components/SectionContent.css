@@ -1,0 +1,48 @@
+.section-md {
+    line-height: 1.7;
+    font-size: 16px
+}
+
+.section-md h1,
+.section-md h2,
+.section-md h3 {
+    margin: 1rem 0 .5rem
+}
+
+.section-md ul,
+.section-md ol {
+    padding-left: 1.25rem;
+    margin: .5rem 0
+}
+
+.section-md code {
+    background: #f6f6f9;
+    padding: .15rem .35rem;
+    border-radius: 6px
+}
+
+.section-md pre {
+    background: #0f102a;
+    color: #fff;
+    padding: .75rem;
+    border-radius: 12px;
+    overflow: auto
+}
+
+.section-md table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: .75rem 0
+}
+
+.section-md th,
+.section-md td {
+    border: 1px solid #e6e6f0;
+    padding: .5rem .6rem
+}
+
+.section-md blockquote {
+    border-left: 4px solid #7c3aed;
+    padding-left: .75rem;
+    color: #555
+}

@@ -1,9 +1,11 @@
+// src/components/LessonSection.jsx
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_URL } from "../../config";
 import '../pages/LessonSection.css';
 import grammar_time from '../assets/grammar_time.png';
 import TestResultModal from '../components/TestResultModal';
+import SectionContent from './SectionContent';
 
 const LessonSection = ({ section, currentUser }) => {
   const [questions, setQuestions] = useState([]);
@@ -17,6 +19,7 @@ const LessonSection = ({ section, currentUser }) => {
     if (section?.control_type === 'grammar') {
       fetchQuestions();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section]);
 
   const fetchQuestions = async () => {
@@ -40,9 +43,7 @@ const LessonSection = ({ section, currentUser }) => {
       const res = await axios.post(
         `${API_URL}/task-results/results/tasks/${section.id}/check/`,
         answers,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
       setResults(res.data);
       setShowResultModal(true);
@@ -69,54 +70,65 @@ const LessonSection = ({ section, currentUser }) => {
         <h2 className="section-title">{section.title}</h2>
       </div>
       <img src={grammar_time} alt="Learning topic" className="lesson-section-img"/>
+
       <section className="lesson-theory-section">
-      <div className="theory-section-content">{section.content}</div>
-      <div className="theory-section-question">{section.description}</div>
-    </section>
-    <section className="lesson-practice-section">
-      <button onClick={() => setShowTest(!showTest)} className="toggle-test-button">
-        {showTest ? 'Hide Test' : 'Start Test'}
-      </button>
-
-      {showTest && currentQuestion && (
-        <div className="test-box">
-          <p className="question-text">{currentQuestion.question_text}</p>
-          <div className="options-container">
-            {Object.entries(currentQuestion.options || {}).map(([key, value]) => (
-              <div
-                key={key}
-                className={`option ${answers[currentQuestion.id] === value ? 'selected' : ''}`}
-                onClick={() => handleAnswer(currentQuestion.id, key)}
-              >
-                {value}
-              </div>
-            ))}
-          </div>
-
-          <div className="question-controls">
-            <button
-              onClick={() => setCurrentQuestionIndex(i => Math.max(i - 1, 0))}
-              disabled={currentQuestionIndex === 0}
-            className="previous-button-test">
-              ⬅ Previous
-            </button>
-            <button
-              onClick={() =>
-                setCurrentQuestionIndex(i =>
-                  i < questions.length - 1 ? i + 1 : i
-                )
-              }
-              disabled={currentQuestionIndex === questions.length - 1}
-              className="next-button-test">
-              Next ➡
-            </button>
-            {currentQuestionIndex === questions.length - 1 && (
-              <button onClick={sendAnswers} className="submit-test-button">✅ Submit</button>
-            )}
-          </div>
+        {/* Markdown-rendered content */}
+        <div className="theory-section-content">
+          <SectionContent content={section.content} />
         </div>
-      )}
+        {/* Опис можна залишити як є, або теж markdown */}
+        {section.description && (
+          <div className="theory-section-question">
+            <SectionContent content={section.description} />
+          </div>
+        )}
       </section>
+
+      <section className="lesson-practice-section">
+        <button onClick={() => setShowTest(!showTest)} className="toggle-test-button">
+          {showTest ? 'Hide Test' : 'Start Test'}
+        </button>
+
+        {showTest && currentQuestion && (
+          <div className="test-box">
+            <p className="question-text">{currentQuestion.question_text}</p>
+            <div className="options-container">
+              {Object.entries(currentQuestion.options || {}).map(([key, value]) => (
+                <div
+                  key={key}
+                  className={`option ${answers[currentQuestion.id] === value ? 'selected' : ''}`}
+                  onClick={() => handleAnswer(currentQuestion.id, key)}
+                >
+                  {value}
+                </div>
+              ))}
+            </div>
+
+            <div className="question-controls">
+              <button
+                onClick={() => setCurrentQuestionIndex(i => Math.max(i - 1, 0))}
+                disabled={currentQuestionIndex === 0}
+                className="previous-button-test">
+                ⬅ Previous
+              </button>
+              <button
+                onClick={() =>
+                  setCurrentQuestionIndex(i =>
+                    i < questions.length - 1 ? i + 1 : i
+                  )
+                }
+                disabled={currentQuestionIndex === questions.length - 1}
+                className="next-button-test">
+                Next ➡
+              </button>
+              {currentQuestionIndex === questions.length - 1 && (
+                <button onClick={sendAnswers} className="submit-test-button">✅ Submit</button>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+
       {showResultModal && (
         <TestResultModal
           results={results}

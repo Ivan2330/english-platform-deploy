@@ -1,0 +1,40 @@
+.md-editor {
+    border: 1px solid #e9e6ff;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fff
+}
+
+.md-tabs {
+    display: flex;
+    gap: 6px;
+    background: #f7f5ff;
+    padding: 6px
+}
+
+.md-tabs button {
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 0;
+    background: transparent;
+    cursor: pointer
+}
+
+.md-tabs .active {
+    background: #7c3aed;
+    color: #fff
+}
+
+.md-textarea {
+    width: 100%;
+    min-height: 220px;
+    padding: 12px;
+    border: 0;
+    outline: none;
+    resize: vertical;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace
+}
+
+.md-preview {
+    padding: 12px
+}
