@@ -7,6 +7,7 @@ from app.schemas.users.users import UserResponse, UserCreate, UserUpdate
 # Імпорти бази даних та ініціалізації
 from app.core.database import get_db_and_tables
 from app.core.initialize_admin import initialize_admin
+from fastapi.staticfiles import StaticFiles
 
 # Імпорти API-маршрутів
 from app.api.classrooms.classroom import router as classroom_router
@@ -78,6 +79,7 @@ app.include_router(
     tags=["Users"]
 )
 app.include_router(photo_router, prefix="/users", tags=["Users"])
+app.mount("/static", StaticFiles(directory="static"), name="static")
 # ✅ **Роутери користувачів**
 app.include_router(students_router, prefix="/students", tags=["Students"])
 app.include_router(staff_router, prefix="/staff", tags=["Staff"])
