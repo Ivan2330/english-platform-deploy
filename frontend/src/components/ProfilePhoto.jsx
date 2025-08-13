@@ -1,3 +1,4 @@
+// src/components/ProfilePhoto.jsx
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import AvatarEditor from "react-avatar-editor";
@@ -28,7 +29,7 @@ const ProfilePhoto = () => {
     // якщо прийшов /static/..., домалюємо базу
     if (url.startsWith("/")) {
       const base = (API_URL || window.location.origin).replace(/\/$/, "");
-      url = ${base}${url};
+      url = `${base}${url}`;
     }
 
     // якщо http://... і сторінка https — форсуємо https
@@ -44,9 +45,9 @@ const ProfilePhoto = () => {
       try {
         setErr(null);
         const staff = await axios
-          .get(${API_URL}/staff/staff/me, { headers })
+          .get(`${API_URL}/staff/staff/me`, { headers })
           .catch(() => null);
-        const res = staff || (await axios.get(${API_URL}/students/students/me, { headers }));
+        const res = staff || (await axios.get(`${API_URL}/students/students/me`, { headers }));
 
         const img = res?.data?.profile_image; // може бути /static/... або повний URL
         setPhotoUrl(toAbsoluteHttps(img));
@@ -88,7 +89,7 @@ const ProfilePhoto = () => {
       formData.append("file", imageFile);
 
       try {
-        const resp = await axios.patch(${API_URL}/users/me/photo, formData, {
+        const resp = await axios.patch(`${API_URL}/users/me/photo`, formData, {
           headers: { ...headers, "Content-Type": "multipart/form-data" },
         });
         // бек повертає абсолютний URL (https)
@@ -124,7 +125,7 @@ const ProfilePhoto = () => {
     setErr(null);
     setMsg(null);
     try {
-      await axios.delete(${API_URL}/users/me/photo, { headers });
+      await axios.delete(`${API_URL}/users/me/photo`, { headers });
       setPhotoUrl(null);
       setSelectedFile(null);
       setShowEditor(false);
