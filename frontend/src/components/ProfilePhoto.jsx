@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import AvatarEditor from "react-avatar-editor";
-import "../pages/ProfilePhoto.css";
+import "../pages/ProfilePhoto.css"; // стилі не змінював
 import { API_URL } from "../../config";
 import avatar from "../assets/user-avatar.svg";
 
@@ -22,35 +22,45 @@ const ProfilePhoto = () => {
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
-  const toAbsolute = (url) => {
+  // нормалізація URL: робимо абсолютний + HTTPS, щоб не було mixed content
+  const toAbsoluteHttps = (url) => {
     if (!url) return null;
-    if (/^https?:\/\//i.test(url)) return url;
-    // якщо бек повернув відносний /static/..., домалюємо базу
-    return `${API_URL.replace(/\/$/, "")}${url}`;
+
+    // якщо прийшов /static/..., домалюємо базу
+    if (url.startsWith("/")) {
+      const base = (API_URL || window.location.origin).replace(/\/$/, "");
+      url = `${base}${url}`;
+    }
+
+    // якщо http://... і сторінка https — форсуємо https
+    if (/^http:\/\//i.test(url) && window.location.protocol === "https:") {
+      url = url.replace(/^http:\/\//i, "https://");
+    }
+    return url;
   };
 
-  // Підтягуємо поточне фото користувача зі свого профілю
+  // підтягнути поточне фото з профілю (staff або student)
   useEffect(() => {
     const fetchMe = async () => {
       try {
         setErr(null);
-        // спершу пробуємо staff, інакше students
-        const res =
-          (await axios.get(`${API_URL}/staff/staff/me`, { headers }).catch(() => null)) ||
-          (await axios.get(`${API_URL}/students/students/me`, { headers }).catch(() => null));
+        const staff = await axios
+          .get(`${API_URL}/staff/staff/me`, { headers })
+          .catch(() => null);
+        const res = staff || (await axios.get(`${API_URL}/students/students/me`, { headers }));
 
-        const img = res?.data?.profile_image;
-        setPhotoUrl(toAbsolute(img));
-      } catch (e) {
-        // не фейлимо UI
+        const img = res?.data?.profile_image; // може бути /static/... або повний URL
+        setPhotoUrl(toAbsoluteHttps(img));
+      } catch {
+        // ігноруємо
       }
     };
     fetchMe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFileChange = (event) => {
-    const file = event.target.files?.[0];
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
     if (!/^image\/(png|jpeg|webp)$/i.test(file.type)) {
       setErr("Дозволені формати: PNG / JPEG / WEBP");
@@ -79,11 +89,12 @@ const ProfilePhoto = () => {
       formData.append("file", imageFile);
 
       try {
-        const response = await axios.patch(`${API_URL}/users/me/photo`, formData, {
+        const resp = await axios.patch(`${API_URL}/users/me/photo`, formData, {
           headers: { ...headers, "Content-Type": "multipart/form-data" },
         });
-        const url = response.data?.photo_url;
-        setPhotoUrl(url || null);
+        // бек повертає абсолютний URL (https)
+        const url = resp.data?.photo_url;
+        setPhotoUrl(toAbsoluteHttps(url));
         setShowEditor(false);
         setSelectedFile(null);
         setMsg("Фото оновлено ✅");
@@ -97,7 +108,7 @@ const ProfilePhoto = () => {
     canvas.toBlob(
       (blob) => {
         if (blob) return doUpload(blob);
-        // Safari фолбек: dataURL -> Blob
+        // Safari фолбек
         const dataUrl = canvas.toDataURL("image/png");
         const binary = atob(dataUrl.split(",")[1]);
         const array = new Uint8Array(binary.length);
@@ -197,7 +208,11 @@ const ProfilePhoto = () => {
         <button onClick={() => fileInputRef.current?.click()} className="update-photo btn">
           Update Photo
         </button>
-        <button className="delete-photo btn danger" onClick={handleDelete} disabled={!photoUrl || loading}>
+        <button
+          className="delete-photo btn danger"
+          onClick={handleDelete}
+          disabled={!photoUrl || loading}
+        >
           Delete Photo
         </button>
       </div>
