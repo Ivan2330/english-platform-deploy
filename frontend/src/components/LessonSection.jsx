@@ -8,7 +8,7 @@ import speaking_page from '../assets/Speaking_Page.png'; // ✅ додали к�
 import TestResultModal from '../components/TestResultModal';
 import SectionContent from './SectionContent';
 
-const SUPPORTED_TYPES = ['grammar', 'speaking']; // ✅ підтримуємо обидва типи
+const SUPPORTED_TYPES = ['grammar', 'reading']; // ✅ підтримуємо обидва типи
 
 const LessonSection = ({ section, currentUser }) => {
   const [questions, setQuestions] = useState([]);
