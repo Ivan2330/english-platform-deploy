@@ -131,12 +131,19 @@ async def update_question(
 
 @router.delete("/{question_id}/", status_code=204)
 async def delete_question(question_id: int, session: AsyncSession = Depends(get_async_session)):
+    # 1) знайдемо питання
     result = await session.execute(select(Question).where(Question.id == question_id))
     question = result.scalar_one_or_none()
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
 
+    # 2) приберемо залежні результати (щоб не впав FK)
+    await session.execute(sa_delete(TaskResult).where(TaskResult.question_id == question_id))
+
+    # 3) тепер безпечно видаляємо питання
     await session.delete(question)
     await session.commit()
-    return {"message": "Question deleted successfully"}
+
+    # 204 — без тіла
+    return Response(status_code=204)
 
