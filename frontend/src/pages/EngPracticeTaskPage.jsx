@@ -21,6 +21,7 @@ export default function EngPracticeTaskPage() {
   const [curr, setCurr] = useState(0);
   const [submitMsg, setSubmitMsg] = useState(null);
   const [resultMeta, setResultMeta] = useState(null);
+  const [showPractice, setShowPractice] = useState(false); // приховуємо тест до кліку
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
@@ -209,6 +210,7 @@ export default function EngPracticeTaskPage() {
 
   return (
     <div className="ep-task-shell">
+      {/* верхній бар без округлень */}
       <div className="ep-task-hero">
         <div className="ep-task-hero-inner">
           <button className="ep-back" onClick={() => navigate(-1)}>← Back</button>
@@ -225,67 +227,84 @@ export default function EngPracticeTaskPage() {
         <div className="ep-empty">Task not found.</div>
       ) : (
         <div className="ep-task-grid">
-          {/* Markdown-теорія */}
+          {/* Markdown — менше, фіксована висота, скрол всередині */}
           <div className="ep-theory card">
-            {task.content ? (
-              <SectionContent content={task.content} />
-            ) : (
-              <div className="ep-empty muted">Немає теоретичного контенту.</div>
-            )}
-            {task.description && (
-              <div className="ep-desc">
-                <SectionContent content={task.description} />
-              </div>
-            )}
-          </div>
-
-          {/* Практика */}
-          <div className="ep-practice card">
-            {q ? (
-              <>
-                {(taskType !== "gap_fill" || !hasInlineGaps(q.question_text)) && (
-                  <p className="ep-qtext">{q.question_text}</p>
+            <div className="ep-theory-fixed">
+              <div className="ep-theory-scroll">
+                {task.content ? (
+                  <SectionContent content={task.content} />
+                ) : (
+                  <div className="ep-empty muted">Немає теоретичного контенту.</div>
                 )}
-
-                {renderQuestionBody(q)}
-
-                <div className="ep-controls">
-                  <button
-                    className="ep-ghost"
-                    disabled={curr === 0}
-                    onClick={() => setCurr((i) => Math.max(0, i - 1))}
-                  >
-                    ⬅ Prev
-                  </button>
-                  <button
-                    className="ep-ghost"
-                    disabled={curr === questions.length - 1}
-                    onClick={() => setCurr((i) => (i < questions.length - 1 ? i + 1 : i))}
-                  >
-                    Next ➡
-                  </button>
-                  {curr === questions.length - 1 && (
-                    <button className="ep-primary" onClick={submit}>
-                      Submit ✅
-                    </button>
-                  )}
-                </div>
-
-                {submitMsg && (
-                  <div className="ep-note">
-                    {submitMsg}
-                    {resultMeta && (
-                      <div className="ep-score">
-                        Score: {resultMeta.correct}/{resultMeta.total}
-                      </div>
-                    )}
+                {task.description && (
+                  <div className="ep-desc">
+                    <SectionContent content={task.description} />
                   </div>
                 )}
-              </>
-            ) : (
-              <div className="ep-empty">Питання відсутні.</div>
-            )}
+              </div>
+            </div>
           </div>
+
+          {/* Практика — прихована до кліку */}
+          {!showPractice ? (
+            <div className="card ep-practice-starter">
+              <h4>Practice</h4>
+              <p className="muted">Готові спробувати завдання? Відкрий тест, коли будете готові.</p>
+              <button className="ep-primary" onClick={() => setShowPractice(true)}>
+                Start Practice ▶
+              </button>
+            </div>
+          ) : (
+            <div className="ep-practice card">
+              {q ? (
+                <>
+                  {(taskType !== "gap_fill" || !hasInlineGaps(q.question_text)) && (
+                    <p className="ep-qtext">{q.question_text}</p>
+                  )}
+
+                  {renderQuestionBody(q)}
+
+                  <div className="ep-controls">
+                    <button
+                      className="ep-ghost"
+                      disabled={curr === 0}
+                      onClick={() => setCurr((i) => Math.max(0, i - 1))}
+                    >
+                      ⬅ Prev
+                    </button>
+                    <button
+                      className="ep-ghost"
+                      disabled={curr === questions.length - 1}
+                      onClick={() => setCurr((i) => (i < questions.length - 1 ? i + 1 : i))}
+                    >
+                      Next ➡
+                    </button>
+                    {curr === questions.length - 1 && (
+                      <button className="ep-primary" onClick={submit}>
+                        Submit ✅
+                      </button>
+                    )}
+                    <button className="ep-ghost" onClick={() => setShowPractice(false)}>
+                      Hide
+                    </button>
+                  </div>
+
+                  {submitMsg && (
+                    <div className="ep-note">
+                      {submitMsg}
+                      {resultMeta && (
+                        <div className="ep-score">
+                          Score: {resultMeta.correct}/{resultMeta.total}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="ep-empty">Питання відсутні.</div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

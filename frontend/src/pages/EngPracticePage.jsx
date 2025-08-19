@@ -4,7 +4,6 @@ import axios from "axios";
 import { API_URL } from "../../config";
 import "./EngPractice.css";
 
-// Показуємо тільки робочі контролі
 const CONTROLS = [
   { key: "grammar", label: "Grammar" },
   { key: "reading", label: "Reading" },
@@ -15,12 +14,12 @@ const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 export default function EngPracticePage() {
   const [tasks, setTasks] = useState([]);
-  const [lessonsMap, setLessonsMap] = useState({}); // { [lesson_id]: level }
+  const [lessonsMap, setLessonsMap] = useState({});
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);
 
   const [control, setControl] = useState("grammar");
-  const [level, setLevel] = useState(null); // null = всі
+  const [level, setLevel] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,7 +34,6 @@ export default function EngPracticePage() {
           axios.get(`${API_URL}/universal-tasks/tasks/`, { headers }),
           axios.get(`${API_URL}/lessons/lessons/`, { headers }),
         ]);
-
         const map = {};
         (lessonsRes.data || []).forEach((ls) => {
           if (ls?.id && ls?.level) map[ls.id] = ls.level;
@@ -58,7 +56,7 @@ export default function EngPracticePage() {
     if (level) {
       arr = arr.filter((t) => {
         const lv = t.lesson_id ? lessonsMap[t.lesson_id] : null;
-        return !lv || lv === level; // без lesson_id — показуємо завжди
+        return !lv || lv === level;
       });
     }
     if (control === "writing") {
@@ -69,11 +67,10 @@ export default function EngPracticePage() {
 
   return (
     <div className="ep-shell">
-      {/* ГОЛОВНИЙ ХЕДЕР */}
+      {/* HERO (без округлень, вищий) */}
       <div className="ep-hero">
         <div className="ep-hero-inner">
           <div className="ep-brand">Eng Practice</div>
-
           <nav className="ep-tabs">
             {CONTROLS.map((c) => (
               <button
@@ -88,7 +85,7 @@ export default function EngPracticePage() {
         </div>
       </div>
 
-      {/* КОНТЕНТ: список + правий сайдбар рівнів */}
+      {/* Тіло: ліворуч список, праворуч рівні (нижче і з відступами) */}
       <div className="ep-body">
         <main className="ep-main">
           {loading ? (
@@ -109,16 +106,13 @@ export default function EngPracticePage() {
                     <span className="ep-chip">{t.control_type}</span>
                     <span className="ep-chip tone">{t.task_type}</span>
                   </div>
-
                   <h4 className="ep-title">{t.title}</h4>
-
                   {t.description && (
                     <p className="ep-desc">
                       {String(t.description).slice(0, 150)}
                       {String(t.description).length > 150 ? "…" : ""}
                     </p>
                   )}
-
                   <div className="ep-card-foot">
                     {t.topic ? <span className="ep-tag">#{t.topic}</span> : <span />}
                     <span className="ep-cta">Open →</span>
