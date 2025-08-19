@@ -1,4 +1,3 @@
-// src/components/ProfilePhoto.jsx
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import AvatarEditor from "react-avatar-editor";
@@ -18,17 +17,15 @@ const ProfilePhoto = () => {
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
 
-  // Робимо абсолютний HTTPS‑URL (щоб не було mixed content)
+  // Робимо абсолютний HTTPS-URL (щоб не було mixed content)
   const toAbsoluteHttps = (url) => {
     if (!url) return null;
     let out = url;
 
-    // Якщо бек зберігає відносний шлях типу /static/...
     if (out.startsWith("/")) {
       const base = (API_URL || window.location.origin).replace(/\/$/, "");
       out = `${base}${out}`;
     }
-    // Якщо http:// на https‑сторінці — форсимо https://
     if (/^http:\/\//i.test(out) && window.location.protocol === "https:") {
       out = out.replace(/^http:\/\//i, "https://");
     }
@@ -67,7 +64,7 @@ const ProfilePhoto = () => {
       async (blob) => {
         if (!blob) return;
 
-        // Надішлемо як file з ім'ям, не «безіменний blob»
+        // Надішлемо як file з ім'ям
         const fileWithName = new File([blob], "avatar.png", { type: blob.type || "image/png" });
         const formData = new FormData();
         formData.append("file", fileWithName);
@@ -80,7 +77,7 @@ const ProfilePhoto = () => {
             },
           });
 
-          // нормалізуємо URL і додаємо cache‑buster, щоб браузер не показував старе
+          // нормалізуємо URL і додаємо cache-buster
           const rawUrl = response.data?.photo_url;
           const url = toAbsoluteHttps(rawUrl);
           const busted = url ? `${url}${url.includes("?") ? "&" : "?"}v=${Date.now()}` : null;
@@ -88,13 +85,12 @@ const ProfilePhoto = () => {
           setPhotoUrl(busted);
           setShowEditor(false);
 
-          // оновимо localStorage.user, щоб фото було і після reload
+          // оновимо localStorage.user
           try {
             const raw = localStorage.getItem("user");
             if (raw) {
               const u = JSON.parse(raw);
-              // збережемо абсолютний URL (без cache‑buster, щоб не розросталось)
-              u.profile_image = url;
+              u.profile_image = url; // збережемо абсолютний URL
               localStorage.setItem("user", JSON.stringify(u));
             }
           } catch {
@@ -109,42 +105,33 @@ const ProfilePhoto = () => {
     );
   };
 
-  const handleDelete = async () => {
-    try {
-      await axios.delete(`${API_URL}/users/me/photo`, { headers });
-      setPhotoUrl(null);
-      setSelectedFile(null);
-      setShowEditor(false);
-
-      try {
-        const raw = localStorage.getItem("user");
-        if (raw) {
-          const u = JSON.parse(raw);
-          u.profile_image = null;
-          localStorage.setItem("user", JSON.stringify(u));
-        }
-      } catch {
-        /* ignore */
-      }
-    } catch (error) {
-      console.error("Delete failed:", error);
-    }
+  // ❗ Видалили кнопки "Update Photo" та "Delete Photo".
+  // Щоб не втратити зручність — фото/плейсхолдер клікабельні для вибору файлу.
+  const openPicker = () => {
+    if (fileInputRef.current) fileInputRef.current.click();
   };
 
   return (
     <div className="photo-wrapper">
       {photoUrl && !showEditor && (
-        <img src={photoUrl} alt="Profile" className="profile-photo-img" />
+        <img
+          src={photoUrl}
+          alt="Profile"
+          className="profile-photo-img"
+          onClick={openPicker}
+          style={{ cursor: "pointer" }}
+          title="Click to update photo"
+        />
       )}
 
       {!photoUrl && !showEditor && (
-        <div className="profile-placeholder">
+        <div className="profile-placeholder" onClick={openPicker} style={{ cursor: "pointer" }}>
           <img
             src={avatar}
             alt="No Photo"
             className="profile-placeholder-noPhoto"
-            width="200px"
-            height="200px"
+            width="200"
+            height="200"
           />
         </div>
       )}
@@ -174,6 +161,7 @@ const ProfilePhoto = () => {
         </div>
       )}
 
+      {/* прихований інпут — викликається кліком по фото/плейсхолдеру */}
       <input
         type="file"
         ref={fileInputRef}
@@ -181,12 +169,6 @@ const ProfilePhoto = () => {
         style={{ display: "none" }}
         onChange={handleFileChange}
       />
-      <button onClick={() => fileInputRef.current.click()} className="update-photo">
-        Update Photo
-      </button>
-      <button onClick={handleDelete} className="delete-photo">
-        Delete Photo
-      </button>
     </div>
   );
 };

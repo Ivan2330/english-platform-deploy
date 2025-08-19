@@ -54,15 +54,15 @@ const StudentDashboardPage = () => {
           <button className="contact-btn">Contact us</button>
           <ul className="contact-btn-dropdown-ul">
             <li className="contact-btn-dropdown-li">
-              <img src={phone_number} />
+              <img src={phone_number} alt="" />
               +38 099 179 70 47
             </li>
             <li className="contact-btn-dropdown-li">
-              <img src={telegram} />
+              <img src={telegram} alt="" />
               @primeacademy
             </li>
             <li className="contact-btn-dropdown-li">
-              <img src={instagram} />
+              <img src={instagram} alt="" />
               @primeacademy
             </li>
           </ul>
@@ -94,9 +94,8 @@ const StudentDashboardPage = () => {
       <section className="dashboard-navigation-section">
         <div className="dashboard-navigation">
           <button className="nav-tab">Learning</button>
-          <button className="nav-tab nav-tab-2">
-            Additional<span>not yet available</span>
-          </button>
+          {/* Прибрано "not yet available" */}
+          <button className="nav-tab nav-tab-2">Additional</button>
         </div>
 
         <div className="student-actions">
