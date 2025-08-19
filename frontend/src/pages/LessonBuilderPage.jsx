@@ -227,7 +227,7 @@ export default function LessonBuilderPage() {
       optionsD: "",
     });
 
-  // ✅ ОНОВЛЕНО: створення питання з нормалізацією correct_answer
+  // ✅ створення питання з нормалізацією correct_answer
   const createQuestion = async (taskId) => {
     const options = {};
     if (qForm.optionsA) options["A"] = qForm.optionsA;
@@ -260,7 +260,7 @@ export default function LessonBuilderPage() {
     await loadTaskQuestions(taskId);
   };
 
-  // ✅ ОНОВЛЕНО: збереження питання (edit) з нормалізацією correct_answer
+  // ✅ збереження питання (edit) з нормалізацією correct_answer
   const saveQuestion = async () => {
     if (!editingQuestion) return;
 
@@ -286,6 +286,13 @@ export default function LessonBuilderPage() {
     });
     setMsg("Question updated.");
     setEditingQuestion(null);
+    if (editingTask) await loadTaskQuestions(editingTask.id);
+  };
+
+  // ✅ ДОДАНО: видалення питання
+  const deleteQuestion = async (questionId) => {
+    await fetchJSON(`${PATHS.questions}/${questionId}/`, { method: "DELETE" });
+    setMsg("Question deleted.");
     if (editingTask) await loadTaskQuestions(editingTask.id);
   };
 
