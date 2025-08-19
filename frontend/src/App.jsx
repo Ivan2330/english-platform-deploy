@@ -1,4 +1,3 @@
-// src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
 import LoginPage from "./pages/LoginPage";
@@ -13,6 +12,9 @@ import CreateClassPage from "./pages/CreateClassPage";
 import AllClassesPage from "./pages/AllClassesPage";
 import LessonBuilderPage from "./pages/LessonBuilderPage";
 
+/* ⬇️ нові сторінки Eng Practice */
+import EngPracticePage from "./pages/EngPracticePage";
+import EngPracticeTaskPage from "./pages/EngPracticeTaskPage";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -54,11 +56,19 @@ function App() {
               <Route path="/create-class" element={<CreateClassPage />} />
               <Route path="/all-classes" element={<AllClassesPage />} />
               <Route path="/lesson-builder" element={<LessonBuilderPage />} />
+
+              {/* Eng Practice (адміну теж доступно для тесту) */}
+              <Route path="/eng-practice" element={<EngPracticePage />} />
+              <Route path="/eng-practice/task/:id" element={<EngPracticeTaskPage />} />
             </>
           ) : (
             <>
               <Route path="/student-dashboard" element={<StudentDashboard />} />
               <Route path="/classroom/:id" element={<ClassPage />} />
+
+              {/* Eng Practice для студента */}
+              <Route path="/eng-practice" element={<EngPracticePage />} />
+              <Route path="/eng-practice/task/:id" element={<EngPracticeTaskPage />} />
             </>
           )}
         </Route>
