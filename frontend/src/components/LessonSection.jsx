@@ -9,6 +9,7 @@ import TestResultModal from '../components/TestResultModal';
 import SectionContent from './SectionContent';
 
 const SUPPORTED_TYPES = ['grammar', 'reading']; // які секції показуємо
+const GAP_TOKEN_REGEX = /\[\[(\d+)\]\]/g;      // маркери [[1]], [[2]], ...
 
 const LessonSection = ({ section, currentUser }) => {
   const [questions, setQuestions] = useState([]);
@@ -42,13 +43,23 @@ const LessonSection = ({ section, currentUser }) => {
     }
   };
 
-  // універсальний сеттер відповіді
+  // універсальні сеттери
   const setAnswer = (questionId, value) => {
     const v = typeof value === 'string' ? value.trim() : value;
     setAnswers(prev => ({ ...prev, [questionId]: v }));
   };
 
-  // multiple choice
+  const setInlineGapValue = (questionId, gapIndex, value) => {
+    setAnswers(prev => {
+      const prevVal = prev[questionId];
+      const base = (prevVal && typeof prevVal === 'object' && !Array.isArray(prevVal)) ? prevVal : {};
+      return {
+        ...prev,
+        [questionId]: { ...base, [gapIndex]: (value ?? '').trim() }
+      };
+    });
+  };
+
   const handleMCOption = (questionId, optionKey) => {
     const q = questions.find(x => x.id === questionId);
     const value = q?.options?.[optionKey];
@@ -58,11 +69,27 @@ const LessonSection = ({ section, currentUser }) => {
   const goPrev = () => setCurrentQuestionIndex(i => Math.max(i - 1, 0));
   const goNext = () => setCurrentQuestionIndex(i => (i < questions.length - 1 ? i + 1 : i));
 
+  // перетворення відповідей для сумісності з беком (inline -> "part1||part2")
+  const buildPayload = () => {
+    const entries = Object.entries(answers);
+    const normalized = entries.map(([qid, val]) => {
+      if (val && typeof val === 'object' && !Array.isArray(val)) {
+        // inline: сортуємо за індексами 1..N і склеюємо "||"
+        const keys = Object.keys(val).sort((a, b) => Number(a) - Number(b));
+        const parts = keys.map(k => String(val[k] ?? '').trim());
+        return [qid, parts.join('||')];
+      }
+      return [qid, typeof val === 'string' ? val.trim() : val];
+    });
+    return Object.fromEntries(normalized);
+  };
+
   const sendAnswers = async () => {
     try {
+      const payload = buildPayload();
       const res = await axios.post(
         `${API_URL}/task-results/results/tasks/${section.id}/check/`,
-        answers,
+        payload,
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
       setResults(res.data);
@@ -83,6 +110,57 @@ const LessonSection = ({ section, currentUser }) => {
 
   const currentQuestion = questions[currentQuestionIndex];
   const heroImage = section.control_type === 'reading' ? speaking_page : grammar_time;
+
+  const hasInlineGaps = (text) => {
+    if (!text) return false;
+    return !!String(text).match(GAP_TOKEN_REGEX);
+  };
+
+  const renderInlineGapFill = (q) => {
+    const text = String(q.question_text || '');
+    const parts = [];
+    let lastIndex = 0;
+    let idx = 0;
+    const regex = new RegExp(GAP_TOKEN_REGEX.source, 'g');
+
+    const valueObj = (answers[q.id] && typeof answers[q.id] === 'object') ? answers[q.id] : {};
+
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      const start = match.index;
+      const end = regex.lastIndex;
+      const gapIndex = Number(match[1]); // [[1]], [[2]], ...
+
+      // текст до пропуску
+      if (start > lastIndex) {
+        parts.push(<span key={`t-${idx}-${start}`}>{text.slice(lastIndex, start)}</span>);
+      }
+
+      // інпут замість пропуску
+      const val = valueObj[gapIndex] || '';
+      parts.push(
+        <input
+          key={`g-${q.id}-${gapIndex}`}
+          className="gap-inline-input"
+          type="text"
+          placeholder="..."
+          value={val}
+          onChange={(e) => setInlineGapValue(q.id, gapIndex, e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') goNext(); }}
+        />
+      );
+
+      lastIndex = end;
+      idx++;
+    }
+
+    // хвіст після останнього пропуску
+    if (lastIndex < text.length) {
+      parts.push(<span key={`t-end-${q.id}`}>{text.slice(lastIndex)}</span>);
+    }
+
+    return <p className="gap-inline-text">{parts}</p>;
+  };
 
   const renderQuestionBody = (q) => {
     if (!q) return null;
@@ -122,9 +200,22 @@ const LessonSection = ({ section, currentUser }) => {
     }
 
     if (taskType === 'gap_fill') {
-      // 1 пропуск = 1 питання -> звичайний input
+      const inline = hasInlineGaps(q.question_text);
+
+      // INLINE MODE: у тексті є [[1]], [[2]] ...
+      if (inline) {
+        return (
+          <div className="gap-inline-box">
+            {renderInlineGapFill(q)}
+            <small className="hint">Впиши відповіді у поля прямо в реченні.</small>
+          </div>
+        );
+      }
+
+      // SIMPLE MODE: 1 питання = 1 інпут
       return (
         <div className="gap-box">
+          <p className="question-text">{q.question_text}</p>
           <input
             className="gap-input"
             type="text"
@@ -187,7 +278,10 @@ const LessonSection = ({ section, currentUser }) => {
 
         {showTest && currentQuestion && (
           <div className="test-box theme--brand">
-            <p className="question-text">{currentQuestion.question_text}</p>
+            {/* Для multiple/true_false та simple gap показуємо текст тут */}
+            {(taskType !== 'gap_fill' || !hasInlineGaps(currentQuestion?.question_text)) && (
+              <p className="question-text">{currentQuestion?.question_text}</p>
+            )}
 
             {renderQuestionBody(currentQuestion)}
 
