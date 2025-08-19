@@ -6,6 +6,10 @@ from app.core.database import get_async_session
 from app.models.controls.questions import Question
 from app.schemas.controls.questions import QuestionCreate, QuestionUpdate, QuestionResponse
 from app.models.controls.universal_task import UniversalTask
+from app.models.controls.task_result import TaskResult
+from fastapi import Response  # якщо ще не імпортовано
+from sqlalchemy import delete  # <— ОЦЕ ГОЛОВНЕ
+
 
 router = APIRouter(prefix="/questions", tags=["Questions"])
 
@@ -131,19 +135,20 @@ async def update_question(
 
 @router.delete("/{question_id}/", status_code=204)
 async def delete_question(question_id: int, session: AsyncSession = Depends(get_async_session)):
-    # 1) знайдемо питання
+    # 1) Знайти питання
     result = await session.execute(select(Question).where(Question.id == question_id))
     question = result.scalar_one_or_none()
     if not question:
         raise HTTPException(status_code=404, detail="Question not found")
 
-    # 2) приберемо залежні результати (щоб не впав FK)
-    await session.execute(sa_delete(TaskResult).where(TaskResult.question_id == question_id))
+    # 2) Видалити залежні TaskResult, щоб не впала FK-цілісність
+    await session.execute(delete(TaskResult).where(TaskResult.question_id == question_id))
 
-    # 3) тепер безпечно видаляємо питання
+    # 3) Видалити саме питання
     await session.delete(question)
     await session.commit()
 
     # 204 — без тіла
     return Response(status_code=204)
+
 
