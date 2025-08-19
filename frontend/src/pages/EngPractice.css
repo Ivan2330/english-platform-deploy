@@ -274,7 +274,7 @@
 
 /* Markdown — менший, фіксована висота + скрол всередині */
 .ep-theory-fixed {
-    height: clamp(440px, 70vh, 700px);
+    height: clamp(360px, 56vh, 560px);
     overflow: hidden;
     /* контейнер фіксованої висоти */
 }
