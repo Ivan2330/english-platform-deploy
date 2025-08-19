@@ -9,10 +9,9 @@ import MarkdownEditor from "../components/MarkdownEditor";
  *  - CRUD уроків
  *  - список секцій/завдань (universal tasks) для уроку
  *  - CRUD секцій (tasks) з полем content у Markdown
- *  - CRUD питань (вхолосту) для конкретного task: order + прив'язка до секції
- *
- * Префікси дубльовані, як просив.
+ *  - CRUD питань для конкретного task: order + прив'язка до секції
  */
+
 const PATHS = {
   lessons: `${API_URL}/lessons/lessons`,
   tasks: `${API_URL}/universal-tasks/tasks`,
@@ -31,6 +30,37 @@ const fetchJSON = async (url, init = {}) => {
   return data;
 };
 
+/** ===== ХЕЛПЕРИ ДЛЯ НОРМАЛІЗАЦІЇ ВІДПОВІДЕЙ ===== **/
+const getTaskById = (tasks, id) => tasks.find((t) => t.id === id);
+
+const normalizeCorrectAnswer = (taskType, correct, optionsMap) => {
+  if (correct == null) return correct;
+  const raw = String(correct).trim();
+  const tt = String(taskType || "").toLowerCase();
+
+  if (tt === "true_false") {
+    const v = raw.toLowerCase();
+    if (["t", "true", "yes", "y", "1"].includes(v)) return "true";
+    if (["f", "false", "no", "n", "0"].includes(v)) return "false";
+    return v;
+  }
+
+  if (tt === "multiple_choice") {
+    // Підтримує "A,B" або "A B" або конкретні значення; мапимо A..D на options[A..D]
+    const parts = raw.split(/[,\s]+/).filter(Boolean);
+    const mapTok = (tok) => {
+      const key = tok.toUpperCase();
+      if (optionsMap && optionsMap[key]) return optionsMap[key];
+      return tok; // вже значення опції (наприклад "Paris")
+    };
+    return parts.map(mapTok).join(",");
+  }
+
+  // gap_fill / open_text — залишаємо як є (для inline gap_fill вводь "word1||word2")
+  return raw;
+};
+/** ===== КІНЕЦЬ ХЕЛПЕРІВ ===== **/
+
 export default function LessonBuilderPage() {
   // LESSONS
   const [lessons, setLessons] = useState([]);
@@ -40,7 +70,10 @@ export default function LessonBuilderPage() {
 
   const [currentLesson, setCurrentLesson] = useState(null);
   const [lessonForm, setLessonForm] = useState({ title: "", level: "A1" });
-  const canCreateLesson = useMemo(() => !!lessonForm.title && !!lessonForm.level, [lessonForm]);
+  const canCreateLesson = useMemo(
+    () => !!lessonForm.title && !!lessonForm.level,
+    [lessonForm]
+  );
 
   // TASKS for selected lesson
   const [tasks, setTasks] = useState([]);
@@ -49,7 +82,7 @@ export default function LessonBuilderPage() {
     task_type: "true_false",
     title: "",
     description: "",
-    content: "",       // markdown
+    content: "", // markdown
     media_url: "",
     topic: "",
     word_list: "",
@@ -76,7 +109,9 @@ export default function LessonBuilderPage() {
     setLessonLoading(true);
     setLessonErr(null);
     try {
-      const data = await fetch(`${PATHS.lessons}/`, { headers: authHeaders() }).then((r) => r.json());
+      const data = await fetch(`${PATHS.lessons}/`, {
+        headers: authHeaders(),
+      }).then((r) => r.json());
       setLessons(Array.isArray(data) ? data : []);
     } catch (e) {
       setLessonErr(e.message);
@@ -87,7 +122,10 @@ export default function LessonBuilderPage() {
 
   const createLesson = async () => {
     const payload = { title: lessonForm.title, level: lessonForm.level };
-    await fetchJSON(`${PATHS.lessons}/`, { method: "POST", body: JSON.stringify(payload) });
+    await fetchJSON(`${PATHS.lessons}/`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
     setMsg("Lesson created.");
     setLessonForm({ title: "", level: "A1" });
     await loadLessons();
@@ -95,7 +133,10 @@ export default function LessonBuilderPage() {
 
   const updateLesson = async (lesson) => {
     const payload = { title: lesson.title, level: lesson.level };
-    await fetchJSON(`${PATHS.lessons}/${lesson.id}`, { method: "PUT", body: JSON.stringify(payload) });
+    await fetchJSON(`${PATHS.lessons}/${lesson.id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
     setMsg("Lesson updated.");
     await loadLessons();
   };
@@ -121,7 +162,10 @@ export default function LessonBuilderPage() {
   const createTask = async () => {
     if (!currentLesson) return;
     const payload = { lesson_id: currentLesson.id, ...taskForm };
-    await fetchJSON(`${PATHS.tasks}/`, { method: "POST", body: JSON.stringify(payload) });
+    await fetchJSON(`${PATHS.tasks}/`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
     setMsg("Task created.");
     setTaskForm({
       control_type: "grammar",
@@ -148,7 +192,10 @@ export default function LessonBuilderPage() {
       word_list: editingTask.word_list,
       visibility: editingTask.visibility,
     };
-    await fetchJSON(`${PATHS.tasks}/${editingTask.id}`, { method: "PUT", body: JSON.stringify(payload) });
+    await fetchJSON(`${PATHS.tasks}/${editingTask.id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
     setMsg("Task updated.");
     setEditingTask(null);
     await loadLessonTasks(currentLesson.id);
@@ -180,6 +227,7 @@ export default function LessonBuilderPage() {
       optionsD: "",
     });
 
+  // ✅ ОНОВЛЕНО: створення питання з нормалізацією correct_answer
   const createQuestion = async (taskId) => {
     const options = {};
     if (qForm.optionsA) options["A"] = qForm.optionsA;
@@ -187,44 +235,64 @@ export default function LessonBuilderPage() {
     if (qForm.optionsC) options["C"] = qForm.optionsC;
     if (qForm.optionsD) options["D"] = qForm.optionsD;
 
+    const task = getTaskById(tasks, taskId);
+    const normalizedAnswer = normalizeCorrectAnswer(
+      task?.task_type,
+      qForm.correct_answer,
+      options
+    );
+
     const payload = {
       task_id: taskId,
       question_text: qForm.question_text,
       options: Object.keys(options).length ? options : null,
-      correct_answer: qForm.correct_answer || null,
+      correct_answer: normalizedAnswer || null,
       explanation: qForm.explanation || null,
       order: Number(qForm.order || 1),
     };
-    await fetchJSON(`${PATHS.questions}/tasks/${taskId}/questions/`, { method: "POST", body: JSON.stringify(payload) });
+
+    await fetchJSON(`${PATHS.questions}/tasks/${taskId}/questions/`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
     setMsg("Question created.");
     setQFormReset();
     await loadTaskQuestions(taskId);
   };
 
+  // ✅ ОНОВЛЕНО: збереження питання (edit) з нормалізацією correct_answer
   const saveQuestion = async () => {
     if (!editingQuestion) return;
+
     const options = editingQuestion.options || {};
+    const task = getTaskById(tasks, editingTask?.id);
+    const normalizedAnswer = normalizeCorrectAnswer(
+      task?.task_type,
+      editingQuestion.correct_answer,
+      options
+    );
+
     const payload = {
       question_text: editingQuestion.question_text,
       options,
-      correct_answer: editingQuestion.correct_answer,
+      correct_answer: normalizedAnswer,
       explanation: editingQuestion.explanation,
       order: editingQuestion.order,
     };
-    await fetchJSON(`${PATHS.questions}/${editingQuestion.id}/`, { method: "PUT", body: JSON.stringify(payload) });
+
+    await fetchJSON(`${PATHS.questions}/${editingQuestion.id}/`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
     setMsg("Question updated.");
     setEditingQuestion(null);
     if (editingTask) await loadTaskQuestions(editingTask.id);
   };
 
-  const deleteQuestion = async (questionId) => {
-    await fetchJSON(`${PATHS.questions}/${questionId}/`, { method: "DELETE" });
-    setMsg("Question deleted.");
-    if (editingTask) await loadTaskQuestions(editingTask.id);
-  };
-
   // init
-  useEffect(() => { loadLessons(); }, []);
+  useEffect(() => {
+    loadLessons();
+  }, []);
   useEffect(() => {
     if (currentLesson) loadLessonTasks(currentLesson.id);
     else {
@@ -234,6 +302,36 @@ export default function LessonBuilderPage() {
     }
   }, [currentLesson]);
 
+  // Підказка під поле Correct Answer залежно від типу завдання
+  const renderCorrectAnswerHint = (taskType) => {
+    const tt = String(taskType || "").toLowerCase();
+    if (tt === "multiple_choice") {
+      return (
+        <small className="hint">
+          Можеш вводити <b>A/B/C/D</b> або безпосереднє значення опції. Для кількох — через кому.
+        </small>
+      );
+    }
+    if (tt === "true_false") {
+      return (
+        <small className="hint">
+          Приймається <b>true/false</b> (можна t/f, yes/no — нормалізується автоматично).
+        </small>
+      );
+    }
+    if (tt === "gap_fill") {
+      return (
+        <small className="hint">
+          Для кількох пропусків у тексті (мітки <b>[[1]]</b>, <b>[[2]]</b>...) введи відповіді як <b>word1||word2</b> у правильному порядку.
+        </small>
+      );
+    }
+    if (tt === "open_text") {
+      return <small className="hint">Відповідь перевіряється вручну викладачем.</small>;
+    }
+    return null;
+  };
+
   return (
     <div className="lb-wrap">
       <h2>Lesson Builder</h2>
@@ -242,7 +340,9 @@ export default function LessonBuilderPage() {
 
       {/* LESSONS */}
       <div className="panel">
-        <div className="panel-head"><h3>Lessons</h3></div>
+        <div className="panel-head">
+          <h3>Lessons</h3>
+        </div>
         <div className="panel-body">
           <div className="grid-3">
             <div className="card">
@@ -251,21 +351,33 @@ export default function LessonBuilderPage() {
                 <span>Title</span>
                 <input
                   value={lessonForm.title}
-                  onChange={(e) => setLessonForm((s) => ({ ...s, title: e.target.value }))}
+                  onChange={(e) =>
+                    setLessonForm((s) => ({ ...s, title: e.target.value }))
+                  }
                 />
               </label>
               <label>
                 <span>Level</span>
                 <select
                   value={lessonForm.level}
-                  onChange={(e) => setLessonForm((s) => ({ ...s, level: e.target.value }))}
+                  onChange={(e) =>
+                    setLessonForm((s) => ({ ...s, level: e.target.value }))
+                  }
                 >
-                  {["A1","A2","B1","B2","C1","C2"].map((l)=>(
-                    <option key={l} value={l}>{l}</option>
+                  {["A1", "A2", "B1", "B2", "C1", "C2"].map((l) => (
+                    <option key={l} value={l}>
+                      {l}
+                    </option>
                   ))}
                 </select>
               </label>
-              <button className="btn primary" disabled={!canCreateLesson} onClick={createLesson}>Create</button>
+              <button
+                className="btn primary"
+                disabled={!canCreateLesson}
+                onClick={createLesson}
+              >
+                Create
+              </button>
             </div>
 
             <div className="card span-2">
@@ -276,29 +388,43 @@ export default function LessonBuilderPage() {
                 ) : lessons.length === 0 ? (
                   <div className="muted">No lessons yet</div>
                 ) : (
-                  lessons.map((l)=>(
+                  lessons.map((l) => (
                     <div
-                      className={`row ${currentLesson?.id===l.id ? "active":""}`}
+                      className={`row ${currentLesson?.id === l.id ? "active" : ""}`}
                       key={l.id}
-                      onClick={()=>setCurrentLesson(l)}
+                      onClick={() => setCurrentLesson(l)}
                     >
                       <div>
                         <b>{l.title}</b> <span className="pill">{l.level}</span>
                       </div>
-                      <div className="row-actions" onClick={(e)=>e.stopPropagation()}>
-                        <button className="btn small" onClick={()=>{
-                          const updated={...l};
-                          const title=prompt("Title:", l.title);
-                          if(title==null) return;
-                          updated.title=title;
-                          const level=prompt("Level (A1..C2):", l.level);
-                          if(level==null) return;
-                          updated.level=level;
-                          updateLesson(updated);
-                        }}>Edit</button>
-                        <button className="btn danger small" onClick={()=>{
-                          if(window.confirm("Delete lesson?")) deleteLesson(l.id);
-                        }}>Delete</button>
+                      <div
+                        className="row-actions"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <button
+                          className="btn small"
+                          onClick={() => {
+                            const updated = { ...l };
+                            const title = prompt("Title:", l.title);
+                            if (title == null) return;
+                            updated.title = title;
+                            const level = prompt("Level (A1..C2):", l.level);
+                            if (level == null) return;
+                            updated.level = level;
+                            updateLesson(updated);
+                          }}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="btn danger small"
+                          onClick={() => {
+                            if (window.confirm("Delete lesson?"))
+                              deleteLesson(l.id);
+                          }}
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   ))
@@ -312,7 +438,9 @@ export default function LessonBuilderPage() {
       {/* TASKS */}
       {currentLesson && (
         <div className="panel">
-          <div className="panel-head"><h3>Sections / Tasks for: {currentLesson.title}</h3></div>
+          <div className="panel-head">
+            <h3>Sections / Tasks for: {currentLesson.title}</h3>
+          </div>
           <div className="panel-body">
             <div className="grid-3">
               <div className="card">
@@ -321,36 +449,52 @@ export default function LessonBuilderPage() {
                   <span>Title</span>
                   <input
                     value={taskForm.title}
-                    onChange={(e)=>setTaskForm((s)=>({...s, title:e.target.value}))}
+                    onChange={(e) =>
+                      setTaskForm((s) => ({ ...s, title: e.target.value }))
+                    }
                   />
                 </label>
                 <label>
                   <span>Control Type</span>
                   <select
                     value={taskForm.control_type}
-                    onChange={(e)=>setTaskForm((s)=>({...s, control_type:e.target.value}))}
+                    onChange={(e) =>
+                      setTaskForm((s) => ({ ...s, control_type: e.target.value }))
+                    }
                   >
-                    {["listening","reading","writing","vocabulary","grammar"].map(v=>(
-                      <option key={v} value={v}>{v}</option>
-                    ))}
+                    {["listening", "reading", "writing", "vocabulary", "grammar"].map(
+                      (v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      )
+                    )}
                   </select>
                 </label>
                 <label>
                   <span>Task Type</span>
                   <select
                     value={taskForm.task_type}
-                    onChange={(e)=>setTaskForm((s)=>({...s, task_type:e.target.value}))}
+                    onChange={(e) =>
+                      setTaskForm((s) => ({ ...s, task_type: e.target.value }))
+                    }
                   >
-                    {["multiple_choice","true_false","gap_fill","open_text"].map(v=>(
-                      <option key={v} value={v}>{v}</option>
-                    ))}
+                    {["multiple_choice", "true_false", "gap_fill", "open_text"].map(
+                      (v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      )
+                    )}
                   </select>
                 </label>
                 <label>
                   <span>Description</span>
                   <input
                     value={taskForm.description}
-                    onChange={(e)=>setTaskForm((s)=>({...s, description:e.target.value}))}
+                    onChange={(e) =>
+                      setTaskForm((s) => ({ ...s, description: e.target.value }))
+                    }
                   />
                 </label>
 
@@ -359,7 +503,9 @@ export default function LessonBuilderPage() {
                   <span>Content (Markdown)</span>
                   <MarkdownEditor
                     value={taskForm.content}
-                    onChange={(val)=>setTaskForm((s)=>({...s, content: val}))}
+                    onChange={(val) =>
+                      setTaskForm((s) => ({ ...s, content: val }))
+                    }
                   />
                 </div>
 
@@ -367,14 +513,18 @@ export default function LessonBuilderPage() {
                   <span>Media URL</span>
                   <input
                     value={taskForm.media_url}
-                    onChange={(e)=>setTaskForm((s)=>({...s, media_url:e.target.value}))}
+                    onChange={(e) =>
+                      setTaskForm((s) => ({ ...s, media_url: e.target.value }))
+                    }
                   />
                 </label>
                 <label>
                   <span>Topic</span>
                   <input
                     value={taskForm.topic}
-                    onChange={(e)=>setTaskForm((s)=>({...s, topic:e.target.value}))}
+                    onChange={(e) =>
+                      setTaskForm((s) => ({ ...s, topic: e.target.value }))
+                    }
                   />
                 </label>
                 <label>
@@ -382,41 +532,64 @@ export default function LessonBuilderPage() {
                   <textarea
                     rows={2}
                     value={taskForm.word_list}
-                    onChange={(e)=>setTaskForm((s)=>({...s, word_list:e.target.value}))}
+                    onChange={(e) =>
+                      setTaskForm((s) => ({ ...s, word_list: e.target.value }))
+                    }
                   />
                 </label>
                 <label>
                   <span>Visibility</span>
                   <select
                     value={taskForm.visibility}
-                    onChange={(e)=>setTaskForm((s)=>({...s, visibility:e.target.value}))}
+                    onChange={(e) =>
+                      setTaskForm((s) => ({ ...s, visibility: e.target.value }))
+                    }
                   >
-                    {["global","class_specific","private"].map(v=>(
-                      <option key={v} value={v}>{v}</option>
+                    {["global", "class_specific", "private"].map((v) => (
+                      <option key={v} value={v}>
+                        {v}
+                      </option>
                     ))}
                   </select>
                 </label>
-                <button className="btn primary" onClick={createTask}>Create Task</button>
+                <button className="btn primary" onClick={createTask}>
+                  Create Task
+                </button>
               </div>
 
               <div className="card span-2">
                 <h4>Tasks</h4>
                 <div className="list">
-                  {tasks.length===0 ? (
+                  {tasks.length === 0 ? (
                     <div className="muted">No tasks yet</div>
                   ) : (
-                    tasks.map((t)=>(
-                      <div className={`row ${editingTask?.id===t.id ? "active":""}`} key={t.id}>
+                    tasks.map((t) => (
+                      <div
+                        className={`row ${editingTask?.id === t.id ? "active" : ""}`}
+                        key={t.id}
+                      >
                         <div className="row-col">
                           <b>{t.title}</b>
-                          <div className="meta2">{t.control_type} • {t.task_type} • {t.visibility}</div>
+                          <div className="meta2">
+                            {t.control_type} • {t.task_type} • {t.visibility}
+                          </div>
                         </div>
                         <div className="row-actions">
-                          <button className="btn small" onClick={()=>{
-                            setEditingTask(t);
-                            loadTaskQuestions(t.id);
-                          }}>Edit</button>
-                          <button className="btn danger small" onClick={()=>deleteTask(t.id)}>Delete</button>
+                          <button
+                            className="btn small"
+                            onClick={() => {
+                              setEditingTask(t);
+                              loadTaskQuestions(t.id);
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn danger small"
+                            onClick={() => deleteTask(t.id)}
+                          >
+                            Delete
+                          </button>
                         </div>
                       </div>
                     ))
@@ -425,23 +598,35 @@ export default function LessonBuilderPage() {
 
                 {editingTask && (
                   <div className="edit-block">
-                    <h4>Edit Task: {editingTask.title}</h4>
+                    <h4>
+                      Edit Task: {editingTask.title}{" "}
+                      <span className="pill">{editingTask.task_type}</span>
+                    </h4>
                     <div className="grid-2">
                       <label>
                         <span>Title</span>
                         <input
                           value={editingTask.title || ""}
-                          onChange={(e)=>setEditingTask((s)=>({...s, title:e.target.value}))}
+                          onChange={(e) =>
+                            setEditingTask((s) => ({ ...s, title: e.target.value }))
+                          }
                         />
                       </label>
                       <label>
                         <span>Visibility</span>
                         <select
                           value={editingTask.visibility || "global"}
-                          onChange={(e)=>setEditingTask((s)=>({...s, visibility:e.target.value}))}
+                          onChange={(e) =>
+                            setEditingTask((s) => ({
+                              ...s,
+                              visibility: e.target.value,
+                            }))
+                          }
                         >
-                          {["global","class_specific","private"].map(v=>(
-                            <option key={v} value={v}>{v}</option>
+                          {["global", "class_specific", "private"].map((v) => (
+                            <option key={v} value={v}>
+                              {v}
+                            </option>
                           ))}
                         </select>
                       </label>
@@ -449,7 +634,12 @@ export default function LessonBuilderPage() {
                         <span>Description</span>
                         <input
                           value={editingTask.description || ""}
-                          onChange={(e)=>setEditingTask((s)=>({...s, description:e.target.value}))}
+                          onChange={(e) =>
+                            setEditingTask((s) => ({
+                              ...s,
+                              description: e.target.value,
+                            }))
+                          }
                         />
                       </label>
 
@@ -458,7 +648,9 @@ export default function LessonBuilderPage() {
                         <span>Content (Markdown)</span>
                         <MarkdownEditor
                           value={editingTask.content || ""}
-                          onChange={(val)=>setEditingTask((s)=>({...s, content: val}))}
+                          onChange={(val) =>
+                            setEditingTask((s) => ({ ...s, content: val }))
+                          }
                         />
                       </div>
 
@@ -466,14 +658,21 @@ export default function LessonBuilderPage() {
                         <span>Media URL</span>
                         <input
                           value={editingTask.media_url || ""}
-                          onChange={(e)=>setEditingTask((s)=>({...s, media_url:e.target.value}))}
+                          onChange={(e) =>
+                            setEditingTask((s) => ({
+                              ...s,
+                              media_url: e.target.value,
+                            }))
+                          }
                         />
                       </label>
                       <label>
                         <span>Topic</span>
                         <input
                           value={editingTask.topic || ""}
-                          onChange={(e)=>setEditingTask((s)=>({...s, topic:e.target.value}))}
+                          onChange={(e) =>
+                            setEditingTask((s) => ({ ...s, topic: e.target.value }))
+                          }
                         />
                       </label>
                       <label className="col-2">
@@ -481,13 +680,22 @@ export default function LessonBuilderPage() {
                         <textarea
                           rows={2}
                           value={editingTask.word_list || ""}
-                          onChange={(e)=>setEditingTask((s)=>({...s, word_list:e.target.value}))}
+                          onChange={(e) =>
+                            setEditingTask((s) => ({
+                              ...s,
+                              word_list: e.target.value,
+                            }))
+                          }
                         />
                       </label>
                     </div>
                     <div className="actions">
-                      <button className="btn primary" onClick={saveTask}>Save Task</button>
-                      <button className="btn ghost" onClick={()=>setEditingTask(null)}>Close</button>
+                      <button className="btn primary" onClick={saveTask}>
+                        Save Task
+                      </button>
+                      <button className="btn ghost" onClick={() => setEditingTask(null)}>
+                        Close
+                      </button>
                     </div>
 
                     {/* QUESTIONS */}
@@ -500,78 +708,161 @@ export default function LessonBuilderPage() {
                           <textarea
                             rows={2}
                             value={qForm.question_text}
-                            onChange={(e)=>setQForm((s)=>({...s, question_text:e.target.value}))}
+                            onChange={(e) =>
+                              setQForm((s) => ({
+                                ...s,
+                                question_text: e.target.value,
+                              }))
+                            }
+                            placeholder={
+                              editingTask.task_type === "gap_fill"
+                                ? "Напр.: I [[1]] to the gym [[2]] Mondays."
+                                : ""
+                            }
                           />
                         </label>
                         <label>
                           <span>Correct Answer</span>
                           <input
                             value={qForm.correct_answer}
-                            onChange={(e)=>setQForm((s)=>({...s, correct_answer:e.target.value}))}
-                            placeholder="A / B / C / D / true / false / text"
+                            onChange={(e) =>
+                              setQForm((s) => ({
+                                ...s,
+                                correct_answer: e.target.value,
+                              }))
+                            }
+                            placeholder={
+                              editingTask.task_type === "gap_fill"
+                                ? "Приклад для inline: go||on"
+                                : editingTask.task_type === "true_false"
+                                ? "true або false"
+                                : editingTask.task_type === "multiple_choice"
+                                ? "A / B / C / D або значення; кілька через кому"
+                                : "текст для open_text"
+                            }
                           />
+                          {renderCorrectAnswerHint(editingTask.task_type)}
                         </label>
                         <label>
                           <span>Order</span>
                           <input
                             type="number"
                             value={qForm.order}
-                            onChange={(e)=>setQForm((s)=>({...s, order:Number(e.target.value)}))}
+                            onChange={(e) =>
+                              setQForm((s) => ({
+                                ...s,
+                                order: Number(e.target.value),
+                              }))
+                            }
                           />
                         </label>
                         <label className="col-2">
                           <span>Explanation (optional)</span>
                           <input
                             value={qForm.explanation}
-                            onChange={(e)=>setQForm((s)=>({...s, explanation:e.target.value}))}
+                            onChange={(e) =>
+                              setQForm((s) => ({
+                                ...s,
+                                explanation: e.target.value,
+                              }))
+                            }
                           />
                         </label>
 
-                        {/* Multiple choice options */}
+                        {/* Multiple choice options — можна лишати пустими для інших типів */}
                         <label>
                           <span>Option A</span>
-                          <input value={qForm.optionsA} onChange={(e)=>setQForm((s)=>({...s, optionsA:e.target.value}))} />
+                          <input
+                            value={qForm.optionsA}
+                            onChange={(e) =>
+                              setQForm((s) => ({ ...s, optionsA: e.target.value }))
+                            }
+                          />
                         </label>
                         <label>
                           <span>Option B</span>
-                          <input value={qForm.optionsB} onChange={(e)=>setQForm((s)=>({...s, optionsB:e.target.value}))} />
+                          <input
+                            value={qForm.optionsB}
+                            onChange={(e) =>
+                              setQForm((s) => ({ ...s, optionsB: e.target.value }))
+                            }
+                          />
                         </label>
                         <label>
                           <span>Option C</span>
-                          <input value={qForm.optionsC} onChange={(e)=>setQForm((s)=>({...s, optionsC:e.target.value}))} />
+                          <input
+                            value={qForm.optionsC}
+                            onChange={(e) =>
+                              setQForm((s) => ({ ...s, optionsC: e.target.value }))
+                            }
+                          />
                         </label>
                         <label>
                           <span>Option D</span>
-                          <input value={qForm.optionsD} onChange={(e)=>setQForm((s)=>({...s, optionsD:e.target.value}))} />
+                          <input
+                            value={qForm.optionsD}
+                            onChange={(e) =>
+                              setQForm((s) => ({ ...s, optionsD: e.target.value }))
+                            }
+                          />
                         </label>
                       </div>
 
                       <div className="actions">
-                        <button className="btn" onClick={()=>setQFormReset()}>Clear</button>
-                        <button className="btn primary" onClick={()=>createQuestion(editingTask.id)}>Add Question</button>
+                        <button className="btn" onClick={() => setQFormReset()}>
+                          Clear
+                        </button>
+                        <button
+                          className="btn primary"
+                          onClick={() => createQuestion(editingTask.id)}
+                        >
+                          Add Question
+                        </button>
                       </div>
 
                       <div className="q-list">
-                        {questions.length===0 ? (
+                        {questions.length === 0 ? (
                           <div className="muted">No questions yet</div>
                         ) : (
                           questions
                             .slice()
-                            .sort((a,b)=>a.order-b.order)
-                            .map((q)=>(
-                              <div className={`row ${editingQuestion?.id===q.id ? "active":""}`} key={q.id}>
+                            .sort((a, b) => a.order - b.order)
+                            .map((q) => (
+                              <div
+                                className={`row ${
+                                  editingQuestion?.id === q.id ? "active" : ""
+                                }`}
+                                key={q.id}
+                              >
                                 <div className="row-col">
                                   <b>#{q.order}</b> {q.question_text}
                                   {q.options && (
                                     <div className="meta2">
-                                      Options: {Object.entries(q.options).map(([k,v])=>`${k}:${v}`).join(" • ")}
+                                      Options:{" "}
+                                      {Object.entries(q.options)
+                                        .map(([k, v]) => `${k}:${v}`)
+                                        .join(" • ")}
                                     </div>
                                   )}
-                                  {q.correct_answer && <div className="pill">Answer: {String(q.correct_answer)}</div>}
+                                  {q.correct_answer && (
+                                    <div className="pill">
+                                      Answer: {String(q.correct_answer)}
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="row-actions">
-                                  <button className="btn small" onClick={()=>setEditingQuestion(q)}>Edit</button>
-                                  <button className="btn danger small" onClick={()=>deleteQuestion(q.id)}>Delete</button>
+                                  <button
+                                    className="btn small"
+                                    onClick={() => setEditingQuestion(q)}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    className="btn danger small"
+                                    onClick={() => deleteQuestion(q.id)}
+                                  >
+                                    Delete
+                                  </button>
                                 </div>
                               </div>
                             ))
@@ -587,7 +878,17 @@ export default function LessonBuilderPage() {
                               <textarea
                                 rows={2}
                                 value={editingQuestion.question_text || ""}
-                                onChange={(e)=>setEditingQuestion((s)=>({...s, question_text:e.target.value}))}
+                                onChange={(e) =>
+                                  setEditingQuestion((s) => ({
+                                    ...s,
+                                    question_text: e.target.value,
+                                  }))
+                                }
+                                placeholder={
+                                  editingTask.task_type === "gap_fill"
+                                    ? "Напр.: I [[1]] to the gym [[2]] Mondays."
+                                    : ""
+                                }
                               />
                             </label>
                             <label>
@@ -595,32 +896,64 @@ export default function LessonBuilderPage() {
                               <input
                                 type="number"
                                 value={editingQuestion.order ?? 1}
-                                onChange={(e)=>setEditingQuestion((s)=>({...s, order:Number(e.target.value)}))}
+                                onChange={(e) =>
+                                  setEditingQuestion((s) => ({
+                                    ...s,
+                                    order: Number(e.target.value),
+                                  }))
+                                }
                               />
                             </label>
                             <label>
                               <span>Correct Answer</span>
                               <input
                                 value={editingQuestion.correct_answer || ""}
-                                onChange={(e)=>setEditingQuestion((s)=>({...s, correct_answer:e.target.value}))}
+                                onChange={(e) =>
+                                  setEditingQuestion((s) => ({
+                                    ...s,
+                                    correct_answer: e.target.value,
+                                  }))
+                                }
+                                placeholder={
+                                  editingTask.task_type === "gap_fill"
+                                    ? "Приклад для inline: go||on"
+                                    : editingTask.task_type === "true_false"
+                                    ? "true або false"
+                                    : editingTask.task_type === "multiple_choice"
+                                    ? "A / B / C / D або значення; кілька через кому"
+                                    : "текст для open_text"
+                                }
                               />
+                              {renderCorrectAnswerHint(editingTask.task_type)}
                             </label>
                             <label className="col-2">
                               <span>Explanation</span>
                               <input
                                 value={editingQuestion.explanation || ""}
-                                onChange={(e)=>setEditingQuestion((s)=>({...s, explanation:e.target.value}))}
+                                onChange={(e) =>
+                                  setEditingQuestion((s) => ({
+                                    ...s,
+                                    explanation: e.target.value,
+                                  }))
+                                }
                               />
                             </label>
-                            {["A","B","C","D"].map((key)=>(
+                            {["A", "B", "C", "D"].map((key) => (
                               <label key={key}>
                                 <span>Option {key}</span>
                                 <input
-                                  value={(editingQuestion.options && editingQuestion.options[key]) || ""}
-                                  onChange={(e)=>
-                                    setEditingQuestion((s)=>({
+                                  value={
+                                    (editingQuestion.options &&
+                                      editingQuestion.options[key]) ||
+                                    ""
+                                  }
+                                  onChange={(e) =>
+                                    setEditingQuestion((s) => ({
                                       ...s,
-                                      options:{...(s.options||{}), [key]: e.target.value}
+                                      options: {
+                                        ...(s.options || {}),
+                                        [key]: e.target.value,
+                                      },
                                     }))
                                   }
                                 />
@@ -628,8 +961,15 @@ export default function LessonBuilderPage() {
                             ))}
                           </div>
                           <div className="actions">
-                            <button className="btn primary" onClick={saveQuestion}>Save Question</button>
-                            <button className="btn ghost" onClick={()=>setEditingQuestion(null)}>Cancel</button>
+                            <button className="btn primary" onClick={saveQuestion}>
+                              Save Question
+                            </button>
+                            <button
+                              className="btn ghost"
+                              onClick={() => setEditingQuestion(null)}
+                            >
+                              Cancel
+                            </button>
                           </div>
                         </div>
                       )}
