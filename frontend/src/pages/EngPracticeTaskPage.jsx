@@ -20,7 +20,7 @@ export default function EngPracticeTaskPage() {
   const [answers, setAnswers] = useState({});
   const [curr, setCurr] = useState(0);
   const [submitMsg, setSubmitMsg] = useState(null);
-  const [resultMeta, setResultMeta] = useState(null); // {correct, total}
+  const [resultMeta, setResultMeta] = useState(null);
 
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
@@ -35,8 +35,7 @@ export default function EngPracticeTaskPage() {
           axios.get(`${API_URL}/questions/questions/tasks/${taskId}/questions/`, { headers }),
         ]);
         setTask(tRes.data);
-        const qs = (qRes.data || []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
-        setQuestions(qs);
+        setQuestions((qRes.data || []).sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
       } catch (e) {
         console.error(e);
         setErr("Failed to load task.");
@@ -195,7 +194,7 @@ export default function EngPracticeTaskPage() {
     return (
       <div className="ep-open">
         <textarea
-          rows={8}
+          rows={10}
           className="ep-textarea"
           placeholder="Напиши свою відповідь…"
           value={answers[q.id] || ""}
@@ -209,10 +208,13 @@ export default function EngPracticeTaskPage() {
   const q = questions[curr];
 
   return (
-    <div className="ep-task-wrap">
-      <div className="ep-task-head">
-        <button className="ep-back" onClick={() => navigate(-1)}>← Back</button>
-        {task && <h3 className="ep-title">{task.title}</h3>}
+    <div className="ep-task-shell">
+      <div className="ep-task-hero">
+        <div className="ep-task-hero-inner">
+          <button className="ep-back" onClick={() => navigate(-1)}>← Back</button>
+          {task && <h3 className="ep-task-title">{task.title}</h3>}
+          {task && <div className="ep-badge">{task.control_type}</div>}
+        </div>
       </div>
 
       {loading ? (
@@ -222,9 +224,9 @@ export default function EngPracticeTaskPage() {
       ) : !task ? (
         <div className="ep-empty">Task not found.</div>
       ) : (
-        <div className="ep-task">
+        <div className="ep-task-grid">
           {/* Markdown-теорія */}
-          <div className="ep-theory">
+          <div className="ep-theory card">
             {task.content ? (
               <SectionContent content={task.content} />
             ) : (
@@ -238,10 +240,9 @@ export default function EngPracticeTaskPage() {
           </div>
 
           {/* Практика */}
-          <div className="ep-practice">
+          <div className="ep-practice card">
             {q ? (
               <>
-                {/* якщо gap-inline — q.question_text стане частиною інлайну, тому заголовок показуємо умовно */}
                 {(taskType !== "gap_fill" || !hasInlineGaps(q.question_text)) && (
                   <p className="ep-qtext">{q.question_text}</p>
                 )}
@@ -259,9 +260,7 @@ export default function EngPracticeTaskPage() {
                   <button
                     className="ep-ghost"
                     disabled={curr === questions.length - 1}
-                    onClick={() =>
-                      setCurr((i) => (i < questions.length - 1 ? i + 1 : i))
-                    }
+                    onClick={() => setCurr((i) => (i < questions.length - 1 ? i + 1 : i))}
                   >
                     Next ➡
                   </button>
