@@ -407,3 +407,225 @@ align-items: center;
         left: clamp(541px,23.5vw,600px);
     }
 }
+
+
+/* --- */
+/* утиліти для мобільного меню/контенту за потреби */
+.mobile-only {
+    display: none
+}
+
+.desktop-only {
+    display: block
+}
+
+@media (max-width:600px) {
+    .mobile-only {
+        display: block
+    }
+
+    .desktop-only {
+        display: none
+    }
+}
+
+/* HEADER */
+@media (max-width:600px) {
+    .dashboard-header-s {
+        height: auto;
+        padding: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
+        margin-bottom: 0;
+        /* не тягнемо контент вгору */
+    }
+
+    .dashboard-header-s span {
+        position: static;
+        font-size: 16px;
+        font-weight: 700;
+        align-self: center;
+    }
+
+    .contact-btn-dropdown {
+        width: 55%
+    }
+
+    /* кнопка як на макеті — широкою смужкою */
+    .contact-btn {
+        top: 0;
+        width: 100%;
+        height: 38px;
+        font-size: 14px;
+        border-radius: 12px;
+    }
+
+    /* випадайка без :hover — по фокусу/тапу */
+    .contact-btn-dropdown-ul {
+        position: static;
+        transform: none;
+        display: none;
+        width: 100%;
+        height: auto;
+        font-size: 14px;
+        border-radius: 16px;
+        margin-top: 8px;
+        gap: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, .08);
+        padding: 10px 12px;
+    }
+
+    .contact-btn-dropdown:focus-within .contact-btn-dropdown-ul {
+        display: flex;
+    }
+
+    .contact-btn-dropdown-li {
+        padding: 8px 6px;
+        border-radius: 10px;
+    }
+
+    .contact-btn-dropdown-li img {
+        width: 20px;
+        height: 20px
+    }
+}
+
+/* ГОЛОВНИЙ БЛОК */
+@media (max-width:600px) {
+    .dashboard-content-s {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 12px;
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+
+    .right-logo {
+        display: none;
+    }
+
+    /* лого праворуч прибираємо */
+    .left-block {
+        width: 100%;
+        gap: 12px;
+        align-items: center;
+    }
+
+    /* прибираємо абсолютне позиціонування заголовка/балансу */
+    .middle-block {
+        position: static;
+        left: auto;
+        top: auto;
+        margin-left: 12px;
+    }
+
+    .middle-block h2 {
+        font-size: 18px;
+        margin: 0 0 6px;
+    }
+
+    .level-badge {
+        margin-left: 8px;
+        font-size: 12px;
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+
+    .level-badge img {
+        transform: none;
+        margin-left: 4px;
+        width: 14px;
+        height: 14px
+    }
+
+    .lesson-balance {
+        font-size: 14px
+    }
+
+    .lesson-balance span {
+        margin-left: 10px;
+        padding: 4px 10px;
+        border-width: 2px;
+        border-radius: 12px;
+    }
+}
+
+/* ТАБИ */
+@media (max-width:600px) {
+    .dashboard-navigation {
+        width: 100%;
+        transform: none;
+        gap: 16px;
+        height: 32px;
+        margin: 6px 0 12px;
+        font-size: 16px;
+        border-bottom: 2px solid #000;
+        padding: 0 12px;
+    }
+
+    .dashboard-navigation .nav-tab:first-child {
+        border-bottom: 4px solid #000
+    }
+
+    .dashboard-navigation .nav-tab-2 span {
+        display: none
+    }
+}
+
+/* ПЛИТКИ ДІЙ — робимо «кнопками» у стовпчик */
+@media (max-width:600px) {
+    .student-actions {
+        width: 100%;
+    }
+
+    .student-actions-build {
+        width: 100%;
+        padding: 0 12px 16px;
+        gap: 10px;
+        justify-content: stretch;
+    }
+
+    .student-tile {
+        position: relative;
+        width: 100%;
+        min-width: auto;
+        max-width: none;
+        align-items: stretch;
+        gap: 0;
+    }
+
+    /* сам «бокс» плитки */
+    .student-tile-img {
+        height: 56px;
+        /* фіксована висота як на макеті */
+        aspect-ratio: auto;
+        border-radius: 12px;
+        padding: 0 12px;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .student-tile-img>img {
+        width: 28px;
+        height: 28px;
+    }
+
+    /* переносимо підпис всередину боксу */
+    .student-tile>span {
+        position: absolute;
+        left: 56px;
+        /* відступ від іконки */
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    /* підказку "not available" — не показуємо на мобільному */
+    .student-title-img-speaking-club:focus::after,
+    .student-title-img-speaking-club:hover::after,
+    .student-title-img-speaking-club:active::after {
+        display: none;
+        content: none
+    }
+}

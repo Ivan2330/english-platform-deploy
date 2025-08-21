@@ -55,4 +55,31 @@
       font-size: 22px;
       }
   }
-  
+
+
+
+@media (max-width:600px) {
+  .photo-wrapper {
+    align-items: center;
+  }
+
+  /* компактний аватар як у макеті */
+  .profile-photo-img,
+  .photo-editor,
+  .profile-placeholder {
+    width: 72px;
+    aspect-ratio: 1;
+    border-radius: 18px;
+  }
+
+  .profile-placeholder-noPhoto {
+    width: 60%;
+  }
+
+  .update-photo,
+  .delete-photo {
+    display: none;
+  }
+
+  /* цих кнопок уже немає */
+}
