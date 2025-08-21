@@ -131,3 +131,131 @@
         height: 70vh;
     }
 }
+
+/* ========== CHAT: сучасний вигляд + мобільна зручність ========== */
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    border-radius: 20px;
+    border: 1px solid rgba(112, 133, 246, .35);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
+    overflow: hidden;
+    background: #fff;
+}
+
+/* Шапка чату (можна додати у ChatComponent простий header з назвою) */
+.chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: linear-gradient(90deg, #7085F6 0%, #FFA4FD 100%);
+    color: #fff;
+    font-weight: 700;
+}
+
+/* Список повідомлень */
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 12px 8px 12px;
+    background: #fbfcff;
+}
+
+/* Бульбашки */
+.chat-message {
+    max-width: 82%;
+    margin: 0 0 10px 0;
+    display: grid;
+    gap: 6px;
+}
+
+.chat-message .bubble {
+    padding: 10px 12px;
+    border-radius: 16px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, .06);
+    word-break: break-word;
+    line-height: 1.4;
+    font-size: 14.5px;
+}
+
+.chat-message.own {
+    margin-left: auto;
+    text-align: right;
+}
+
+.chat-message.own .bubble {
+    background: #eaf0ff;
+    border: 1px solid #9fb0ff;
+}
+
+.chat-message.other .bubble {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, .08);
+}
+
+.chat-meta {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+/* Вкладення/картинки всередині */
+.chat-message img {
+    max-width: 100%;
+    border-radius: 10px;
+    display: block;
+}
+
+/* Ввід — прилипає до низу, великі таргети */
+.chat-input {
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    background: linear-gradient(#ffffff, #fbfbff);
+    border-top: 1px solid rgba(0, 0, 0, .06);
+}
+
+.chat-input input {
+    flex: 1;
+    height: 44px;
+    border-radius: 999px;
+    border: 2px solid #7085F6;
+    padding: 0 14px;
+    font-size: 16px;
+    outline: none;
+}
+
+.chat-input button {
+    height: 44px;
+    min-width: 44px;
+    border-radius: 12px;
+    border: 2px solid #7085F6;
+    background: #fff;
+    font-weight: 700;
+}
+
+/* Мобільні правки */
+@media (max-width:600px) {
+    .chat-container {
+        height: 72vh;
+        width: 100%;
+        border-radius: 16px;
+    }
+
+    .chat-messages {
+        padding: 10px;
+    }
+
+    .chat-message {
+        max-width: 88%;
+    }
+
+    .chat-message .bubble {
+        font-size: 15px;
+    }
+}

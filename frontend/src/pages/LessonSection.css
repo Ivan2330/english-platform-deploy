@@ -424,3 +424,257 @@ background: #574fcf;
 
 /* (раніше додані стилі для .gap-input/.open-textarea/.tf-btn/.options-container.variant--pill/
    .test-box.theme--brand лишаються без змін) */
+
+
+/* ========== MARKDOWN IN LESSON: типографіка, зображення, код, таблиці ========== */
+
+/* Контейнер із контентом — робимо предиктивну типографіку */
+.theory-section-content,
+.theory-section-question {
+    --md-fg: #111827;
+    --md-muted: #6b7280;
+    --md-link: #3557ff;
+    --md-code-bg: #f7f8ff;
+    --md-border: rgba(0, 0, 0, .08);
+}
+
+.theory-section-content :where(h1, h2, h3, h4, h5, h6) {
+    line-height: 1.25;
+    margin: 0 0 .5em 0;
+}
+
+.theory-section-content :where(p, ul, ol, blockquote, pre, table, figure) {
+    margin: 0 0 1em 0;
+    color: var(--md-fg);
+    line-height: 1.6;
+}
+
+/* Посилання */
+.theory-section-content a {
+    color: var(--md-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* Картинки в markdown */
+.theory-section-content img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: .6em auto;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, .06);
+}
+
+/* Списки */
+.theory-section-content ul,
+.theory-section-content ol {
+    padding-left: 1.2em;
+}
+
+.theory-section-content li {
+    margin: .25em 0;
+}
+
+/* Код */
+.theory-section-content code {
+    background: var(--md-code-bg);
+    border: 1px solid var(--md-border);
+    border-radius: 8px;
+    padding: .12em .4em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: .92em;
+}
+
+.theory-section-content pre {
+    background: var(--md-code-bg);
+    border: 1px solid var(--md-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    overflow-x: auto;
+}
+
+.theory-section-content pre code {
+    background: transparent;
+    border: 0;
+    padding: 0;
+}
+
+/* Таблиці: горизонтальний скрол замість ламання верстки */
+.theory-section-content table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--md-border);
+    border-radius: 10px;
+    overflow: hidden;
+    display: block;
+    max-width: 100%;
+    white-space: nowrap;
+    /* не ламати таблицю на мобайлі */
+}
+
+.theory-section-content thead {
+    background: #f3f4ff;
+}
+
+.theory-section-content th,
+.theory-section-content td {
+    border-bottom: 1px solid var(--md-border);
+    padding: 10px 12px;
+    text-align: left;
+}
+
+.theory-section-content tr:last-child td {
+    border-bottom: 0;
+}
+
+/* Цитати */
+.theory-section-content blockquote {
+    border-left: 4px solid #7085F6;
+    background: #f8f9ff;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #1C274C;
+}
+
+/* Мобільна типографіка */
+@media (max-width: 600px) {
+    .theory-section-content {
+        padding: 12px;
+        border-radius: 14px;
+    }
+
+    .theory-section-content :where(h1) {
+        font-size: 22px;
+    }
+
+    .theory-section-content :where(h2) {
+        font-size: 20px;
+    }
+
+    .theory-section-content :where(h3) {
+        font-size: 18px;
+    }
+
+    .theory-section-content :where(p, li) {
+        font-size: 16px;
+    }
+}
+
+/* ========== TESTS: кращий мобільний UX для всіх типів ========== */
+
+/* Блок тесту більш компактний на мобільному */
+@media (max-width: 600px) {
+    .test-box {
+        border-width: 3px;
+        border-radius: 16px;
+        padding: 14px 12px;
+        font-size: 16px;
+    }
+
+    .question-text {
+        font-size: 16px;
+    }
+}
+
+/* Multiple choice → одна колонка на мобільному, великі таргети */
+@media (max-width: 600px) {
+    .options-container {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin: 12px 0 16px;
+        font-size: 16px;
+    }
+
+    .options-container .option {
+        height: 52px;
+        border-radius: 12px;
+    }
+}
+
+/* True/False — великі кнопки */
+@media (max-width: 600px) {
+    .tf-toggle {
+        gap: 10px;
+    }
+
+    .tf-btn {
+        height: 52px;
+        font-size: 16px;
+        border-width: 2px;
+        border-radius: 12px;
+    }
+}
+
+/* Gap fill — інлайн і простий */
+@media (max-width: 600px) {
+    .gap-inline-text {
+        font-size: 16px;
+        line-height: 1.55;
+    }
+
+    .gap-inline-input {
+        height: 38px;
+        min-width: 84px;
+        border-radius: 10px;
+        font-size: 16px;
+        padding: 6px 10px;
+    }
+
+    .gap-input {
+        height: 48px;
+        border-radius: 12px;
+        font-size: 16px;
+        max-width: 100%;
+    }
+}
+
+/* Open text — textarea зручніша */
+@media (max-width: 600px) {
+    .open-textarea {
+        min-height: 140px;
+        font-size: 16px;
+        border-radius: 12px;
+    }
+}
+
+/* Кнопки навігації питаннями — липнуть до низу блоку тесту */
+.test-box {
+    position: relative;
+}
+
+.question-controls {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    gap: 8px;
+    padding-top: 10px;
+    margin-top: 10px;
+    background: linear-gradient(180deg, transparent, #fff 40%);
+}
+
+@media (max-width: 600px) {
+    .question-controls button {
+        height: 46px;
+        border-radius: 12px;
+        border-width: 3px;
+        flex: 1 1 auto;
+    }
+
+    .question-controls .submit-test-button {
+        flex-basis: 100%;
+        order: -1;
+        margin-right: 0;
+    }
+}
+
+/* Фокус‑стили для доступності */
+.options-container .option:focus,
+.tf-btn:focus,
+.gap-input:focus,
+.gap-inline-input:focus,
+.open-textarea:focus,
+.question-controls button:focus {
+    outline: 2px solid #2558ff;
+    outline-offset: 2px;
+}
