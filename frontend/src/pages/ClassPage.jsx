@@ -11,6 +11,42 @@ import leaveLessonButton from '../assets/leaveClass-button.svg';
 import logo from '../assets/my_logo-1.svg';
 import chatSvg from '../assets/chat.svg';
 
+/* ──────────────────────────────────────────────────────────────
+   Локальна утиліта: мобільна шторка (slide-up) + бекдроп
+   ────────────────────────────────────────────────────────────── */
+function SlidePanel({ id, title, open, onClose, children, height = '72vh' }) {
+  // Закриття по ESC
+  useEffect(() => {
+    const onKey = (e) => e.key === 'Escape' && onClose?.();
+    if (open) document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
+  return (
+    <>
+      <div
+        className={`mdock-backdrop ${open ? 'is-open' : ''}`}
+        onClick={onClose}
+        aria-hidden={!open}
+      />
+      <section
+        id={id}
+        className={`mdock-drawer ${open ? 'is-open' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`${id}-title`}
+        style={{ height }}
+      >
+        <header className="mdock-drawer-head">
+          <h3 id={`${id}-title`}>{title}</h3>
+          <button type="button" className="mdock-close" onClick={onClose} aria-label="Close">✕</button>
+        </header>
+        <div className="mdock-drawer-body">{children}</div>
+      </section>
+    </>
+  );
+}
+
 const ClassPage = () => {
   const { id } = useParams(); // classroomId
   const [user, setUser] = useState(null);
@@ -19,8 +55,15 @@ const ClassPage = () => {
   const [sections, setSections] = useState([]);
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [showLessonSelector, setShowLessonSelector] = useState(false);
+
+  // Дзвінок/чат на десктопі
   const [inCall, setInCall] = useState(false);
   const [showChat, setShowChat] = useState(false);
+
+  // ── Мобільний док: "call" | "chat" | "sections" | null
+  const [dockActive, setDockActive] = useState(null);
+  const toggleDock = (key) => setDockActive((k) => (k === key ? null : key));
+  const closeDock = () => setDockActive(null);
 
   useEffect(() => {
     const fetchUserAndChat = async () => {
@@ -59,7 +102,7 @@ const ClassPage = () => {
     if (sections.length > 0 && !activeSectionId) {
       setActiveSectionId(sections[0].id);
     }
-  }, [sections]);
+  }, [sections, activeSectionId]);
 
   const handleLessonSelected = async (lesson) => {
     try {
@@ -82,12 +125,13 @@ const ClassPage = () => {
     <div className="class-page">
       <header className="header">
         <button onClick={() => setShowLessonSelector(true)}>Choose Lesson</button>
-        <button onClick={() => window.location.href = user.role === 'staff' ? '/admin-dashboard' : '/student-dashboard'}>
+        <button onClick={() => (window.location.href = user.role === 'staff' ? '/admin-dashboard' : '/student-dashboard')}>
           <img src={leaveLessonButton} alt="leave Lesson" />
         </button>
       </header>
 
       <section className="main-content">
+        {/* LEFT panel (десктоп): чат + секції */}
         <div className="left-panel">
           {showChat ? (
             <ChatComponent chatId={parseInt(id)} currentUser={user} onClose={() => setShowChat(false)} />
@@ -112,18 +156,21 @@ const ClassPage = () => {
           )}
         </div>
 
-        <div className="center-panel" style={{ alignItems: 'flex-start', justifyContent: 'center', paddingTop: '40px', paddingBottom: '40px' }}>
+        {/* CENTER */}
+        <div
+          className="center-panel"
+          style={{ alignItems: 'flex-start', justifyContent: 'center', paddingTop: '40px', paddingBottom: '40px' }}
+        >
           {currentLesson ? (
             sections
-              .filter(section => section.id === activeSectionId)
-              .map(section => (
-                <LessonSection key={section.id} section={section} currentUser={user} />
-              ))
+              .filter((section) => section.id === activeSectionId)
+              .map((section) => <LessonSection key={section.id} section={section} currentUser={user} />)
           ) : (
             <div className="lesson-placeholder">👀 Please select a lesson to begin.</div>
           )}
         </div>
 
+        {/* RIGHT panel (десктоп): дзвінок */}
         <div className="right-panel">
           {inCall ? (
             <CallComponent
@@ -140,6 +187,94 @@ const ClassPage = () => {
           )}
         </div>
       </section>
+
+      {/* ─────────────────────────────────────────────────────────
+          МОБІЛЬНИЙ ДОК + ВИСУВНІ ПАНЕЛІ (видимі лише на мобільному)
+          Дзвінок/чат залишаються змонтованими всередині шторок.
+          ─────────────────────────────────────────────────────── */}
+      <SlidePanel
+        id="panel-call"
+        title="Call"
+        open={dockActive === 'call'}
+        onClose={closeDock}
+        height="72vh"
+      >
+        {inCall ? (
+          <div className="mdock-call-wrap">
+            <CallComponent
+              classroomId={parseInt(id)}
+              currentUserId={user.id}
+              role={user.role}
+              onLeave={() => {
+                setInCall(false);
+                closeDock();
+              }}
+            />
+          </div>
+        ) : (
+          <div className="mdock-call-placeholder">
+            <img src={logo} alt="Logo" />
+            <button className="mdock-join" onClick={() => setInCall(true)}>
+              Join Call
+            </button>
+          </div>
+        )}
+      </SlidePanel>
+
+      <SlidePanel id="panel-chat" title="Chat" open={dockActive === 'chat'} onClose={closeDock} height="72vh">
+        <div className="mdock-chat-wrap">
+          <ChatComponent chatId={parseInt(id)} currentUser={user} onClose={closeDock} />
+        </div>
+      </SlidePanel>
+
+      <SlidePanel id="panel-sections" title="Sections" open={dockActive === 'sections'} onClose={closeDock} height="64vh">
+        <ul className="mdock-sections-list">
+          {sections.map((s, i) => (
+            <li key={s.id}>
+              <button
+                type="button"
+                className={`mdock-section-btn ${activeSectionId === s.id ? 'is-active' : ''}`}
+                onClick={() => {
+                  setActiveSectionId(s.id);
+                  closeDock();
+                }}
+              >
+                {s.title || s.task_type || `Section ${i + 1}`}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </SlidePanel>
+
+      <nav className="mdock-bar" aria-label="Quick actions">
+        <button
+          type="button"
+          className={`mdock-btn ${dockActive === 'call' ? 'is-active' : ''}`}
+          onClick={() => toggleDock('call')}
+          aria-controls="panel-call"
+          aria-expanded={dockActive === 'call'}
+        >
+          📞 <span>Call</span>
+        </button>
+        <button
+          type="button"
+          className={`mdock-btn ${dockActive === 'chat' ? 'is-active' : ''}`}
+          onClick={() => toggleDock('chat')}
+          aria-controls="panel-chat"
+          aria-expanded={dockActive === 'chat'}
+        >
+          💬 <span>Chat</span>
+        </button>
+        <button
+          type="button"
+          className={`mdock-btn ${dockActive === 'sections' ? 'is-active' : ''}`}
+          onClick={() => toggleDock('sections')}
+          aria-controls="panel-sections"
+          aria-expanded={dockActive === 'sections'}
+        >
+          📚 <span>Sections</span>
+        </button>
+      </nav>
 
       {showLessonSelector && (
         <LessonSelectorModal

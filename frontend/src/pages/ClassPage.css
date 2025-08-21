@@ -229,3 +229,199 @@ body {
   text-align: center;
   width: 100%;
 }
+
+
+/* --- */
+/* ───────── MOBILE: приховати ліву/праву панелі, дати місце доку ───────── */
+@media (max-width: 900px) {
+  .main-content {
+    grid-template-columns: 1fr;
+  }
+
+  .left-panel,
+  .right-panel {
+    display: none;
+  }
+
+  .center-panel {
+    padding-bottom: 88px;
+  }
+
+  /* місце під нижній док */
+}
+
+/* ───────── DOCK (видимий лише на мобільному) ───────── */
+.mdock-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 64px;
+  padding: 6px 10px;
+  display: none;
+  /* вмикаємо на мобільному нижче */
+  gap: 8px;
+  background: rgba(255, 255, 255, .92);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(0, 0, 0, .08);
+  z-index: 1000;
+}
+
+@media (max-width: 900px) {
+  .mdock-bar {
+    display: flex;
+  }
+}
+
+.mdock-btn {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  border: 2px solid #7085F6;
+  border-radius: 12px;
+  background: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.mdock-btn.is-active {
+  background: #EAF0FF;
+}
+
+/* ───────── BACKDROP + DRAWER (slide‑up) ───────── */
+.mdock-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+  z-index: 998;
+}
+
+.mdock-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mdock-drawer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 64px;
+  /* сидить над доком */
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -10px 24px rgba(0, 0, 0, .14);
+  transform: translateY(110%);
+  transition: transform .28s ease;
+  z-index: 999;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.mdock-drawer.is-open {
+  transform: translateY(0%);
+}
+
+.mdock-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(0, 0, 0, .06);
+}
+
+.mdock-drawer-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.mdock-close {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.mdock-drawer-body {
+  overflow: auto;
+  padding: 10px 10px 12px;
+}
+
+/* ───────── Контент шторок ───────── */
+.mdock-call-wrap .call-container {
+  display: flex !important;
+  width: 100%;
+}
+
+.mdock-call-wrap .video-wrapper {
+  width: 100%;
+  gap: 10px;
+}
+
+.mdock-call-wrap .button-group-actions {
+  width: 100%;
+}
+
+.mdock-call-placeholder {
+  display: grid;
+  place-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.mdock-call-placeholder img {
+  width: 120px;
+  height: auto;
+}
+
+.mdock-join {
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 12px;
+  border: 3px solid #7085F6;
+  background: #fff;
+  font-weight: 700;
+}
+
+.mdock-chat-wrap {
+  height: 100%;
+}
+
+/* Список секцій у шторці */
+.mdock-sections-list {
+  list-style: none;
+  padding: 6px;
+  margin: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.mdock-section-btn {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 2px solid #7085F6;
+  background: #fff;
+  font-weight: 600;
+}
+
+.mdock-section-btn.is-active {
+  background: #EAF0FF;
+}
+
+/* показувати ці штуки лише на мобільному */
+@media (min-width: 901px) {
+
+  .mdock-backdrop,
+  .mdock-drawer {
+    display: none !important;
+  }
+}
