@@ -83,3 +83,25 @@
 
   /* цих кнопок уже немає */
 }
+
+@media (max-width:600px) {
+  .photo-wrapper {
+    align-items: center;
+  }
+
+  /* збільшуємо і робимо однаковими ширину/висоту */
+  .profile-photo-img,
+  .photo-editor,
+  .profile-placeholder {
+    width: 108px;
+    /* було ~72px — тепер помітно більше */
+    aspect-ratio: 1;
+    /* рівні ширина/висота */
+    border-radius: 20px;
+    /* «трохи» заокруглений фон-квадрат */
+  }
+
+  .profile-placeholder-noPhoto {
+    width: 60%;
+  }
+}

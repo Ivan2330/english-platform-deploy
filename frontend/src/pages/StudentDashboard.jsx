@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import ProfilePhoto from "../components/ProfilePhoto";
@@ -17,6 +17,21 @@ const StudentDashboardPage = () => {
   const [studentData, setStudentData] = useState(null);
   const [studentClass, setStudentClass] = useState(null);
   const navigate = useNavigate();
+
+  /* ▼ Contact us toggle ▼ */
+  const [contactOpen, setContactOpen] = useState(false);
+  const contactRef = useRef(null);
+
+  useEffect(() => {
+    const onDocClick = (e) => {
+      if (contactRef.current && !contactRef.current.contains(e.target)) {
+        setContactOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", onDocClick);
+    return () => document.removeEventListener("pointerdown", onDocClick);
+  }, []);
+  /* ▲ Contact us toggle ▲ */
 
   useEffect(() => {
     const fetchStudentData = async () => {
@@ -50,18 +65,31 @@ const StudentDashboardPage = () => {
     <div className="student-dashboard-s">
       <header className="dashboard-header-s">
         <span>Prime Academy</span>
-        <div className="contact-btn-dropdown">
-          <button className="contact-btn">Contact us</button>
-          <ul className="contact-btn-dropdown-ul">
-            <li className="contact-btn-dropdown-li">
+
+        {/* Contact dropdown with toggle */}
+        <div
+          className={`contact-btn-dropdown ${contactOpen ? "is-open" : ""}`}
+          ref={contactRef}
+        >
+          <button
+            type="button"
+            className="contact-btn"
+            onClick={() => setContactOpen((o) => !o)}
+            aria-expanded={contactOpen}
+            aria-controls="contact-menu"
+          >
+            Contact us
+          </button>
+          <ul id="contact-menu" className="contact-btn-dropdown-ul" role="menu">
+            <li className="contact-btn-dropdown-li" role="menuitem">
               <img src={phone_number} alt="" />
               +38 099 179 70 47
             </li>
-            <li className="contact-btn-dropdown-li">
+            <li className="contact-btn-dropdown-li" role="menuitem">
               <img src={telegram} alt="" />
               @primeacademy
             </li>
-            <li className="contact-btn-dropdown-li">
+            <li className="contact-btn-dropdown-li" role="menuitem">
               <img src={instagram} alt="" />
               @primeacademy
             </li>
