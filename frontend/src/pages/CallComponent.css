@@ -1,4 +1,4 @@
-/* Контейнер дзвінка в правій панелі: старт від верху */
+/* Container */
 .call-container {
     width: 100%;
     display: flex;
@@ -10,8 +10,7 @@
     padding: 0;
 }
 
-/* Дві великі картки-відео одна під одною.
-   Вузькіші за панель: мають бокові відступи через width:86% */
+/* Two tiles (remote over local) */
 .video-wrapper {
     display: grid;
     grid-template-rows: 1fr 1fr;
@@ -19,10 +18,8 @@
     width: 86%;
     margin: 0 auto;
     min-height: 56vh;
-    /* достатня висота під дві плитки */
 }
 
-/* Верхнє — remote (інша людина), нижнє — local (ти) */
 .video.remote,
 .video.local {
     width: 100%;
@@ -37,14 +34,11 @@
     order: 0;
 }
 
-/* інша людина зверху */
 .video.local {
     order: 1;
 }
 
-/* ти знизу */
-
-/* Панель керування: приклеєна під відео, тієї ж ширини, рівні іконки */
+/* Controls */
 .button-group-actions {
     position: static;
     width: 86%;
@@ -53,16 +47,13 @@
     align-items: center;
     justify-content: center;
     gap: 0;
-    /* керуємо відступами самі */
     padding: 12px 8px;
     background: #0b0b0f;
     border: 1px solid #1a1a25;
     border-radius: 0 0 16px 16px;
-    /* відчуття “приробленої” нижньої панелі */
     box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
 }
 
-/* Кнопки — однакова висота й вирівнювання по центру */
 .button-group-actions button {
     width: 64px;
     height: 48px;
@@ -76,7 +67,6 @@
     outline: none;
 }
 
-/* Тонкі вертикальні роздільники між кнопками (між першою/другою та другою/третьою) */
 .button-group-actions button:not(:last-child) {
     position: relative;
 }
@@ -92,31 +82,28 @@
     background: rgba(255, 255, 255, .22);
 }
 
-/* Ховер без “стрибків” */
 .button-group-actions button:hover {
     transform: translateY(-1px);
     opacity: .92;
 }
 
-/* Іконки-ізображення всередині кнопок */
 .button-group-actions img {
     width: 100%;
     height: 100%;
     object-fit: contain;
     filter: invert(1);
-    /* білі іконки на темному тлі */
 }
 
-/* Невеликі адаптивні правки */
+/* Roundings for smaller widths */
 @media (max-width:1200px) {
 
     .video.remote,
     .video.local {
-        border-radius: 12px
+        border-radius: 12px;
     }
 
     .button-group-actions {
-        border-radius: 0 0 12px 12px
+        border-radius: 0 0 12px 12px;
     }
 }
 
@@ -124,15 +111,31 @@
 
     .video.remote,
     .video.local {
-        border-radius: 10px
+        border-radius: 10px;
     }
 
     .button-group-actions {
-        border-radius: 0 0 10px 10px
+        border-radius: 0 0 10px 10px;
     }
 }
 
-/* Стандартизація відео-елемента */
+/* Video element normalization */
 video {
     display: block;
+}
+
+/* ===== Mobile dock integration: коли права панель стає шторкою ===== */
+@media (max-width: 900px) {
+    .right-panel.is-open .call-container {
+        width: 100%;
+    }
+
+    .right-panel.is-open .video-wrapper {
+        width: 94%;
+        min-height: 54vh;
+    }
+
+    .right-panel.is-open .button-group-actions {
+        width: 94%;
+    }
 }

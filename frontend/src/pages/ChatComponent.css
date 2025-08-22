@@ -1,150 +1,24 @@
+/* ========== CHAT CONTAINER ========== */
 .chat-container {
     position: fixed;
-    /* ✅ завжди на екрані, навіть при скролі */
+    /* overlay */
     top: 20px;
-    /* відступ зверху */
     left: 20px;
-    /* відступ зліва */
     display: flex;
     flex-direction: column;
     height: 65vh;
     width: clamp(300px, 20.83vw, 450px);
-    border: 3px solid #7085F6;
-    border-radius: 52px;
-    padding: 10px 11.2px 33px 21px;
+    border: 1px solid rgba(112, 133, 246, .35);
+    border-radius: 20px;
+    padding: 0;
     background-color: #ffffff;
     font-family: 'Segoe UI', sans-serif;
-    box-shadow: 3px 1px 8px 2px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
     z-index: 9999;
-    /* ✅ поверх усіх інших елементів */
-}
-.chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding-right: 8px;
-}
-.chat{
-    text-align: center;
-    font-weight: 700;
-    font-size: 20px;
-    margin-bottom: 30px;
-}
-
-.chat-message {
-    display: flex;
-    flex-direction: column;
-    /* margin-bottom: 12px; */
-    margin-bottom: 20px;
-    max-width: 80%;
-    word-break: break-word;
-    border-radius: 25px;
-}
-
-.own-message {
-    align-self: flex-end;
-    background-color: #e0e7ff;
-    /* border-radius: 16px 16px 0 16px; */
-    padding: 10px 14px;
-    color: #111827;
-    margin-left: auto;
-}
-
-.other-message {
-    align-self: flex-start;
-    background-color: #f0f4ff;
-    /* border-radius: 16px 16px 16px 0; */
-    padding: 10px 14px;
-    color: #111827;
-    margin-right: auto;
-}
-
-.chat-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-right: 10px;
-    padding-left: 5px;
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-bottom: 4px;
-    /* gap: 8px; */
-}
-
-.chat-role {
-    /* color: white; */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.chat-text {
-    font-size: 0.95rem;
-    line-height: 1.4;
-}
-/* chat input */
-.chat-input {
-
-    height: 50px;
-    display: flex;
-    width: 100%;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 10px;
-    /* border-top: 1px solid #e5e7eb; */
-    gap: 9.5px;
-}
-
-.chat-input input {
-    height:100%;
-    width: clamp(200px,100%,360px);
-    /* flex: 1; */
-    padding: 10px 14px;
-    border: 3px solid #7085F6;
-    border-radius: 40px;
-    font-size: 1rem;
-    outline: none;
-}
-
-.chat-input button {
-    height: 100%;
-    min-width: 57.66px;
-    color: white;
-    border: none;
-    /* padding: 10px 14px; */
-    /* border-radius: 50%; */
-    font-size: 1.1rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-.chat-input img{
-    width: 100%;
-    height: 100%;
-}
-
-.chat-input button:hover {
-    cursor: pointer;
-}
-@media(max-width:1500px){
-    .chat-container{
-        height: 70vh;
-    }
-}
-
-/* ========== CHAT: сучасний вигляд + мобільна зручність ========== */
-
-.chat-container {
-    display: flex;
-    flex-direction: column;
-    border-radius: 20px;
-    border: 1px solid rgba(112, 133, 246, .35);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
     overflow: hidden;
-    background: #fff;
 }
 
-/* Шапка чату (можна додати у ChatComponent простий header з назвою) */
+/* HEADER */
 .chat-header {
     display: flex;
     align-items: center;
@@ -155,7 +29,20 @@
     font-weight: 700;
 }
 
-/* Список повідомлень */
+.chat {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.chat-close-button {
+    border: none;
+    background: transparent;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* MESSAGES */
 .chat-messages {
     flex: 1;
     overflow-y: auto;
@@ -163,7 +50,6 @@
     background: #fbfcff;
 }
 
-/* Бульбашки */
 .chat-message {
     max-width: 82%;
     margin: 0 0 10px 0;
@@ -171,43 +57,41 @@
     gap: 6px;
 }
 
-.chat-message .bubble {
-    padding: 10px 12px;
-    border-radius: 16px;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, .06);
-    word-break: break-word;
-    line-height: 1.4;
-    font-size: 14.5px;
-}
-
-.chat-message.own {
+.chat-message.own-message {
     margin-left: auto;
     text-align: right;
 }
 
-.chat-message.own .bubble {
-    background: #eaf0ff;
-    border: 1px solid #9fb0ff;
-}
-
-.chat-message.other .bubble {
-    background: #ffffff;
-    border: 1px solid rgba(0, 0, 0, .08);
+.chat-message.other-message {
+    margin-right: auto;
+    text-align: left;
 }
 
 .chat-meta {
     font-size: 11px;
     color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px;
 }
 
-/* Вкладення/картинки всередині */
-.chat-message img {
-    max-width: 100%;
-    border-radius: 10px;
-    display: block;
+.chat-text {
+    padding: 10px 12px;
+    border-radius: 16px;
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, .08);
+    word-break: break-word;
+    line-height: 1.4;
+    font-size: 14.5px;
 }
 
-/* Ввід — прилипає до низу, великі таргети */
+.own-message .chat-text {
+    background: #eaf0ff;
+    border: 1px solid #9fb0ff;
+}
+
+/* INPUT */
 .chat-input {
     position: sticky;
     bottom: 0;
@@ -239,11 +123,24 @@
     font-weight: 700;
 }
 
-/* Мобільні правки */
-@media (max-width:600px) {
+.chat-input img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+/* MOBILE SIZING */
+@media (max-width: 1500px) {
     .chat-container {
+        height: 70vh;
+    }
+}
+
+@media (max-width: 600px) {
+    .chat-container {
+        width: 92vw;
+        left: 4vw;
         height: 72vh;
-        width: 100%;
         border-radius: 16px;
     }
 
@@ -255,7 +152,25 @@
         max-width: 88%;
     }
 
-    .chat-message .bubble {
+    .chat-text {
         font-size: 15px;
+    }
+}
+
+/* ========== DOCK INTEGRATION (ВАЖЛИВО) ========== */
+/* Коли відкрито вкладку chat у мобільному доку, ми "якоримо" чат біля нижнього доку */
+@media (max-width: 900px) {
+    .class-page.mdock-open.mdock-tab-chat .chat-container {
+        left: 0;
+        right: 0;
+        bottom: 64px;
+        top: auto;
+        width: 100%;
+        height: 70vh;
+        border-radius: 16px 16px 0 0;
+        border: 1px solid rgba(0, 0, 0, .06);
+        box-shadow: 0 -10px 24px rgba(0, 0, 0, .14);
+        z-index: 999;
+        /* під кнопками дока (1000) і над центром */
     }
 }

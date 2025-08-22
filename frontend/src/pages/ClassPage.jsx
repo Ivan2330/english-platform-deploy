@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { WS_URL, API_URL } from '../../config';
+import React, { useEffect, useState } from 'react';
+import { API_URL } from '../../config';
 import axios from 'axios';
 import { useParams } from 'react-router-dom';
 import CallComponent from '../components/CallComponent';
@@ -22,6 +22,30 @@ const ClassPage = () => {
   const [inCall, setInCall] = useState(false);
   const [showChat, setShowChat] = useState(false);
 
+  // 🔻 Mobile dock state (CSS-driven)
+  const [dockOpen, setDockOpen] = useState(false);
+  const [dockTab, setDockTab] = useState(null); // 'call' | 'chat' | 'sections' | null
+
+  const openDock = (tab) => {
+    // toggle same tab
+    if (dockOpen && dockTab === tab) {
+      setDockOpen(false);
+      setDockTab(null);
+      if (tab === 'chat') setShowChat(false);
+      return;
+    }
+    setDockTab(tab);
+    setDockOpen(true);
+    if (tab === 'chat') setShowChat(true);
+    if (tab === 'call' && !inCall) setInCall(true); // автоперехід у Join/Call
+  };
+
+  const closeDock = () => {
+    setDockOpen(false);
+    if (dockTab === 'chat') setShowChat(false);
+    setDockTab(null);
+  };
+
   useEffect(() => {
     const fetchUserAndChat = async () => {
       try {
@@ -42,11 +66,9 @@ const ClassPage = () => {
         if (resClass.data.current_lesson_id) {
           const lesson = await axios.get(`${API_URL}/lessons/lessons/${resClass.data.current_lesson_id}`, { headers });
           setCurrentLesson(lesson.data);
-
           const resSections = await axios.get(`${API_URL}/lessons/lessons/${lesson.data.id}/tasks/`, { headers });
           setSections(resSections.data);
         }
-
         setChatReady(true);
       } catch (error) {
         console.error('Error fetching user or chat:', error);
@@ -59,14 +81,13 @@ const ClassPage = () => {
     if (sections.length > 0 && !activeSectionId) {
       setActiveSectionId(sections[0].id);
     }
-  }, [sections]);
+  }, [sections, activeSectionId]);
 
   const handleLessonSelected = async (lesson) => {
     try {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       await axios.patch(`${API_URL}/classrooms/classrooms/${id}/set-lesson/${lesson.id}`, {}, { headers });
-
       setCurrentLesson(lesson);
       const resSections = await axios.get(`${API_URL}/lessons/lessons/${lesson.id}/tasks/`, { headers });
       setSections(resSections.data);
@@ -79,20 +100,39 @@ const ClassPage = () => {
   if (!user || !chatReady) return <p>Loading user and chat...</p>;
 
   return (
-    <div className="class-page">
+    <div
+      className={`class-page ${dockOpen ? 'mdock-open' : ''} ${dockTab ? `mdock-tab-${dockTab}` : ''}`}
+    >
       <header className="header">
         <button onClick={() => setShowLessonSelector(true)}>Choose Lesson</button>
-        <button onClick={() => window.location.href = user.role === 'staff' ? '/admin-dashboard' : '/student-dashboard'}>
+        <button
+          onClick={() => (window.location.href = user.role === 'staff' ? '/admin-dashboard' : '/student-dashboard')}
+          aria-label="Leave Lesson"
+        >
           <img src={leaveLessonButton} alt="leave Lesson" />
         </button>
       </header>
 
       <section className="main-content">
+        {/* LEFT */}
         <div className="left-panel">
           {showChat ? (
-            <ChatComponent chatId={parseInt(id)} currentUser={user} onClose={() => setShowChat(false)} />
+            <ChatComponent
+              chatId={parseInt(id)}
+              currentUser={user}
+              onClose={() => {
+                setShowChat(false);
+                if (dockTab === 'chat') closeDock();
+              }}
+            />
           ) : (
-            <div className="chat-toggle" onClick={() => setShowChat(true)}>
+            <div
+              className="chat-toggle"
+              onClick={() => setShowChat(true)}
+              role="button"
+              aria-label="Open chat"
+              title="Open chat"
+            >
               <img src={chatSvg} alt="chat" />
             </div>
           )}
@@ -112,19 +152,22 @@ const ClassPage = () => {
           )}
         </div>
 
-        <div className="center-panel" style={{ alignItems: 'flex-start', justifyContent: 'center', paddingTop: '40px', paddingBottom: '40px' }}>
+        {/* CENTER */}
+        <div
+          className="center-panel"
+          style={{ alignItems: 'flex-start', justifyContent: 'center', paddingTop: '40px', paddingBottom: '40px' }}
+        >
           {currentLesson ? (
             sections
-              .filter(section => section.id === activeSectionId)
-              .map(section => (
-                <LessonSection key={section.id} section={section} currentUser={user} />
-              ))
+              .filter((section) => section.id === activeSectionId)
+              .map((section) => <LessonSection key={section.id} section={section} currentUser={user} />)
           ) : (
             <div className="lesson-placeholder">👀 Please select a lesson to begin.</div>
           )}
         </div>
 
-        <div className="right-panel">
+        {/* RIGHT — ЄДИНИЙ інстанс CallComponent */}
+        <div className={`right-panel ${dockOpen && dockTab === 'call' ? 'is-open' : ''}`}>
           {inCall ? (
             <CallComponent
               classroomId={parseInt(id)}
@@ -140,6 +183,62 @@ const ClassPage = () => {
           )}
         </div>
       </section>
+
+      {/* MOBILE DOCK */}
+      <div className="mdock-bar" role="tablist" aria-label="Mobile actions">
+        <button
+          className={`mdock-btn ${dockOpen && dockTab === 'call' ? 'is-active' : ''}`}
+          onClick={() => openDock('call')}
+          role="tab"
+          aria-selected={dockOpen && dockTab === 'call'}
+        >
+          📞 Call
+        </button>
+        <button
+          className={`mdock-btn ${dockOpen && dockTab === 'chat' ? 'is-active' : ''}`}
+          onClick={() => openDock('chat')}
+          role="tab"
+          aria-selected={dockOpen && dockTab === 'chat'}
+        >
+          💬 Chat
+        </button>
+        <button
+          className={`mdock-btn ${dockOpen && dockTab === 'sections' ? 'is-active' : ''}`}
+          onClick={() => openDock('sections')}
+          role="tab"
+          aria-selected={dockOpen && dockTab === 'sections'}
+        >
+          📚 Sections
+        </button>
+      </div>
+
+      {/* Backdrop для будь‑якого режиму дока */}
+      <div className={`mdock-backdrop ${dockOpen ? 'is-open' : ''}`} onClick={closeDock} />
+
+      {/* Drawer показуємо ТІЛЬКИ для "sections" (call і chat рендеряться своїми контейнерами) */}
+      <div className={`mdock-drawer ${dockOpen && dockTab === 'sections' ? 'is-open' : ''}`}>
+        <div className="mdock-drawer-head">
+          <h3>Sections</h3>
+          <button className="mdock-close" onClick={closeDock} aria-label="Close">✖</button>
+        </div>
+        <div className="mdock-drawer-body">
+          <ul className="mdock-sections-list">
+            {sections.map((section, idx) => (
+              <li key={section.id}>
+                <button
+                  className={`mdock-section-btn ${activeSectionId === section.id ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setActiveSectionId(section.id);
+                    // не закриваю док, щоб можна було швидко перемикати
+                  }}
+                >
+                  {section.title || section.task_type || `Section ${idx + 1}`}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
 
       {showLessonSelector && (
         <LessonSelectorModal
