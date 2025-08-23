@@ -67,16 +67,18 @@ export default function EngPracticePage() {
 
   return (
     <div className="ep-shell">
-      {/* HERO (без округлень, вищий) */}
+      {/* HERO */}
       <div className="ep-hero">
         <div className="ep-hero-inner">
           <div className="ep-brand">Eng Practice</div>
-          <nav className="ep-tabs">
+          <nav className="ep-tabs" role="tablist" aria-label="Task categories">
             {CONTROLS.map((c) => (
               <button
                 key={c.key}
                 className={`ep-tab ${control === c.key ? "active" : ""}`}
                 onClick={() => setControl(c.key)}
+                role="tab"
+                aria-selected={control === c.key}
               >
                 {c.label}
               </button>
@@ -85,7 +87,7 @@ export default function EngPracticePage() {
         </div>
       </div>
 
-      {/* Тіло: ліворуч список, праворуч рівні (нижче і з відступами) */}
+      {/* BODY */}
       <div className="ep-body">
         <main className="ep-main">
           {loading ? (
@@ -123,13 +125,14 @@ export default function EngPracticePage() {
           )}
         </main>
 
-        <aside className="ep-aside">
+        <aside className="ep-aside" aria-label="Levels">
           <div className="ep-aside-inner">
             {LEVELS.map((lv) => (
               <button
                 key={lv}
                 className={`ep-level ${level === lv ? "active" : ""}`}
                 onClick={() => setLevel(level === lv ? null : lv)}
+                aria-pressed={level === lv}
               >
                 {lv}
               </button>

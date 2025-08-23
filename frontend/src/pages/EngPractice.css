@@ -1,21 +1,17 @@
-/* ====== ШЕЛЛ ====== */
+/* ====== SHELL ====== */
 .ep-shell {
     display: flex;
     flex-direction: column;
     min-height: 100%;
     padding: 0 28px;
-    /* більше простору ліворуч/праворуч */
 }
 
-/* ====== HERO (без скруглень, вищий) ====== */
+/* ====== HERO ====== */
 .ep-hero {
     background: linear-gradient(90deg, #5B7CFF 0%, #A47CF3 50%, #F89AD5 100%);
     border-radius: 0;
-    /* без заокруглень */
     padding: 40px 32px;
-    /* вищий */
     margin: 0 -28px 22px;
-    /* розтягнути на всю ширину відносно shell */
 }
 
 .ep-hero-inner {
@@ -48,6 +44,11 @@
     padding: 12px 8px;
     cursor: pointer;
     position: relative;
+    transition: opacity .15s ease, transform .12s ease;
+}
+
+.ep-tab:hover {
+    transform: translateY(-1px);
 }
 
 .ep-tab.active {
@@ -70,23 +71,15 @@
     display: grid;
     grid-template-columns: 1fr 320px;
     gap: 26px;
-    /* додаткове “повітря” навколо */
     padding: 6px 0 18px 0;
 }
 
-@media (max-width: 1000px) {
-    .ep-body {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ====== MAIN: список завдань (з лівим відступом) ====== */
+/* ====== MAIN ====== */
 .ep-main {
     min-height: 420px;
     padding-left: 18px;
 }
 
-/* лівий відступ для повітря */
 .ep-grid {
     display: grid;
     gap: 18px;
@@ -166,22 +159,11 @@
     color: #1C274C;
 }
 
-/* ====== ASIDE: права панель рівнів (нижче, з відступами) ====== */
+/* ====== ASIDE (Levels) ====== */
 .ep-aside {
     border-left: 1px solid rgba(0, 0, 0, .12);
     margin-top: 8px;
-    /* опустили трохи нижче */
     padding: 20px 20px;
-    /* внутрішні відступи з усіх боків побільше */
-}
-
-@media (max-width: 1000px) {
-    .ep-aside {
-        border-left: none;
-        border-top: 1px solid rgba(0, 0, 0, .12);
-        margin-top: 12px;
-        padding: 16px 0;
-    }
 }
 
 .ep-aside-inner {
@@ -199,6 +181,11 @@
     color: #fff;
     font-weight: 700;
     cursor: pointer;
+    transition: transform .12s ease, background-color .12s ease;
+}
+
+.ep-level:hover {
+    transform: translateY(-1px);
 }
 
 .ep-level.active {
@@ -206,7 +193,153 @@
     background: #1C274C;
 }
 
-/* ====== TASK PAGE ====== */
+/* ===========================
+   MOBILE / SMALL SCREENS
+   =========================== */
+@media (max-width: 1000px) {
+    .ep-shell {
+        padding: 0 16px;
+    }
+
+    .ep-hero {
+        padding: 26px 18px;
+        margin: 0 -16px 14px;
+    }
+
+    .ep-hero-inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .ep-brand {
+        font-size: 24px;
+    }
+
+    /* Tabs → горизонтальні “пігулки” зі скролом */
+    .ep-tabs {
+        width: 100%;
+        gap: 10px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .ep-tabs::-webkit-scrollbar {
+        display: none;
+    }
+
+    .ep-tab {
+        font-size: 15px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: 1.5px solid rgba(255, 255, 255, .55);
+        background: rgba(255, 255, 255, .12);
+        opacity: 1;
+    }
+
+    .ep-tab.active {
+        color: #1C274C;
+        background: #fff;
+        border-color: #fff;
+    }
+
+    .ep-tab.active::after {
+        display: none;
+    }
+
+    /* прибираємо нижню лінію */
+
+    /* Layout: міняємо порядок — спочатку рівні (aside), потім список */
+    .ep-body {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-auto-rows: min-content;
+        gap: 14px;
+    }
+
+    .ep-aside {
+        border-left: none;
+        border-top: none;
+        border-bottom: 1px solid rgba(0, 0, 0, .08);
+        margin-top: 0;
+        padding: 6px 0 10px;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: #fff;
+        grid-row: 1;
+    }
+
+    .ep-main {
+        grid-row: 2;
+        padding-left: 0;
+        min-height: 360px;
+    }
+
+    /* Levels → горизонтальна чіп-стрічка зі скролом */
+    .ep-aside-inner {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 2px 2px 2px 2px;
+        scrollbar-width: none;
+    }
+
+    .ep-aside-inner::-webkit-scrollbar {
+        display: none;
+    }
+
+    .ep-level {
+        height: 38px;
+        padding: 0 14px;
+        border-radius: 999px;
+        white-space: nowrap;
+        background: #6F83FF;
+        flex: 0 0 auto;
+        font-weight: 800;
+        font-size: 14px;
+    }
+
+    .ep-level.active {
+        background: #1C274C;
+        outline-width: 2px;
+    }
+
+    /* Cards grid — компактніше на вузьких екранах */
+    .ep-grid {
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+    }
+
+    @media (max-width: 420px) {
+        .ep-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .ep-card {
+        padding: 14px;
+        border-radius: 14px;
+    }
+
+    .ep-title {
+        font-size: 16px;
+    }
+
+    .ep-desc {
+        font-size: 14px;
+        line-height: 1.45;
+    }
+
+    .ep-card-foot {
+        margin-top: 10px;
+    }
+}
+
+/* ====== TASK PAGE (без змін) ====== */
 .ep-task-shell {
     display: flex;
     flex-direction: column;
@@ -217,10 +350,8 @@
 .ep-task-hero {
     background: linear-gradient(90deg, #5B7CFF 0%, #A47CF3 50%, #F89AD5 100%);
     border-radius: 0;
-    /* без заокруглень */
     padding: 28px 32px;
     margin: 0 -28px 18px;
-    /* на всю ширину */
 }
 
 .ep-task-hero-inner {
@@ -276,13 +407,11 @@
 .ep-theory-fixed {
     height: clamp(440px, 70vh, 700px);
     overflow: hidden;
-    /* контейнер фіксованої висоти */
 }
 
 .ep-theory-scroll {
     height: 100%;
     overflow: auto;
-    /* скролиться тільки контент всередині */
     padding-right: 8px;
     font-size: 0.95rem;
     line-height: 1.55;
