@@ -20,29 +20,28 @@ const ClassPage = () => {
   const [activeSectionId, setActiveSectionId] = useState(null);
   const [showLessonSelector, setShowLessonSelector] = useState(false);
   const [inCall, setInCall] = useState(false);
+
+  // Chat visibility (єдиний інстанс, рендериться як overlay у кінці)
   const [showChat, setShowChat] = useState(false);
 
-  // 🔻 Mobile dock state (CSS-driven)
+  // Mobile dock
   const [dockOpen, setDockOpen] = useState(false);
   const [dockTab, setDockTab] = useState(null); // 'call' | 'chat' | 'sections' | null
 
   const openDock = (tab) => {
-    // toggle same tab
     if (dockOpen && dockTab === tab) {
-      setDockOpen(false);
-      setDockTab(null);
-      if (tab === 'chat') setShowChat(false);
+      closeDock();
       return;
     }
     setDockTab(tab);
     setDockOpen(true);
     if (tab === 'chat') setShowChat(true);
-    if (tab === 'call' && !inCall) setInCall(true); // автоперехід у Join/Call
+    if (tab === 'call' && !inCall) setInCall(true);
   };
 
   const closeDock = () => {
-    setDockOpen(false);
     if (dockTab === 'chat') setShowChat(false);
+    setDockOpen(false);
     setDockTab(null);
   };
 
@@ -66,9 +65,11 @@ const ClassPage = () => {
         if (resClass.data.current_lesson_id) {
           const lesson = await axios.get(`${API_URL}/lessons/lessons/${resClass.data.current_lesson_id}`, { headers });
           setCurrentLesson(lesson.data);
+
           const resSections = await axios.get(`${API_URL}/lessons/lessons/${lesson.data.id}/tasks/`, { headers });
           setSections(resSections.data);
         }
+
         setChatReady(true);
       } catch (error) {
         console.error('Error fetching user or chat:', error);
@@ -88,6 +89,7 @@ const ClassPage = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
       await axios.patch(`${API_URL}/classrooms/classrooms/${id}/set-lesson/${lesson.id}`, {}, { headers });
+
       setCurrentLesson(lesson);
       const resSections = await axios.get(`${API_URL}/lessons/lessons/${lesson.id}/tasks/`, { headers });
       setSections(resSections.data);
@@ -100,13 +102,14 @@ const ClassPage = () => {
   if (!user || !chatReady) return <p>Loading user and chat...</p>;
 
   return (
-    <div
-      className={`class-page ${dockOpen ? 'mdock-open' : ''} ${dockTab ? `mdock-tab-${dockTab}` : ''}`}
-    >
+    <div className={`class-page ${dockOpen ? 'mdock-open' : ''} ${dockTab ? `mdock-tab-${dockTab}` : ''}`}>
       <header className="header">
         <button onClick={() => setShowLessonSelector(true)}>Choose Lesson</button>
         <button
-          onClick={() => (window.location.href = user.role === 'staff' ? '/admin-dashboard' : '/student-dashboard')}
+          onClick={() =>
+            (window.location.href =
+              user.role === 'staff' ? '/admin-dashboard' : '/student-dashboard')
+          }
           aria-label="Leave Lesson"
         >
           <img src={leaveLessonButton} alt="leave Lesson" />
@@ -116,26 +119,16 @@ const ClassPage = () => {
       <section className="main-content">
         {/* LEFT */}
         <div className="left-panel">
-          {showChat ? (
-            <ChatComponent
-              chatId={parseInt(id)}
-              currentUser={user}
-              onClose={() => {
-                setShowChat(false);
-                if (dockTab === 'chat') closeDock();
-              }}
-            />
-          ) : (
-            <div
-              className="chat-toggle"
-              onClick={() => setShowChat(true)}
-              role="button"
-              aria-label="Open chat"
-              title="Open chat"
-            >
-              <img src={chatSvg} alt="chat" />
-            </div>
-          )}
+          {/* На десктопі ця кнопка відкриває overlay чат */}
+          <div
+            className="chat-toggle"
+            onClick={() => setShowChat(true)}
+            role="button"
+            aria-label="Open chat"
+            title="Open chat"
+          >
+            <img src={chatSvg} alt="chat" />
+          </div>
 
           {sections.length > 0 && (
             <div className="section-list">
@@ -160,7 +153,9 @@ const ClassPage = () => {
           {currentLesson ? (
             sections
               .filter((section) => section.id === activeSectionId)
-              .map((section) => <LessonSection key={section.id} section={section} currentUser={user} />)
+              .map((section) => (
+                <LessonSection key={section.id} section={section} currentUser={user} />
+              ))
           ) : (
             <div className="lesson-placeholder">👀 Please select a lesson to begin.</div>
           )}
@@ -212,10 +207,10 @@ const ClassPage = () => {
         </button>
       </div>
 
-      {/* Backdrop для будь‑якого режиму дока */}
+      {/* Backdrop */}
       <div className={`mdock-backdrop ${dockOpen ? 'is-open' : ''}`} onClick={closeDock} />
 
-      {/* Drawer показуємо ТІЛЬКИ для "sections" (call і chat рендеряться своїми контейнерами) */}
+      {/* Drawer для Sections */}
       <div className={`mdock-drawer ${dockOpen && dockTab === 'sections' ? 'is-open' : ''}`}>
         <div className="mdock-drawer-head">
           <h3>Sections</h3>
@@ -227,10 +222,7 @@ const ClassPage = () => {
               <li key={section.id}>
                 <button
                   className={`mdock-section-btn ${activeSectionId === section.id ? 'is-active' : ''}`}
-                  onClick={() => {
-                    setActiveSectionId(section.id);
-                    // не закриваю док, щоб можна було швидко перемикати
-                  }}
+                  onClick={() => setActiveSectionId(section.id)}
                 >
                   {section.title || section.task_type || `Section ${idx + 1}`}
                 </button>
@@ -239,6 +231,18 @@ const ClassPage = () => {
           </ul>
         </div>
       </div>
+
+      {/* ✅ ЄДИНИЙ ChatComponent ОКРЕМО ВІД left-panel (щоб працював на мобільному) */}
+      {showChat && (
+        <ChatComponent
+          chatId={parseInt(id)}
+          currentUser={user}
+          onClose={() => {
+            setShowChat(false);
+            if (dockTab === 'chat') closeDock();
+          }}
+        />
+      )}
 
       {showLessonSelector && (
         <LessonSelectorModal
