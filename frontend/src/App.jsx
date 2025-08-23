@@ -18,16 +18,14 @@ import LessonBuilderPage from "./pages/LessonBuilderPage";
 import EngPracticePage from "./pages/EngPracticePage";
 import EngPracticeTaskPage from "./pages/EngPracticeTaskPage";
 
-/* Глобальна анімація завантаження (єдина для всіх сторінок) */
-import GlobalLoader from "./components/GlobalLoader";
+/* 🔄 Лоадер лише на переходи між сторінками */
+import RouteChangeLoader from "./components/RouteChangeLoader";
 
 function App() {
   const [user, setUser] = useState(() => {
-    // 1) миттєво беремо user з localStorage (щоб не було "порожнечі" при refresh)
     const cached = localStorage.getItem("user");
     return cached ? JSON.parse(cached) : null;
   });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const bootstrap = async () => {
@@ -38,51 +36,32 @@ function App() {
           setUser(response.data);
           localStorage.setItem("user", JSON.stringify(response.data));
         } else {
-          // без токена — гарантуємо чистий стан
           localStorage.removeItem("user");
           setUser(null);
         }
       } catch (error) {
         console.error("Помилка отримання користувача", error);
-        // при помилці токен скоріше за все невалідний — чистимо
         localStorage.removeItem("token");
         localStorage.removeItem("user");
         setUser(null);
-      } finally {
-        setLoading(false);
       }
     };
     bootstrap();
   }, []);
 
-  // Головний шлях за замовчуванням для залогінених
-  const homeFor = (u) => (u?.role === "staff" && u?.status === "admin" ? "/admin-dashboard" : "/student-dashboard");
-
-  // Поки відбувається первинна ініціалізація — покажемо GlobalLoader (а не текст)
-  if (loading) {
-    return (
-      <>
-        <GlobalLoader />
-        {/* Router все одно монтуємо, щоб працювала адреса/історія */}
-        <Router>
-          <Routes>
-            <Route path="*" element={<></>} />
-          </Routes>
-        </Router>
-      </>
-    );
-  }
+  const homeFor = (u) =>
+    u?.role === "staff" && u?.status === "admin" ? "/admin-dashboard" : "/student-dashboard";
 
   return (
     <Router>
-      {/* Один раз підключаємо глобальний лоадер (слухає всі axios-запити) */}
-      <GlobalLoader />
+      {/* ⬇️ Лише при зміні URL; без інтерсепторів */}
+      <RouteChangeLoader showOnFirstLoad={false} />
 
       <Routes>
-        {/* Публічний маршрут логіну */}
+        {/* Публічний логін */}
         <Route path="/login" element={<LoginPage setUser={setUser} />} />
 
-        {/* Приватні маршрути — пустить, якщо є token у localStorage */}
+        {/* Приватна зона — пропускає, якщо Є token у localStorage */}
         <Route element={<ProtectedRoute />}>
           {/* Доступно всім залогіненим */}
           <Route path="/student-dashboard" element={<StudentDashboard />} />
@@ -90,7 +69,7 @@ function App() {
           <Route path="/eng-practice" element={<EngPracticePage />} />
           <Route path="/eng-practice/task/:id" element={<EngPracticeTaskPage />} />
 
-          {/* Тільки адмін (staff + admin) */}
+          {/* Тільки для admin (staff+admin) */}
           <Route element={<AdminRoute user={user} />}>
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/create-user" element={<CreateUserPage />} />
@@ -101,15 +80,15 @@ function App() {
           </Route>
         </Route>
 
-        {/* Fallback:
-           - якщо є token → на свій home (admin/student)
-           - якщо немає → на /login
-        */}
+        {/* Fallback */}
         <Route
           path="*"
           element={
             localStorage.getItem("token") ? (
-              <Navigate to={homeFor(user || JSON.parse(localStorage.getItem("user") || "{}"))} replace />
+              <Navigate
+                to={homeFor(user || JSON.parse(localStorage.getItem("user") || "{}"))}
+                replace
+              />
             ) : (
               <Navigate to="/login" replace />
             )
