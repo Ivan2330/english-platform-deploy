@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { API_URL } from '../../config';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import CallComponent from '../components/CallComponent';
 import ChatComponent from '../components/ChatComponent';
 import LessonSection from '../components/LessonSection';
@@ -13,6 +13,8 @@ import chatSvg from '../assets/chat.svg';
 
 const ClassPage = () => {
   const { id } = useParams(); // classroomId
+  const navigate = useNavigate();
+
   const [user, setUser] = useState(null);
   const [chatReady, setChatReady] = useState(false);
   const [currentLesson, setCurrentLesson] = useState(null);
@@ -99,19 +101,19 @@ const ClassPage = () => {
     }
   };
 
+  const handleLeaveClass = () => {
+    // SPA-навігація без перезавантаження сторінки
+    const target = user?.role === 'staff' ? '/admin-dashboard' : '/student-dashboard';
+    navigate(target, { replace: true, state: { from: `/classroom/${id}` } });
+  };
+
   if (!user || !chatReady) return <p>Loading user and chat...</p>;
 
   return (
     <div className={`class-page ${dockOpen ? 'mdock-open' : ''} ${dockTab ? `mdock-tab-${dockTab}` : ''}`}>
       <header className="header">
         <button onClick={() => setShowLessonSelector(true)}>Choose Lesson</button>
-        <button
-          onClick={() =>
-            (window.location.href =
-              user.role === 'staff' ? '/admin-dashboard' : '/student-dashboard')
-          }
-          aria-label="Leave Lesson"
-        >
+        <button onClick={handleLeaveClass} aria-label="Leave Lesson">
           <img src={leaveLessonButton} alt="leave Lesson" />
         </button>
       </header>

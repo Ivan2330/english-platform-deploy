@@ -1,4 +1,3 @@
-// src/App.jsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import LoginPage from "./pages/LoginPage";
@@ -18,13 +17,14 @@ import LessonBuilderPage from "./pages/LessonBuilderPage";
 import EngPracticePage from "./pages/EngPracticePage";
 import EngPracticeTaskPage from "./pages/EngPracticeTaskPage";
 
-/* 🔄 Лоадер лише на переходи між сторінками */
-import RouteChangeLoader from "./components/RouteChangeLoader";
-
 function App() {
   const [user, setUser] = useState(() => {
-    const cached = localStorage.getItem("user");
-    return cached ? JSON.parse(cached) : null;
+    try {
+      const cached = localStorage.getItem("user");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
   });
 
   useEffect(() => {
@@ -54,14 +54,11 @@ function App() {
 
   return (
     <Router>
-      {/* ⬇️ Лише при зміні URL; без інтерсепторів */}
-      <RouteChangeLoader showOnFirstLoad={false} />
-
       <Routes>
         {/* Публічний логін */}
         <Route path="/login" element={<LoginPage setUser={setUser} />} />
 
-        {/* Приватна зона — пропускає, якщо Є token у localStorage */}
+        {/* Приватна зона — перевірка тільки на токен (щоб refresh не кидав на /login) */}
         <Route element={<ProtectedRoute />}>
           {/* Доступно всім залогіненим */}
           <Route path="/student-dashboard" element={<StudentDashboard />} />
@@ -69,7 +66,7 @@ function App() {
           <Route path="/eng-practice" element={<EngPracticePage />} />
           <Route path="/eng-practice/task/:id" element={<EngPracticeTaskPage />} />
 
-          {/* Тільки для admin (staff+admin) */}
+          {/* Лише для адмінів */}
           <Route element={<AdminRoute user={user} />}>
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/create-user" element={<CreateUserPage />} />
@@ -80,15 +77,27 @@ function App() {
           </Route>
         </Route>
 
-        {/* Fallback */}
+        {/* Fallback:
+           - Є токен → якщо є кешований user → редірект у його home; якщо НІ — на /login
+           - Нема токена → на /login
+        */}
         <Route
           path="*"
           element={
             localStorage.getItem("token") ? (
-              <Navigate
-                to={homeFor(user || JSON.parse(localStorage.getItem("user") || "{}"))}
-                replace
-              />
+              (() => {
+                let cachedUser = null;
+                try {
+                  cachedUser = JSON.parse(localStorage.getItem("user") || "null");
+                } catch {
+                  cachedUser = null;
+                }
+                return cachedUser ? (
+                  <Navigate to={homeFor(cachedUser)} replace />
+                ) : (
+                  <Navigate to="/login" replace />
+                );
+              })()
             ) : (
               <Navigate to="/login" replace />
             )
