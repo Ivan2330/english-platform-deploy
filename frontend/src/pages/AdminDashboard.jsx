@@ -47,7 +47,7 @@ const AdminDashboardPage = () => {
     return () => { mounted = false; };
   }, []);
 
-  // Ефект підсвітки курсора на кнопках
+  // підсвітка курсора на кнопках (працює разом із CSS var --x/--y)
   useEffect(() => {
     const moveGlow = (e) => {
       const t = e.target;
@@ -65,6 +65,11 @@ const AdminDashboardPage = () => {
 
   return (
     <div className="admin-dashboard">
+      {/* фонові шари під стиль референсу */}
+      <div className="fx fx-stars" aria-hidden="true" />
+      <div className="fx fx-grid" aria-hidden="true" />
+      <div className="fx fx-glow" aria-hidden="true" />
+
       <header className="dashboard-header" role="banner">
         <h1 className="dashboard-header-h1">Prime Academy · Admin</h1>
         <div className="dashboard-header-meta" aria-live="polite">
