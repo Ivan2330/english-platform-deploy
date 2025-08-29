@@ -1,562 +1,250 @@
-/* ──────────────────────────────────────────────────────────────
-   Prime Academy · Admin — Violet Neon Rail · Card Grid Layout
-   Designed for AdminDashboardPage.jsx as-is (no JSX changes).
-   ────────────────────────────────────────────────────────────── */
+/* ───────────────────────────────
+   Prime Academy Admin Dashboard
+   Concept: Holographic Console
+   ─────────────────────────────── */
 
-/* ===== Theme Tokens (Violet / Cyberpunk) ===== */
 :root {
-  --bg: #090611;
-  --bg-grad-1: rgba(180, 90, 255, 0.12);
-  --bg-grad-2: rgba(255, 72, 196, 0.10);
+  --bg: #05060a;
+  --text: #f2f4ff;
+  --text-dim: #8d91a5;
 
-  --panel: rgba(19, 12, 34, 0.55);
-  --panel-strong: rgba(22, 14, 40, 0.7);
-  --card: rgba(24, 16, 46, 0.55);
+  --grad-1: linear-gradient(135deg, #6a11cb, #2575fc);
+  --grad-2: linear-gradient(135deg, #ff6fd8, #3813c2);
+  --grad-3: linear-gradient(135deg, #00dbde, #fc00ff);
+  --grad-4: linear-gradient(135deg, #f7971e, #ffd200);
 
-  --violet: #b67cff;
-  --magenta: #ff48c4;
-  --pink: #ff8bd1;
-  --blue: #7aa8ff;
-  --lime: #9dffa5;
-
-  --text: #f5eaff;
-  --text-dim: #bca9d8;
-
-  --border: 1px solid rgba(255, 255, 255, 0.08);
-  --radius-xl: 22px;
-  --radius-lg: 16px;
-  --radius-md: 12px;
-  --radius-sm: 10px;
-
-  --shadow-soft: 0 14px 34px rgba(0, 0, 0, 0.45);
-  --glass: saturate(150%) blur(12px);
-
-  --ring: 2px;
-  --ring-color: rgba(182, 124, 255, 0.65);
-
-  --gap-xl: clamp(18px, 2.6vw, 30px);
-  --gap-lg: clamp(14px, 2vw, 22px);
-  --gap-md: 12px;
-  --gap-sm: 8px;
+  --border: 1px solid rgba(255, 255, 255, 0.1);
+  --radius-lg: 18px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  --glass: blur(10px) saturate(160%);
 }
 
-/* Optional light mode tweak */
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f4eeff;
-    --panel: rgba(255, 255, 255, 0.55);
-    --panel-strong: rgba(255, 255, 255, 0.75);
-    --card: rgba(255, 255, 255, 0.6);
-    --text: #150c2a;
-    --text-dim: #5d4a86;
-    --border: 1px solid rgba(21, 12, 42, 0.08);
-    --shadow-soft: 0 12px 28px rgba(21, 12, 42, 0.10);
-  }
-}
-
-/* ===== Page Background ===== */
+/* ===== Base ===== */
 .admin-dashboard {
-  min-height: 100dvh;
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, rgba(108, 0, 255, 0.25), transparent 40%),
+    radial-gradient(circle at bottom right, rgba(0, 212, 255, 0.2), transparent 40%),
+    var(--bg);
   color: var(--text);
-  background:
-    radial-gradient(900px 600px at 15% -10%, var(--bg-grad-1), transparent 60%),
-    radial-gradient(900px 600px at 95% 110%, var(--bg-grad-2), transparent 60%),
-    linear-gradient(180deg, var(--bg), #07040e 70%, #05030a 100%);
-  padding: clamp(16px, 2vw, 24px);
   display: flex;
   flex-direction: column;
-  gap: var(--gap-xl);
-  overflow-x: hidden;
+  gap: 30px;
+  padding: 20px;
+  font-family: "Segoe UI", sans-serif;
 }
 
-/* Soft scanline shimmer */
-.admin-dashboard::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(180deg,
-      rgba(255, 255, 255, 0.02) 0 2px,
-      transparent 2px 6px);
-  opacity: .25;
-}
-
-/* ===== Header (wide banner) ===== */
+/* ===== Header ===== */
 .dashboard-header {
-  position: relative;
+  background: rgba(255, 255, 255, 0.05);
   border: var(--border);
-  border-radius: var(--radius-xl);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 40%) var(--panel);
-  backdrop-filter: var(--glass);
-  box-shadow: var(--shadow-soft);
-  padding: clamp(14px, 2vw, 22px) clamp(16px, 2.2vw, 28px);
-  display: grid;
-  grid-template-columns: 1fr auto;
+  border-radius: var(--radius-lg);
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  overflow: clip;
-}
-
-.dashboard-header::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    conic-gradient(from 0deg at 50% 50%,
-      rgba(182, 124, 255, 0.22),
-      rgba(255, 72, 196, 0.18),
-      rgba(122, 168, 255, 0.18),
-      transparent 70%);
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  padding: 1px;
-  opacity: .65;
+  backdrop-filter: var(--glass);
+  box-shadow: var(--shadow);
 }
 
 .dashboard-header-h1 {
   margin: 0;
-  font-size: clamp(18px, 2.8vw, 32px);
-  font-weight: 800;
-  letter-spacing: .3px;
-  text-shadow:
-    0 2px 14px rgba(182, 124, 255, 0.35),
-    0 0 40px rgba(255, 72, 196, 0.18);
+  font-size: 26px;
+  font-weight: 700;
+  background: var(--grad-3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .dashboard-header-meta {
-  color: var(--text-dim);
   font-size: 14px;
-  padding: 8px 12px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 14px;
   border-radius: 999px;
-  border: var(--border);
-  background: var(--panel-strong);
-  backdrop-filter: var(--glass);
 }
 
-/* ===== Layout: Neon Rail + Card Grid ===== */
-
-/* Two columns: narrow left rail, expansive right content */
+/* ===== Layout ===== */
 .dashboard-content {
   display: grid;
-  grid-template-columns: 86px minmax(0, 1fr);
-  gap: var(--gap-xl);
-  align-items: start;
+  grid-template-columns: 1fr 2fr;
+  gap: 30px;
+  flex: 1;
 }
 
-/* Left rail: collapsed by default, expands on hover/focus */
+/* ===== Left Panel (modules) ===== */
 .left-panel-buttons {
-  position: sticky;
-  top: clamp(10px, 2vh, 24px);
-  height: calc(100dvh - 180px);
-  min-height: 520px;
-  border: var(--border);
-  border-radius: var(--radius-xl);
-  background:
-    linear-gradient(180deg, rgba(182, 124, 255, 0.10), transparent 50%) var(--panel);
-  backdrop-filter: var(--glass);
-  box-shadow: var(--shadow-soft);
-  padding: 10px;
   display: grid;
-  grid-template-rows: auto 1fr 1fr;
-  gap: var(--gap-md);
-  width: 86px;
-  transition: width .25s ease, box-shadow .25s ease;
-  overflow: hidden;
-}
-
-.left-panel-buttons:hover,
-.left-panel-buttons:focus-within {
-  width: 280px;
-  box-shadow: 0 18px 42px rgba(182, 124, 255, 0.18), var(--shadow-soft);
-}
-
-/* Profile chip pinned on top of rail */
-.profile-info {
-  border: var(--border);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, rgba(122, 168, 255, 0.10), transparent 60%) var(--panel-strong);
-  padding: 12px;
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-}
-
-.profile-name {
-  margin: 0;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #ffd9fb 0 35%, #ff8bd1 60%, #7e2a61 100%);
-  box-shadow: 0 0 0 2px rgba(255, 139, 209, 0.18), 0 0 18px rgba(255, 139, 209, 0.45);
-}
-
-.profile-sub {
-  margin: 0;
-  color: var(--text-dim);
-  font-size: 12px;
-  line-height: 1.25;
-}
-
-/* Button stacks as two neon islands */
-.button-group {
-  list-style: none;
-  margin: 0;
-  padding: 6px;
-  border: var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--card);
-  display: grid;
-  gap: 6px;
-  overflow: hidden;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
 .button-group-li {
-  min-width: 0;
+  list-style: none;
 }
 
 .button {
-  --btn-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
-  --glow: radial-gradient(70px 70px at var(--x, 50%) var(--y, 50%), rgba(182, 124, 255, 0.28), transparent 45%);
-  width: 100%;
-  display: inline-flex;
-  justify-content: flex-start;
+  display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  font-weight: 700;
-  color: var(--text);
-  background: var(--btn-bg), var(--glow), var(--panel-strong);
-  border: var(--border);
-  border-radius: 12px;
-  backdrop-filter: var(--glass);
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  border: none;
+  color: #fff;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease;
-  position: relative;
-  isolation: isolate;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+/* Different gradients for variety */
+#li-1 .button {
+  background: var(--grad-1);
+}
+
+#li-2 .button {
+  background: var(--grad-2);
+}
+
+#li-3 .button {
+  background: var(--grad-3);
+}
+
+#li-4 .button {
+  background: var(--grad-4);
+}
+
+#li-5 .button {
+  background: var(--grad-2);
+}
+
+#button-c .button {
+  background: var(--grad-1);
+}
+
+#button-a .button {
+  background: var(--grad-3);
 }
 
 .button:hover {
-  transform: translateY(-1px);
-  border-color: rgba(182, 124, 255, 0.55);
-  box-shadow: 0 12px 28px rgba(182, 124, 255, 0.22);
+  transform: translateY(-5px) rotateX(6deg);
+  box-shadow: 0 20px 40px rgba(255, 0, 255, 0.4);
 }
 
-.button:active {
-  transform: translateY(0);
-}
-
-.button:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 var(--ring) var(--ring-color);
-}
-
-/* ===== Right: Card Grid for Classes ===== */
+/* ===== Right Panel (class cards) ===== */
 .right-panel-classes {
+  background: rgba(255, 255, 255, 0.03);
   border: var(--border);
-  border-radius: var(--radius-xl);
-  background:
-    linear-gradient(180deg, rgba(255, 72, 196, 0.08), transparent 60%) var(--panel);
-  box-shadow: var(--shadow-soft);
+  border-radius: var(--radius-lg);
   backdrop-filter: var(--glass);
-  padding: clamp(12px, 1.6vw, 18px);
-  display: grid;
-  gap: var(--gap-lg);
-  min-height: 460px;
+  box-shadow: var(--shadow);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .panel-head {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 6px 6px 2px;
+  align-items: center;
 }
 
 .panel-head h3 {
   margin: 0;
-  font-size: clamp(16px, 2vw, 22px);
-  font-weight: 800;
-  letter-spacing: .2px;
-  text-shadow: 0 2px 10px rgba(255, 72, 196, 0.22);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 36px;
-  height: 28px;
-  padding: 0 10px;
+  background: var(--grad-3);
+  padding: 6px 14px;
   border-radius: 999px;
-  font-weight: 800;
-  color: #260a1e;
-  background: linear-gradient(180deg, #ff8bd1, #ff48c4);
-  box-shadow: 0 8px 18px rgba(255, 72, 196, 0.30), 0 1px 0 rgba(255, 255, 255, 0.45) inset;
+  font-weight: 600;
+  color: #fff;
 }
 
-/* Grid transforms list into cards */
 .r-panel-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: var(--gap-lg);
-  max-height: none;
-  /* cards should flow */
-  padding-right: 2px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
 }
 
-/* Card styling repurposing list item */
 .r-panel-item {
-  display: grid;
-  grid-template:
-    "id name" auto
-    ".  actions" auto / 96px 1fr;
-  gap: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
   border: var(--border);
-  background:
-    radial-gradient(240px 160px at 100% 0%, rgba(182, 124, 255, 0.14), transparent 60%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)) var(--card);
-  backdrop-filter: var(--glass);
   border-radius: var(--radius-lg);
-  padding: 14px;
-  position: relative;
-  overflow: clip;
-  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-}
-
-.r-panel-item::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background:
-    linear-gradient(120deg, rgba(255, 72, 196, 0.22), rgba(122, 168, 255, 0.18), transparent 70%);
-  opacity: 0;
-  transition: opacity .25s ease;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  padding: 1px;
-  pointer-events: none;
+  padding: 16px;
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 12px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .r-panel-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 16px 36px rgba(182, 124, 255, 0.20);
-  border-color: rgba(182, 124, 255, 0.45);
-}
-
-.r-panel-item:hover::before {
-  opacity: .9;
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 18px 36px rgba(108, 0, 255, 0.3);
 }
 
 .r-panel-item-id {
-  grid-area: id;
-  align-self: start;
-  justify-self: start;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  color: #efd8ff;
-  letter-spacing: .3px;
-  padding: 10px 12px;
-  border-radius: 14px;
-  background:
-    linear-gradient(180deg, rgba(182, 124, 255, 0.2), rgba(182, 124, 255, 0.08));
-  border: 1px dashed rgba(182, 124, 255, 0.55);
-  text-align: center;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
 }
 
 .r-panel-item-name {
-  grid-area: name;
-  align-self: center;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text);
-  font-weight: 800;
-  letter-spacing: .25px;
-  min-width: 0;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.r-panel-item-go {
-  grid-area: actions;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
+  white-space: nowrap;
 }
 
 .go-btn {
-  --glow: radial-gradient(80px 80px at var(--x, 50%) var(--y, 50%), rgba(255, 72, 196, 0.32), transparent 48%);
-  padding: 10px 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 72, 196, 0.55);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0.03)),
-    var(--glow),
-    rgba(17, 10, 30, 0.65);
-  color: #ffe9f6;
-  font-weight: 800;
+  margin-top: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--grad-1);
+  color: #fff;
+  font-weight: 600;
   cursor: pointer;
-  transition: transform .14s ease, box-shadow .14s ease, border-color .14s ease, background .14s ease;
-  backdrop-filter: var(--glass);
-  box-shadow: 0 10px 22px rgba(255, 72, 196, 0.18);
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .go-btn:hover {
-  transform: translateY(-1px);
-  border-color: rgba(255, 72, 196, 0.85);
-  box-shadow: 0 14px 30px rgba(255, 72, 196, 0.26);
+  background: var(--grad-2);
+  transform: translateY(-2px);
 }
 
-.go-btn:active {
-  transform: translateY(0);
-}
-
-.go-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 var(--ring) rgba(255, 72, 196, 0.55);
-}
-
-/* ===== Empty & Error States ===== */
-.empty-state {
-  border: 1px dashed rgba(255, 255, 255, 0.18);
-  background: repeating-linear-gradient(135deg,
-      rgba(255, 255, 255, 0.05) 0 10px,
-      rgba(255, 255, 255, 0.02) 10px 20px) var(--card);
-  backdrop-filter: var(--glass);
-  color: var(--text-dim);
-  padding: 18px;
-  border-radius: var(--radius-md);
-  text-align: center;
-}
-
-.empty-state.danger {
-  border-color: rgba(255, 102, 170, 0.5);
-  color: #ffe1ed;
-  background:
-    linear-gradient(180deg, rgba(255, 102, 170, 0.12), transparent 60%),
-    var(--card);
-}
-
-/* ===== Skeletons (card-style) ===== */
+/* ===== Skeleton / Empty ===== */
 .skeleton .shimmer {
-  position: relative;
-  color: transparent !important;
-  background: linear-gradient(90deg,
-      rgba(255, 255, 255, 0.06),
-      rgba(255, 255, 255, 0.14),
-      rgba(255, 255, 255, 0.06));
-  background-size: 220% 100%;
-  animation: shimmer 1.8s ease-in-out infinite;
-  border-radius: 10px;
+  background: linear-gradient(90deg, #333, #555, #333);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 
 @keyframes shimmer {
   0% {
-    background-position: 220% 0;
+    background-position: 200% 0;
   }
 
   100% {
-    background-position: -220% 0;
+    background-position: -200% 0;
   }
 }
 
-.btn-skeleton {
-  width: 80px;
-  height: 36px;
-  border-radius: 12px;
+.empty-state {
+  text-align: center;
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 14px;
+  color: var(--text-dim);
 }
 
-.skeleton .r-panel-item-id {
-  height: 40px;
-}
-
-.skeleton .r-panel-item-name {
-  height: 16px;
-}
-
-/* ===== A11y Focus ===== */
-.button:focus-visible,
-.go-btn:focus-visible,
-.r-panel-item:focus-within {
-  outline: none;
-  box-shadow: 0 0 0 var(--ring) var(--ring-color);
-}
-
-/* ===== Motion Safety ===== */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
-  }
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 1100px) {
-  .dashboard-content {
-    grid-template-columns: 80px 1fr;
-  }
-}
-
-@media (max-width: 900px) {
-  .left-panel-buttons {
-    height: auto;
-    min-height: unset;
-  }
-}
-
-@media (max-width: 760px) {
-
-  /* Rail stacks on top, expands by default on mobile */
-  .dashboard-content {
-    grid-template-columns: 1fr;
-    gap: var(--gap-lg);
-  }
-
-  .left-panel-buttons {
-    position: static;
-    width: 100%;
-    padding: 12px;
-  }
-
-  .left-panel-buttons:hover,
-  .left-panel-buttons:focus-within {
-    width: 100%;
-  }
-
-  .r-panel-list {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  }
-}
-
-@media (max-width: 460px) {
-  .badge {
-    min-width: 32px;
-    height: 26px;
-    font-size: 12px;
-  }
-
-  .r-panel-item {
-    grid-template:
-      "id name" auto
-      "actions actions" auto / 86px 1fr;
-    padding: 12px;
-  }
-
-  .go-btn {
-    padding: 8px 12px;
-    font-size: 13px;
-  }
+.empty-state.danger {
+  color: #ff8ba0;
+  border: 1px dashed rgba(255, 0, 90, 0.4);
 }
