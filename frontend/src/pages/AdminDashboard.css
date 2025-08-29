@@ -1,143 +1,127 @@
 /* ───────────────────────────────
    Prime Academy Admin Dashboard
-   Concept: Holographic Console
+   Concept: Modern Neon Console
    ─────────────────────────────── */
 
 :root {
-  --bg: #05060a;
-  --text: #f2f4ff;
-  --text-dim: #8d91a5;
+  --bg: #0a0b10;
+  --bg-panel: rgba(255, 255, 255, 0.03);
+  --bg-card: rgba(255, 255, 255, 0.06);
+  --text: #f4f4ff;
+  --text-dim: #a0a3b8;
+  --accent-1: #9a6dff;
+  --accent-2: #00ffe7;
 
-  --grad-1: linear-gradient(135deg, #6a11cb, #2575fc);
-  --grad-2: linear-gradient(135deg, #ff6fd8, #3813c2);
-  --grad-3: linear-gradient(135deg, #00dbde, #fc00ff);
-  --grad-4: linear-gradient(135deg, #f7971e, #ffd200);
-
-  --border: 1px solid rgba(255, 255, 255, 0.1);
-  --radius-lg: 18px;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  --glass: blur(10px) saturate(160%);
+  --border: 1px solid rgba(255, 255, 255, 0.08);
+  --radius: 14px;
+  --shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+  --glass: blur(12px) saturate(150%);
 }
 
 /* ===== Base ===== */
 .admin-dashboard {
   min-height: 100vh;
-  background: radial-gradient(circle at top left, rgba(108, 0, 255, 0.25), transparent 40%),
-    radial-gradient(circle at bottom right, rgba(0, 212, 255, 0.2), transparent 40%),
-    var(--bg);
-  color: var(--text);
+  background: linear-gradient(180deg, #080910 0%, #05060a 100%);
   display: flex;
   flex-direction: column;
-  gap: 30px;
-  padding: 20px;
-  font-family: "Segoe UI", sans-serif;
+  font-family: "Inter", sans-serif;
+  color: var(--text);
 }
 
 /* ===== Header ===== */
 .dashboard-header {
-  background: rgba(255, 255, 255, 0.05);
-  border: var(--border);
-  border-radius: var(--radius-lg);
-  padding: 20px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 18px 28px;
+  background: var(--bg-panel);
+  border-bottom: var(--border);
   backdrop-filter: var(--glass);
-  box-shadow: var(--shadow);
 }
 
 .dashboard-header-h1 {
-  margin: 0;
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
-  background: var(--grad-3);
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  margin: 0;
 }
 
 .dashboard-header-meta {
   font-size: 14px;
-  color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-dim);
 }
 
-/* ===== Layout ===== */
+/* ===== Layout: sidebar + content ===== */
 .dashboard-content {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 30px;
   flex: 1;
-}
-
-/* ===== Left Panel (modules) ===== */
-.left-panel-buttons {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  grid-template-columns: 240px 1fr;
+  min-height: 0;
 }
 
-.button-group-li {
+/* ===== Sidebar ===== */
+.left-panel-buttons {
+  background: var(--bg-panel);
+  border-right: var(--border);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.profile-info {
+  padding: 12px;
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  font-size: 14px;
+}
+
+.profile-name {
+  margin: 0 0 4px 0;
+  font-weight: 600;
+}
+
+.profile-sub {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 18px;
-  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  border-radius: var(--radius);
   border: none;
-  color: #fff;
-  font-weight: 600;
+  text-align: left;
+  background: var(--bg-card);
+  color: var(--text);
+  font-weight: 500;
   cursor: pointer;
-  box-shadow: var(--shadow);
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
-}
-
-/* Different gradients for variety */
-#li-1 .button {
-  background: var(--grad-1);
-}
-
-#li-2 .button {
-  background: var(--grad-2);
-}
-
-#li-3 .button {
-  background: var(--grad-3);
-}
-
-#li-4 .button {
-  background: var(--grad-4);
-}
-
-#li-5 .button {
-  background: var(--grad-2);
-}
-
-#button-c .button {
-  background: var(--grad-1);
-}
-
-#button-a .button {
-  background: var(--grad-3);
+  transition: all 0.2s ease;
 }
 
 .button:hover {
-  transform: translateY(-5px) rotateX(6deg);
-  box-shadow: 0 20px 40px rgba(255, 0, 255, 0.4);
+  background: linear-gradient(90deg, var(--accent-1) 0%, var(--accent-2) 100%);
+  color: #000;
+  transform: translateX(4px);
 }
 
-/* ===== Right Panel (class cards) ===== */
+/* ===== Right Panel (classes) ===== */
 .right-panel-classes {
-  background: rgba(255, 255, 255, 0.03);
-  border: var(--border);
-  border-radius: var(--radius-lg);
-  backdrop-filter: var(--glass);
-  box-shadow: var(--shadow);
-  padding: 20px;
+  padding: 28px;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -152,99 +136,66 @@
 .panel-head h3 {
   margin: 0;
   font-size: 20px;
-  font-weight: 700;
-  color: var(--text);
+  font-weight: 600;
 }
 
 .badge {
-  background: var(--grad-3);
-  padding: 6px 14px;
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+  padding: 4px 12px;
   border-radius: 999px;
+  font-size: 13px;
   font-weight: 600;
-  color: #fff;
+  color: #000;
 }
 
 .r-panel-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  gap: 20px;
 }
 
 .r-panel-item {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-card);
   border: var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius);
   padding: 16px;
-  display: grid;
-  grid-template-rows: auto auto;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .r-panel-item:hover {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 18px 36px rgba(108, 0, 255, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(154, 109, 255, 0.2);
 }
 
 .r-panel-item-id {
   font-size: 13px;
-  font-weight: 600;
   color: var(--text-dim);
 }
 
 .r-panel-item-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .go-btn {
-  margin-top: 8px;
-  padding: 8px 14px;
-  border-radius: 10px;
+  margin-top: auto;
+  align-self: flex-end;
+  padding: 6px 12px;
+  border-radius: 8px;
   border: none;
-  background: var(--grad-1);
-  color: #fff;
+  background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+  color: #000;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition: transform 0.2s ease;
 }
 
 .go-btn:hover {
-  background: var(--grad-2);
-  transform: translateY(-2px);
-}
-
-/* ===== Skeleton / Empty ===== */
-.skeleton .shimmer {
-  background: linear-gradient(90deg, #333, #555, #333);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-.empty-state {
-  text-align: center;
-  padding: 20px;
-  border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 14px;
-  color: var(--text-dim);
-}
-
-.empty-state.danger {
-  color: #ff8ba0;
-  border: 1px dashed rgba(255, 0, 90, 0.4);
+  transform: scale(1.05);
 }
