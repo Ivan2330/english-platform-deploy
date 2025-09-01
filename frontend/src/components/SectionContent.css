@@ -62,10 +62,10 @@
 
 /* Базова картка */
 .md-card {
-    background: #0f1226;
+    background: #7c3aed;
     /* темний дефолт — далі підженемо під твій дизайн */
     color: #f2f5f9;
-    border: 1px solid rgba(255, 255, 255, .06);
+    border: 5px solid #3b2b66;
     border-radius: 16px;
     padding: 20px;
     box-shadow: 0 8px 26px rgba(0, 0, 0, .15);
@@ -106,4 +106,9 @@
     display: block;
     max-width: 100%;
     border-radius: 12px;
+}
+
+/* SectionContent.css */
+.md-card :is(h1, h2, h3, h4, h5, h6) {
+    color: #fff;
 }
