@@ -261,7 +261,8 @@ const LessonSection = ({ section, currentUser }) => {
       {/* Теорія */}
       <section className="lesson-theory-section">
         <div className="theory-section-content">
-          <SectionContent content={section.content} />
+          {/* ⬇️ тут тепер підтримка слайдів і media_url (через [[MEDIA]] або окремою карткою) */}
+          <SectionContent content={section.content} mediaUrl={section.media_url} />
         </div>
         {section.description && (
           <div className="theory-section-question">

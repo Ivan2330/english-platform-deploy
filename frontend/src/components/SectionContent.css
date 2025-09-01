@@ -1,4 +1,4 @@
-.section-md {
+/* .section-md {
     line-height: 1.7;
     font-size: 16px
 }
@@ -45,4 +45,65 @@
     border-left: 4px solid #7c3aed;
     padding-left: .75rem;
     color: #555
+} */
+
+/* Контейнер блоку з markdown */
+.section-md {
+    width: 100%;
+}
+
+/* Стеки карток */
+.md-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    /* відступ між «прямокутниками» */
+}
+
+/* Базова картка */
+.md-card {
+    background: #0f1226;
+    /* темний дефолт — далі підженемо під твій дизайн */
+    color: #f2f5f9;
+    border: 1px solid rgba(255, 255, 255, .06);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, .15);
+    overflow: hidden;
+}
+
+/* Зображення/відео/аудіо/фрейми */
+.md-media-img,
+.md-media-video,
+.md-media-iframe {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+    margin: 8px 0;
+}
+
+.md-media-audio {
+    width: 100%;
+    margin: 8px 0;
+}
+
+.md-media-link {
+    word-break: break-all;
+    text-decoration: underline;
+}
+
+/* Типові елементи всередині markdown */
+.md-card h1,
+.md-card h2,
+.md-card h3 {
+    margin-top: 0.2em;
+}
+
+.md-card img,
+.md-card video,
+.md-card iframe {
+    display: block;
+    max-width: 100%;
+    border-radius: 12px;
 }
