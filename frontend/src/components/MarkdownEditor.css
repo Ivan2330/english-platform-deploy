@@ -38,3 +38,31 @@
 .md-preview {
     padding: 12px
 }
+
+/* MarkdownEditor.css або глобально */
+.md-preview .md-table,
+.section-content .md-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+}
+
+.md-preview .md-table th,
+.md-preview .md-table td,
+.section-content .md-table th,
+.section-content .md-table td {
+    border: 1px solid #e3e7ef;
+    padding: 8px 10px;
+    vertical-align: top;
+}
+
+.md-preview .md-table thead th,
+.section-content .md-table thead th {
+    background: #f6f8fb;
+    font-weight: 600;
+}
+
+.md-preview {
+    /* переконайся, що нічого не обрізає */
+    overflow: visible;
+}
