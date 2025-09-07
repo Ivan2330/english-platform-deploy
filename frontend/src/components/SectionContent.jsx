@@ -2,12 +2,11 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import remarkBreaks from "remark-breaks";
+// import remarkBreaks from "remark-breaks"; // не використовуємо, щоб не ламати таблиці
 import "./SectionContent.css";
 
-// Підтримуємо розділювачі: [[slide]] або рядок з ---
-// (кастомний знак — [[slide]]; також працює класичний hr)
-const SPLIT_RE = /\n(?:\[\[slide\]\]|\-{3,})\n/i;
+// ТІЛЬКИ явний розділювач [[slide]] — щоб не конфліктувати з GFM-таблицями
+const SPLIT_RE = /\n\[\[slide\]\]\n/i;
 
 // Токен для вбудованого місця під media_url
 const MEDIA_TOKEN_RE = /\[\[\s*media\s*\]\]/i;
@@ -24,27 +23,21 @@ function getKind(url) {
 
 function MediaInline({ url, alt = "" }) {
   const kind = getKind(url);
-
   if (!url) return null;
 
   if (kind === "image") {
     return <img src={url} alt={alt || "Image"} loading="lazy" className="md-media-img" />;
   }
   if (kind === "video") {
-    const ext = url.split(".").pop();
+    const ext = (url.split(".").pop() || "").toLowerCase();
     return (
-      <video
-        controls
-        preload="metadata"
-        playsInline
-        className="md-media-video"
-      >
+      <video controls preload="metadata" playsInline className="md-media-video">
         <source src={url} type={`video/${ext}`} />
       </video>
     );
   }
   if (kind === "audio") {
-    const ext = url.split(".").pop();
+    const ext = (url.split(".").pop() || "").toLowerCase();
     return (
       <audio controls preload="metadata" className="md-media-audio">
         <source src={url} type={`audio/${ext}`} />
@@ -79,7 +72,8 @@ function MediaInline({ url, alt = "" }) {
       />
     );
   }
-  // fallback — просто посилання
+
+  // fallback — просто лінк
   return (
     <a href={url} target="_blank" rel="noreferrer" className="md-media-link">
       {url}
@@ -94,29 +88,20 @@ export default function SectionContent({ content, mediaUrl }) {
   const hasSplit = SPLIT_RE.test(raw);
   const sections = hasSplit ? raw.split(SPLIT_RE) : [raw];
 
-  // Для кожної секції ще перевіряємо [[MEDIA]]; якщо є mediaUrl — вставляємо в тому місці
-  // Якщо [[MEDIA]] ніде немає, але mediaUrl переданий — додамо його окремою карткою в кінці
+  // Будуємо картки, підставляємо медіа за [[MEDIA]] або додаємо в кінці
   const cards = [];
-  sections.forEach((sec, idx) => {
+  sections.forEach((sec) => {
     if (mediaUrl && MEDIA_TOKEN_RE.test(sec)) {
       const parts = sec.split(MEDIA_TOKEN_RE);
-      // до токена
-      if (parts[0]?.trim()) {
-        cards.push({ kind: "md", text: parts[0] });
-      }
-      // медіа-картка
+      if (parts[0]?.trim()) cards.push({ kind: "md", text: parts[0] });
       cards.push({ kind: "media", url: mediaUrl });
-      // після токена
-      if (parts[1]?.trim()) {
-        cards.push({ kind: "md", text: parts[1] });
-      }
+      if (parts[1]?.trim()) cards.push({ kind: "md", text: parts[1] });
     } else {
       cards.push({ kind: "md", text: sec });
     }
   });
 
-  // якщо медіа не вставили токеном — додамо наприкінці окремою карткою
-  const mediaAlreadyPlaced = cards.some(c => c.kind === "media");
+  const mediaAlreadyPlaced = cards.some((c) => c.kind === "media");
   if (mediaUrl && !mediaAlreadyPlaced) {
     cards.push({ kind: "media", url: mediaUrl });
   }
@@ -132,10 +117,18 @@ export default function SectionContent({ content, mediaUrl }) {
           ) : (
             <article key={`t-${i}`} className="md-card">
               <ReactMarkdown
-                remarkPlugins={[remarkGfm, remarkBreaks]}
+                remarkPlugins={[remarkGfm]} // без remark-breaks
                 skipHtml={false} // дозволяємо <video>, <audio>, <iframe>, <img> у markdown
+                components={{
+                  table: (props) => <table {...props} className="md-table" />,
+                  thead: (props) => <thead {...props} className="md-thead" />,
+                  tbody: (props) => <tbody {...props} className="md-tbody" />,
+                  tr: (props) => <tr {...props} className="md-tr" />,
+                  th: (props) => <th {...props} className="md-th" />,
+                  td: (props) => <td {...props} className="md-td" />,
+                }}
               >
-                {String(c.text || "").trim()}
+                {String(c.text || "")} {/* без .trim(), щоб не ламати розмітку */}
               </ReactMarkdown>
             </article>
           )
