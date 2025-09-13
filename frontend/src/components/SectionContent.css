@@ -1,4 +1,4 @@
-/* .section-md {
+/* /* .section-md {
     line-height: 1.7;
     font-size: 16px
 }
@@ -111,4 +111,85 @@
 /* SectionContent.css */
 .md-card :is(h1, h2, h3, h4, h5, h6) {
     color: #fff;
+}
+
+/* =========================
+   ✅ ДОДАНО: стилі для таблиць
+   (не змінює твої існуючі стилі)
+   ========================= */
+
+.section-md .md-card {
+    /* щоб широкі таблиці не ламали вёрстку — дамо горизонтальний скрол у картці */
+    overflow-x: auto;
+}
+
+.md-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    table-layout: auto;
+    margin: 0.75rem 0 1rem;
+    background: var(--md-table-bg, rgba(255, 255, 255, 0.02));
+    border: 1px solid var(--md-table-border, rgba(255, 255, 255, 0.25));
+    border-radius: 10px;
+    overflow: hidden;
+    /* щоб закруглення працювало */
+}
+
+.md-thead .md-th {
+    font-weight: 600;
+    text-align: left;
+    background: var(--md-thead-bg, rgba(255, 255, 255, 0.08));
+    color: inherit;
+    /* зберігаємо твою схему кольорів у картці */
+}
+
+.md-th,
+.md-td {
+    padding: 10px 12px;
+    border-right: 1px solid var(--md-cell-border, rgba(255, 255, 255, 0.18));
+    border-bottom: 1px solid var(--md-cell-border, rgba(255, 255, 255, 0.18));
+    vertical-align: top;
+    line-height: 1.35;
+    white-space: normal;
+    color: inherit;
+    /* повага до теми картки */
+    background: transparent;
+}
+
+.md-tr:last-child .md-td,
+.md-tr:last-child .md-th {
+    border-bottom: none;
+}
+
+.md-tr .md-td:last-child,
+.md-tr .md-th:last-child {
+    border-right: none;
+}
+
+.md-tbody .md-tr:nth-child(odd) .md-td {
+    background: var(--md-row-odd, rgba(255, 255, 255, 0.03));
+}
+
+.md-tbody .md-tr:hover .md-td {
+    background: var(--md-row-hover, rgba(255, 255, 255, 0.07));
+}
+
+/* Світла/темна тема — можна адаптувати під твій дизайн */
+:root {
+    --md-table-border: rgba(0, 0, 0, 0.18);
+    --md-cell-border: rgba(0, 0, 0, 0.12);
+    --md-thead-bg: rgba(0, 0, 0, 0.06);
+    --md-row-odd: rgba(0, 0, 0, 0.03);
+    --md-row-hover: rgba(0, 0, 0, 0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --md-table-border: rgba(255, 255, 255, 0.28);
+        --md-cell-border: rgba(255, 255, 255, 0.18);
+        --md-thead-bg: rgba(255, 255, 255, 0.10);
+        --md-row-odd: rgba(255, 255, 255, 0.05);
+        --md-row-hover: rgba(255, 255, 255, 0.11);
+    }
 }

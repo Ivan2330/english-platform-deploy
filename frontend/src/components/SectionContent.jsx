@@ -85,6 +85,16 @@ function MediaInline({ url, alt = "" }) {
   );
 }
 
+
+const markdownComponents = {
+  table: (props) => <table className="md-table" {...props} />,
+  thead: (props) => <thead className="md-thead" {...props} />,
+  tbody: (props) => <tbody className="md-tbody" {...props} />,
+  tr:    (props) => <tr className="md-tr" {...props} />,
+  th:    (props) => <th className="md-th" {...props} />,
+  td:    (props) => <td className="md-td" {...props} />,
+};
+
 export default function SectionContent({ content, mediaUrl }) {
   const raw = String(content || "");
 
@@ -132,6 +142,7 @@ export default function SectionContent({ content, mediaUrl }) {
               <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkBreaks]}
                 skipHtml={false} // дозволяємо <video>, <audio>, <iframe>, <img> у markdown
+                components={markdownComponents}  // ✅ ДОДАНО: застосувати класи до таблиць
               >
                 {String(c.text || "").trim()}
               </ReactMarkdown>
