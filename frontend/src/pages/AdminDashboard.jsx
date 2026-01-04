@@ -71,7 +71,7 @@ const AdminDashboardPage = () => {
       <header className="cyber-header">
         <div className="brand-section">
           <div className="logo-glitch">PRIME_Academy</div>
-          <div className="version-tag">v.3.0 // ADMIN</div>
+          <div className="version-tag">v.3.3 // ADMIN</div>
         </div>
         
         <div className="user-status-bar">
@@ -123,13 +123,13 @@ const AdminDashboardPage = () => {
           <div className="tiles-grid two-col">
             <button className="cyber-tile tile-cyan" onClick={() => navigate("/create-class")}>
               <div className="tile-content">
-                <span className="tile-label">New Class</span>
+                <span className="tile-label">Create Class</span>
               </div>
               <div className="tile-glow"></div>
             </button>
             <button className="cyber-tile tile-cyan" onClick={() => navigate("/all-classes")}>
               <div className="tile-content">
-                <span className="tile-label">Global View</span>
+                <span className="tile-label">All Classes</span>
               </div>
               <div className="tile-glow"></div>
             </button>
