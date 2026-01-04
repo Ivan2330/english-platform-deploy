@@ -70,7 +70,7 @@ const AdminDashboardPage = () => {
       
       <header className="cyber-header">
         <div className="brand-section">
-          <div className="logo-glitch">PRIME_OS</div>
+          <div className="logo-glitch">PRIME_Academy</div>
           <div className="version-tag">v.3.0 // ADMIN</div>
         </div>
         
