@@ -1,4 +1,3 @@
-// src/pages/AdminDashboardPage.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -36,8 +35,7 @@ const AdminDashboardPage = () => {
 
         setClassrooms(filtered);
       } catch (e) {
-        console.error("Admin dashboard fetch error:", e);
-        if (mounted) setErr("Не вдалося завантажити дані. Спробуй оновити сторінку.");
+        if (mounted) setErr("System Error: Unable to sync data.");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -47,154 +45,137 @@ const AdminDashboardPage = () => {
     return () => { mounted = false; };
   }, []);
 
-  // Ефект підсвітки курсора на кнопках
   useEffect(() => {
     const moveGlow = (e) => {
       const t = e.target;
       if (!(t instanceof HTMLElement)) return;
-      if (!t.matches(".button, .go-btn")) return;
-      const rect = t.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      t.style.setProperty("--x", `${x}%`);
-      t.style.setProperty("--y", `${y}%`);
+      if (!t.closest(".cyber-tile")) return;
+      
+      const target = t.closest(".cyber-tile");
+      const rect = target.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      target.style.setProperty("--x", `${x}px`);
+      target.style.setProperty("--y", `${y}px`);
     };
     window.addEventListener("mousemove", moveGlow);
     return () => window.removeEventListener("mousemove", moveGlow);
   }, []);
 
   return (
-    <div className="admin-dashboard">
-      <header className="dashboard-header" role="banner">
-        <h1 className="dashboard-header-h1">Prime Academy · Admin</h1>
-        <div className="dashboard-header-meta" aria-live="polite">
+    <div className="cyber-dashboard">
+      <div className="bg-grid"></div>
+      <div className="bg-glow"></div>
+      
+      <header className="cyber-header">
+        <div className="brand-section">
+          <div className="logo-glitch">PRIME_OS</div>
+          <div className="version-tag">v.3.0 // ADMIN</div>
+        </div>
+        
+        <div className="user-status-bar">
           {adminData ? (
-            <span title="Рівень користувача">
-              {adminData.username ?? "Admin"} · {adminData.level ?? "—"}
-            </span>
+            <>
+              <div className="status-indicator online"></div>
+              <div className="user-details">
+                <span className="user-name">{adminData.username}</span>
+                <span className="user-role">[{adminData.level || "ROOT"}]</span>
+              </div>
+            </>
           ) : (
-            <span>Завантаження профілю…</span>
+            <div className="loading-text">INITIALIZING...</div>
           )}
         </div>
       </header>
 
-      <section className="dashboard-content" role="main">
-        {/* Ліва панель — дії */}
-        <aside className="left-panel-buttons" aria-label="Панель дій">
-          <div className="profile-info" role="note">
-            <h2 className="profile-name">
-              {adminData?.username || "Name Surname"} {adminData?.level ? `· ${adminData.level}` : ""}
-              <span className="status-dot" aria-hidden="true" />
-            </h2>
-            <p className="profile-sub">Адмін-панель · керування користувачами, класами та уроками</p>
+      <main className="cyber-main-grid">
+        <section className="control-panel">
+          <h2 className="panel-title">COMMAND CENTER</h2>
+          
+          <div className="tiles-grid">
+            <button className="cyber-tile tile-blue" onClick={() => navigate("/create-user")}>
+              <div className="tile-content">
+                <span className="tile-icon">✚</span>
+                <span className="tile-label">Create User</span>
+              </div>
+              <div className="tile-glow"></div>
+            </button>
+
+            <button className="cyber-tile tile-purple" onClick={() => navigate("/users")}>
+              <div className="tile-content">
+                <span className="tile-icon">👥</span>
+                <span className="tile-label">User Database</span>
+              </div>
+              <div className="tile-glow"></div>
+            </button>
+
+            <button className="cyber-tile tile-pink" onClick={() => navigate("/lesson-builder")}>
+              <div className="tile-content">
+                <span className="tile-icon">🛠</span>
+                <span className="tile-label">Lesson Builder</span>
+              </div>
+              <div className="tile-glow"></div>
+            </button>
           </div>
 
-          <ul className="button-group" aria-label="Керування користувачами та завданнями">
-            <li className="button-group-li" id="li-1">
-              <button className="button" onClick={() => navigate("/create-user")}>
-                Create User
-              </button>
-            </li>
-            <li className="button-group-li" id="li-2">
-              <button className="button" onClick={() => navigate("/users")}>
-                Users List
-              </button>
-            </li>
-            <li className="button-group-li">
-              <button className="button" onClick={() => navigate("/task-list")}>
-                Task List
-              </button>
-            </li>
-            <li className="button-group-li">
-              <button className="button" onClick={() => navigate("/create-task")}>
-                Create Task
-              </button>
-            </li>
-            <li className="button-group-li">
-              <button className="button" onClick={() => navigate("/lesson-builder")}>
-                Lesson Builder
-              </button>
-            </li>
-          </ul>
+          <h2 className="panel-title mt-large">CLASSROOM MANAGEMENT</h2>
+          <div className="tiles-grid two-col">
+            <button className="cyber-tile tile-cyan" onClick={() => navigate("/create-class")}>
+              <div className="tile-content">
+                <span className="tile-label">New Class</span>
+              </div>
+              <div className="tile-glow"></div>
+            </button>
+            <button className="cyber-tile tile-cyan" onClick={() => navigate("/all-classes")}>
+              <div className="tile-content">
+                <span className="tile-label">Global View</span>
+              </div>
+              <div className="tile-glow"></div>
+            </button>
+          </div>
+        </section>
 
-          <ul className="button-group" aria-label="Класи">
-            <li className="button-group-li" id="button-c">
-              <button className="button" onClick={() => navigate("/create-class")}>
-                Create Class
-              </button>
-            </li>
-            <li className="button-group-li" id="button-a">
-              <button className="button" onClick={() => navigate("/all-classes")}>
-                All Classes
-              </button>
-            </li>
-          </ul>
-        </aside>
-
-        {/* Права панель — список класів */}
-        <div className="right-panel-classes">
-          <div className="panel-head">
-            <h3>Classes</h3>
-            {!loading && (
-              <span className="badge" aria-label="Кількість класів">
-                {classrooms.length}
-              </span>
-            )}
+        <section className="data-panel">
+          <div className="data-header">
+            <h3>ACTIVE STREAMS</h3>
+            <div className="live-badge">
+              {loading ? "SYNC..." : `${classrooms.length} NODES`}
+            </div>
           </div>
 
-          <div className="r-panel-list" role="list">
+          <div className="class-feed">
             {loading && (
-              <>
-                <SkeletonItem />
-                <SkeletonItem />
-                <SkeletonItem />
-              </>
+              <div className="loading-scanline">
+                <div className="scan-bar"></div>
+                LOADING DATA STREAMS...
+              </div>
             )}
 
             {!loading && err && (
-              <div className="empty-state danger" role="alert">
-                {err}
+              <div className="error-box">
+                ⚠ {err}
               </div>
             )}
 
             {!loading && !err && classrooms.length === 0 && (
-              <div className="empty-state" role="status">
-                У тебе поки немає класів. Створи перший — натисни <strong>Create Class</strong>.
+              <div className="empty-void">
+                NO DATA FOUND. INITIATE NEW CLASS.
               </div>
             )}
 
-            {!loading &&
-              !err &&
-              classrooms.map((cls) => (
-                <div key={cls.id} className="r-panel-item" role="listitem">
-                  <div className="r-panel-item-id" title="ID класу">{cls.id}</div>
-                  <div className="r-panel-item-name" title="Назва класу">{cls.name}</div>
-                  <div className="r-panel-item-go">
-                    <button
-                      className="go-btn"
-                      onClick={() => navigate(`/classroom/${cls.id}`)}
-                      aria-label={`Перейти до класу ${cls.name}`}
-                    >
-                      Go
-                    </button>
-                  </div>
-                </div>
-              ))}
+            {!loading && !err && classrooms.map((cls) => (
+              <div key={cls.id} className="class-node" onClick={() => navigate(`/classroom/${cls.id}`)}>
+                <div className="node-id">#{cls.id.toString().padStart(4, '0')}</div>
+                <div className="node-name">{cls.name}</div>
+                <div className="node-action">ACCESS &rarr;</div>
+              </div>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
     </div>
   );
 };
-
-const SkeletonItem = () => (
-  <div className="r-panel-item skeleton">
-    <div className="r-panel-item-id shimmer">—</div>
-    <div className="r-panel-item-name shimmer">Завантаження…</div>
-    <div className="r-panel-item-go">
-      <div className="btn-skeleton shimmer" />
-    </div>
-  </div>
-);
 
 export default AdminDashboardPage;
