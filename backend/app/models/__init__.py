@@ -17,4 +17,8 @@ from app.models.controls import (  # noqa: F401
     questions,
     task_result,
     ai_feedback,
+    section,
+    block,
+    lesson_attempt,
+    answer,
 )

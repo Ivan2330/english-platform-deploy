@@ -8,19 +8,24 @@ class Question(Base):
     __tablename__ = "questions"
 
     id = Column(Integer, primary_key=True, index=True)
-    task_id = Column(Integer, ForeignKey("universal_tasks.id"), nullable=False)
+    # Стара прив'язка до UniversalTask (лишаємо для наявних даних, тепер nullable)
+    task_id = Column(Integer, ForeignKey("universal_tasks.id"), nullable=True)
+    # Нова прив'язка до Block
+    block_id = Column(Integer, ForeignKey("blocks.id", ondelete="CASCADE"), nullable=True)
+
     question_text = Column(Text, nullable=False)
-    options = Column(Text, nullable=True) #JSON
+    options = Column(Text, nullable=True)  # JSON
     correct_answer = Column(Text, nullable=True)
     explanation = Column(Text, nullable=True)
-    order = Column(Integer, nullable=False)  #order in test
+    order = Column(Integer, nullable=False)  # порядок у завданні
 
     task = relationship("UniversalTask", back_populates="questions")
+    block = relationship("Block", back_populates="questions")
 
     def set_options(self, options_dict):
-        """Saving in JSON format"""
+        """Зберігаємо у форматі JSON."""
         self.options = json.dumps(options_dict)
 
     def get_options(self):
-        """Getting from JSON to Dict"""
+        """Дістаємо з JSON у dict."""
         return json.loads(self.options) if self.options else {}

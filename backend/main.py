@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 import os
 from app.schemas.users.users import UserResponse, UserCreate, UserUpdate
 # Імпорти бази даних та ініціалізації
-from app.core.database import get_db_and_tables
 from app.core.initialize_admin import initialize_admin
 from fastapi.staticfiles import StaticFiles
 
@@ -32,14 +31,13 @@ load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Виконує ініціалізацію перед запуском серверу"""
-    await get_db_and_tables()  # Створюємо таблиці в базі перед запуском
+    """Ініціалізація перед запуском. Схемою БД керує Alembic."""
     await initialize_admin()  # Створюємо адміністратора, якщо його немає
     yield
 
 app = FastAPI(lifespan=lifespan)
 
-# Додаємо CORS для доступу з будь-яких джерел
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
