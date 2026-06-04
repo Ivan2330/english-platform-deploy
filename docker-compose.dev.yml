@@ -1,0 +1,48 @@
+# =====================================================================
+#  ЛОКАЛЬНЕ DEV-середовище для Prime Academy
+#  Запускає лише: PostgreSQL + Redis + Backend (з гарячим reload).
+#  НЕ запускає nginx/certbot — фронт ти крутиш окремо через `npm run dev`.
+#
+#  Запуск:   docker compose -f docker-compose.dev.yml up --build
+#  Зупинка:  docker compose -f docker-compose.dev.yml down
+#  (прод-файл docker-compose.yml цей файл НЕ чіпає)
+# =====================================================================
+
+services:
+  db:
+    image: postgres:15
+    container_name: pa-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 2111
+      POSTGRES_DB: prime_platform_db
+    ports:
+      - "5432:5432"          # відкрито на хост — зручно дивитись БД через DBeaver/psql
+    volumes:
+      - pa_pg_dev:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: pa-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  backend:
+    build: ./backend
+    container_name: pa-backend-dev
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env       # той самий .env, що й на сервері (host = db / redis)
+    volumes:
+      - ./backend:/app        # код монтуємо — зміни підхоплюються миттєво
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"           # бекенд доступний на http://localhost:8000
+    depends_on:
+      - db
+      - redis
+
+volumes:
+  pa_pg_dev:
