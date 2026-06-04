@@ -1,820 +1,464 @@
-:root {
-    --deepPurple: #7085F6;
-    --lightPurple: #91A1F6;
-    --poppinsBig: 700;
-    --poppinsSmall: 400;
+/* ===========================================================
+   Prime Academy — Student Dashboard
+   Desktop: sidebar + main
+   Mobile (<=860px): top bar + bottom nav, контент стеком
+   =========================================================== */
+
+.pa-dash,
+.pa-dash * {
+  box-sizing: border-box;
 }
 
-* {
-    margin: 0;
+.pa-dash {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: #f4f2fb;
+  font-family: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: #1c1b2e;
+}
+
+/* ---------- Бренд (спільний) ---------- */
+.pa-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.pa-brand img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+.pa-brand span {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* ---------- Sidebar (desktop) ---------- */
+.pa-side {
+  flex: 0 0 212px;
+  background: #fff;
+  border: 1px solid #ece9f8;
+  border-radius: 20px;
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+}
+.pa-side .pa-brand {
+  padding: 2px 8px 18px;
+}
+
+.pa-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.pa-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: #6a6880;
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.pa-nav-item svg {
+  flex: none;
+}
+.pa-nav-item:hover {
+  background: #f6f4fc;
+}
+.pa-nav-item.is-active {
+  background: rgba(108, 99, 255, 0.12);
+  color: #6c63ff;
+  font-weight: 600;
+}
+.pa-nav-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.pa-nav-item .pa-soon-tag {
+  margin-left: auto;
+}
+
+.pa-side-foot {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #f0edf9;
+}
+
+/* ---------- Contact dropdown ---------- */
+.pa-contact {
+  position: relative;
+}
+.pa-contact-btn {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 12px;
+  background: none;
+  color: #6a6880;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.pa-contact-btn:hover {
+  background: #f6f4fc;
+}
+.pa-contact-menu {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #ece9f8;
+  border-radius: 14px;
+  box-shadow: 0 14px 34px rgba(74, 44, 143, 0.16);
+  display: none;
+  position: absolute;
+  z-index: 40;
+  min-width: 210px;
+}
+.pa-contact.is-open .pa-contact-menu {
+  display: block;
+}
+.pa-contact-menu li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: #5a5870;
+  white-space: nowrap;
+}
+.pa-contact-menu li:hover {
+  background: #f6f4fc;
+}
+.pa-contact-menu img {
+  width: 18px;
+  height: 18px;
+}
+/* Sidebar: меню розкривається вгору */
+.pa-contact--side .pa-contact-menu {
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+}
+/* Topbar (mobile): меню падає вниз праворуч */
+.pa-contact--top .pa-contact-menu {
+  top: calc(100% + 6px);
+  right: 0;
+}
+
+/* ---------- Top bar (mobile only) ---------- */
+.pa-topbar {
+  display: none;
+}
+
+/* ---------- Main ---------- */
+.pa-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pa-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid #ece9f8;
+  border-radius: 20px;
+  padding: 18px 22px;
+  margin-bottom: 22px;
+  box-shadow: 0 12px 30px rgba(108, 99, 255, 0.06);
+}
+.pa-welcome-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Avatar — кружок з ініціалами */
+.pa-avatar {
+  width: 60px;
+  height: 60px;
+  flex: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6c63ff, #d4307e);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.pa-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pa-name {
+  font-size: 20px;
+  font-weight: 700;
+}
+.pa-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #6c63ff;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.pa-level img {
+  width: 13px;
+  height: 13px;
+}
+.pa-greeting {
+  color: #8a8aa0;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.pa-balance {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  background: #f6f4ff;
+  border: 1px solid #e9e5fb;
+  border-radius: 16px;
+  padding: 12px 20px;
+  color: #6c63ff;
+}
+.pa-balance-num {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+.pa-balance-label {
+  font-size: 11px;
+  color: #8a8aa0;
+  margin-top: 3px;
+}
+
+/* ---------- Tabs ---------- */
+.pa-tabs {
+  display: flex;
+  gap: 26px;
+  border-bottom: 1.5px solid #e7e3f3;
+  margin-bottom: 22px;
+}
+.pa-tab {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1.5px;
+  padding: 0 2px 12px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: #9a98ad;
+  cursor: pointer;
+}
+.pa-tab.is-active {
+  color: #1c1b2e;
+  font-weight: 600;
+  border-bottom-color: #6c63ff;
+}
+
+/* ---------- Action cards ---------- */
+.pa-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+.pa-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #ece9f8;
+  border-radius: 18px;
+  padding: 22px;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(108, 99, 255, 0.05);
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.pa-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(108, 99, 255, 0.12);
+}
+.pa-card.pa-soon {
+  cursor: default;
+}
+.pa-card.pa-soon:hover {
+  transform: none;
+  box-shadow: 0 8px 22px rgba(108, 99, 255, 0.05);
+}
+.pa-card-ic {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+.pa-ic-violet { background: rgba(108, 99, 255, 0.12); color: #6c63ff; }
+.pa-ic-pink { background: rgba(212, 48, 126, 0.12); color: #d4307e; }
+.pa-ic-purple { background: rgba(157, 78, 221, 0.14); color: #9d4edd; }
+
+.pa-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.pa-card-sub {
+  font-size: 12.5px;
+  color: #9a98ad;
+  line-height: 1.5;
+}
+.pa-card-go {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 14px;
+  color: #6c63ff;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.pa-soon-tag {
+  font-size: 9.5px;
+  font-weight: 600;
+  color: #b5862a;
+  background: #fdf4e3;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+/* ---------- Empty (Additional) ---------- */
+.pa-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 54px 20px;
+  text-align: center;
+  color: #b3aed0;
+}
+.pa-empty svg {
+  width: 34px;
+  height: 34px;
+}
+.pa-empty p {
+  margin: 0;
+  font-size: 13.5px;
+}
+
+/* ---------- Bottom nav (mobile only) ---------- */
+.pa-bottomnav {
+  display: none;
+}
+
+/* ===========================================================
+   Адаптив
+   =========================================================== */
+@media (max-width: 860px) {
+  .pa-dash {
+    flex-direction: column;
+    gap: 0;
     padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    /* width: 100vw; */
-    width: 100%;
-    font-family: 'Poppins', sans-serif;
-    background-color: #fff;
-}
-
-button {
-    font-family: 'Poppins';
-    border: none;
+  }
+  .pa-side {
+    display: none;
+  }
+  .pa-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: #fff;
+    border-bottom: 1px solid #eee8f7;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  .pa-main {
+    padding: 18px 16px 92px;
+  }
+  .pa-bottomnav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 30;
+    background: #fff;
+    border-top: 1px solid #eee8f7;
+    padding: 8px 6px 16px;
+  }
+  .pa-bottomnav button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
     background: none;
+    border: none;
+    color: #a9a6bd;
+    font-family: inherit;
     cursor: pointer;
+  }
+  .pa-bottomnav button span {
+    font-size: 10px;
+  }
+  .pa-bottomnav button.is-active {
+    color: #6c63ff;
+  }
+  .pa-bottomnav button:disabled {
+    opacity: 0.4;
+  }
 }
 
-.student-dashboard-s {
+@media (max-width: 480px) {
+  .pa-welcome {
+    padding: 16px;
+  }
+  .pa-balance {
     width: 100%;
-    overflow-x: hidden;
-}
-
-.dashboard-header-s {
-    min-width: 100vw;
-    /* height: 20.8vh; */
-    /* height: 20.37vh; */
-    height: clamp(180px, 20.37vh, 280px);
-    width: 100%;
-    background: 
-    
-    linear-gradient(-72deg, #FA9DF5 0%, rgba(250, 157, 245, 0) 56%),
-    linear-gradient(to top, #6879D4 0%,  rgba(112,133,246,0.0) 100%);
-    background-position: top right, bottom center;
-    
-    /* background:
-        linear-gradient(to bottom, #fff 0%, #faf9f9 100%),
-        linear-gradient(#fff, #cdd4fc),
-        linear-gradient(90deg, #6879D4 0%, rgba(112, 133, 246, 0.0) 100%),
-        linear-gradient(180deg, #FA9DF5 0%, #fa9df500 100%); */
-    display: flex;
-    justify-content: space-between;
-    /* padding-top: 35px; */
-    padding-left: 34px;
-    padding-right: 4.94%;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-    /* margin-bottom: -75px; */
-    margin-bottom: clamp(-75px,-3.9vw,-35px);
-
-}
-
-.dashboard-header-s span {
-    font-weight: var(--poppinsBig);
-    font-size: 24px;
-    color: black;
-    position: relative;
-    /* top: 35px; */
-    top: 15.901%;
-}
-
-.contact-btn {
-    position: relative;
-    top: 25%;
-    border-radius: 39px;
-    background-color: var(--deepPurple);
-    font-weight: var(--poppinsBig);
-    color: #fff;
-    font-weight: 700;
-    font-size: 24px;
-    /* width: calc((182px/1920px)*100%); */
-    width: clamp(180px,9.47vw,220px);
-    height: 55px;    
-    /* max-height: ; */
-    /* aspect-ratio: 3.309; */
-    transition: all 0.5s ease-in-out;
-    box-shadow: none;
-}
-.contact-btn-dropdown{
-    position: relative;
-}
-.contact-btn-dropdown-ul{
-    display: none;
-    position:absolute;
-    left: -50%;
-    transform: translateY(65px);
-    /* top: 54px; */
-    width: 365px;
-    height: 265px;
-    font-size: 24px;
-    /* font-weight: 700; */
-    background-color: #fff;
-    z-index: 2;
-    border-radius: 50px;
-    border: 1px solid #7085F6;
-    box-shadow: 0 2px 5px 1px rgb(173, 173, 173);
-}
-
-.contact-btn-dropdown-li{
-    /* margin-bottom: 48px; */
-    display: flex;
-    /* height: ; */
-    justify-content: start;
-gap: 9px;
-    align-items: center;
-    font-weight: 700;
-    /* width: 80%; */
-        
-}
-.contact-btn-dropdown-li:hover{
-    background-color: #D9D9D9;
-}
-.contact-btn-dropdown:hover .contact-btn-dropdown-ul{
-    display: flex;
-    flex-direction: column;
-    /* gap: 48px; */
-    padding-left: 16px;
-    padding-top:12px;
-    padding-bottom: 15px;
-    align-items: space-between;
-    justify-content: space-between;
-
-}
-
-.contact-btn-dropdown:hover .contact-btn{
-    box-shadow: inset 0 0 0 3px #7085F6,inset 0 10px 10px 0 rgba(0, 0, 0, 0.25);
-
-}
-.contact-btn-dropdown-li:nth-last-child(){
-    margin-bottom: 0;
-}
-
-
-
-
-
-/* dashboard content-s, name, photo, lessons, logo, update, delete, confirm photo */
-.dashboard-content-s {
-    /* height: 100%; */
-    width: 100%;
-    position:relative;
-    padding-left: 4.8%;
-    /* padding-left: 92px; */
-    padding-right: 12px;
-    /* width: 94.5833%; */
-    /* gap: 20px; */
-    display: flex; 
-    justify-content: space-between;
-    font-size: 24px;
-    
-    /* margin-top: clamp(-135px,-3.9vw,-75px); */
-    margin-bottom: clamp(75px,3.9vw,100px);
-
-}
-/* testing */
-
-.right-logo {
-    position: relative;
-    /* top: clamp(114px,5.9vw,130px); */
-    /* top: 94.5px; */
-    top: clamp(85px,4.922vw,104.5px);
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    width: clamp(200px,14.84vw,316px);
-    
-    aspect-ratio: 0.89;
-    
-}
-
-.right-logo img {
-    width: 100%;
-    /* temporary */
-    /* max-width: 350px;
-    min-width: 200px; */
-    /* temporary end */
-    height: auto;
-    object-fit: contain;
-}
-
-.left-block{
-    /* width: 43.2819%; */
-    /* position: relative; */
-    width: 49.58%;
-    display: flex;
-    /* align-items: flex-start; */
-}
-
-.middle-block{
-    position: absolute;
-   
-    left: clamp(390px,25.69vw,541px);
-    /* left: clamp(383px,25.573vw,541px); */
-    
-    
-   
-    /* top: clamp(85px,20.8%,139px); */
-    top: clamp(85px,6vw,139px);
-    
-}
-.middle-block h2{
-    font-size: 40px;
-    font-weight: 700;
-    position: relative;
-    vertical-align: middle;
-    margin-bottom: clamp(15px,1.41vw,27px);  
-}
-
-
-
-.lesson-balance span{
-    padding: 9px 25px 9px 25px;
-    margin-left: 28px;
-    border: 4px solid #7085F6;
-    border-radius: 50px;
-    
-}
-.level-badge{
-    color: white; 
-    text-align: center;
-    vertical-align: middle;
-    border-radius: 25px;
-    padding: 3px 15px;
-    background-color: #7085F6;
-    margin-left: 27px;
-    box-shadow: inset 0 0 0 3px #91A1F6;
-
-}
-.level-badge img{
-    transform: translateY(10px);
-    margin-left: 3px;
-}
-/* dashboard navigation section */
-.dashboard-navigation-section{
-    font-size: 24px;
-    width: 100%;
-}
-.dashboard-navigation-section  button{
-    font-size: 24px;
-    
-}
-.dashboard-navigation{
-    margin: 0 auto;
-    transform: translateX(-14px);
-    display: flex;
-    gap:36px;
-    height: 46px;
-    margin-bottom: 49px;
-    border-bottom: 3px solid black;
-    width: 91.77%;
-    font-size: 46px;
-    /* font-size: 24px; */
-}
-
-.dashboard-navigation .nav-tab:first-child{
-    border-bottom: 8px solid black;
-}
-.dashboard-navigation .nav-tab-2{
-display: flex;
-align-items: center;
-}
-.dashboard-navigation .nav-tab-2 span{
-    display: none;
-    font-size: 12px;
-    /* width: 60%; */
-    /* height: 100%; */
-    color: white;
-    margin-left: 15px;
-    padding: 13px; 
-    background-color: red;
-}
-.dashboard-navigation .nav-tab-2:hover span{
-    display: inline-block;
-}
-
-.student-actions{
-    position: relative;
-    left: 50%;
-    transform: translateX(-50%);    
-    width: 91.77%;
-    /* width: 100%; */
-    display: flex;
     justify-content: center;
-    
-}
-.student-actions-build{
-    position: relative;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 100%;
-    display: flex;
-    justify-content: center;    
-    gap: 7.37% ;
-    flex-wrap: wrap;
-}
-.student-tile{
-    position: relative;
-    flex: 1;
-    /* width: 26%; */
-    
-    min-width: 200px;
-    max-width: 700px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 23px;
-}
-.student-tile-img{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    width: 100%;
-    aspect-ratio: 1.6733;
-    border-radius: 50px;
-    border: 4px solid #7085F6;
-    transition: all 0.3s;
-    
-}
-.student-tile-img:hover{
-    background-color: #D9D9D9;
-}
-.student-tile-img > img{
-    width: 26%;
-    aspect-ratio: 1;
-}
-.student-title-img-speaking-club:focus::after, .student-title-img-speaking-club:hover::after, .student-title-img-speaking-club:active::after{
-    content: "unfortunately not available right now"; 
-    font-size: 12px;
-    width: 60%;
-    color: white;
-    position: absolute;
-    left: 50%;
-    transform: translate(-50%);
-    padding: 13px;
-    background-color: red;
-}
-
-@media(max-width:1600px) {
-    .dashboard-content-s{
-        font-size: 20px;
-    }
-    .middle-block h2{
-        font-size: 36px;
-    }
-    .contact-btn {
-        font-size: 20px;
-        /* width: auto; */
-    }
-    .contact-btn-dropdown-ul{
-        font-size: 20px;
-    }
-    .lesson-balance span{
-        padding: 6px 16.6px;
-        margin-left: 16px;}
-}
-@media(max-width:1400px){
-    .student-actions-build{
-        flex-wrap: wrap;
-        justify-content: left;
-    }
-    .student-tile{
-        gap: 18px;
-    }
-
-}
-@media(max-width:1000px){
-    .dashboard-content-s{
-        font-size: 18px;
-    }
-    .middle-block h2{
-        font-size: 32px;
-    }
-    /* .student-tile{
-        gap: 15px;
-    } */
-    .student-tile{
-        gap: 15px;
-    }
-    .contact-btn-dropdown-ul{
-        width: 320px;
-        height: 220px;
-        font-size: 18px;
-        border-radius: 40px;
-
-    }
-    .contact-btn-dropdown-li img{
-        width: 60px;
-        height: 60px;
-    }
-}
-@media(max-width:1050px){
-    
-}
-@media(min-width:2133px){
-    .middle-block{
-        position: absolute;
-        left: clamp(541px,23.5vw,600px);
-    }
-}
-
-
-/* --- */
-/* утиліти для мобільного меню/контенту за потреби */
-.mobile-only {
-    display: none
-}
-
-.desktop-only {
-    display: block
-}
-
-@media (max-width:600px) {
-    .mobile-only {
-        display: block
-    }
-
-    .desktop-only {
-        display: none
-    }
-}
-
-/* HEADER */
-@media (max-width:600px) {
-    .dashboard-header-s {
-        height: auto;
-        padding: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
-        margin-bottom: 0;
-        /* не тягнемо контент вгору */
-    }
-
-    .dashboard-header-s span {
-        position: static;
-        font-size: 16px;
-        font-weight: 700;
-        align-self: center;
-    }
-
-    .contact-btn-dropdown {
-        width: 55%
-    }
-
-    /* кнопка як на макеті — широкою смужкою */
-    .contact-btn {
-        top: 0;
-        width: 100%;
-        height: 38px;
-        font-size: 14px;
-        border-radius: 12px;
-    }
-
-    /* випадайка без :hover — по фокусу/тапу */
-    .contact-btn-dropdown-ul {
-        position: static;
-        transform: none;
-        display: none;
-        width: 100%;
-        height: auto;
-        font-size: 14px;
-        border-radius: 16px;
-        margin-top: 8px;
-        gap: 8px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, .08);
-        padding: 10px 12px;
-    }
-
-    .contact-btn-dropdown:focus-within .contact-btn-dropdown-ul {
-        display: flex;
-    }
-
-    .contact-btn-dropdown-li {
-        padding: 8px 6px;
-        border-radius: 10px;
-    }
-
-    .contact-btn-dropdown-li img {
-        width: 20px;
-        height: 20px
-    }
-}
-
-/* ГОЛОВНИЙ БЛОК */
-@media (max-width:600px) {
-    .dashboard-content-s {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 12px;
-        font-size: 16px;
-        margin-bottom: 16px;
-    }
-
-    .right-logo {
-        display: none;
-    }
-
-    /* лого праворуч прибираємо */
-    .left-block {
-        width: 100%;
-        gap: 12px;
-        align-items: center;
-    }
-
-    /* прибираємо абсолютне позиціонування заголовка/балансу */
-    .middle-block {
-        position: static;
-        left: auto;
-        top: auto;
-        margin-left: 12px;
-    }
-
-    .middle-block h2 {
-        font-size: 18px;
-        margin: 0 0 6px;
-    }
-
-    .level-badge {
-        margin-left: 8px;
-        font-size: 12px;
-        padding: 2px 8px;
-        border-radius: 12px;
-    }
-
-    .level-badge img {
-        transform: none;
-        margin-left: 4px;
-        width: 14px;
-        height: 14px
-    }
-
-    .lesson-balance {
-        font-size: 14px
-    }
-
-    .lesson-balance span {
-        margin-left: 10px;
-        padding: 4px 10px;
-        border-width: 2px;
-        border-radius: 12px;
-    }
-}
-
-/* ТАБИ */
-@media (max-width:600px) {
-    .dashboard-navigation {
-        width: 100%;
-        transform: none;
-        gap: 16px;
-        height: 32px;
-        margin: 6px 0 12px;
-        font-size: 16px;
-        border-bottom: 2px solid #000;
-        padding: 0 12px;
-    }
-
-    .dashboard-navigation .nav-tab:first-child {
-        border-bottom: 4px solid #000
-    }
-
-    .dashboard-navigation .nav-tab-2 span {
-        display: none
-    }
-}
-
-/* ПЛИТКИ ДІЙ — робимо «кнопками» у стовпчик */
-@media (max-width:600px) {
-    .student-actions {
-        width: 100%;
-    }
-
-    .student-actions-build {
-        width: 100%;
-        padding: 0 12px 16px;
-        gap: 10px;
-        justify-content: stretch;
-    }
-
-    .student-tile {
-        position: relative;
-        width: 100%;
-        min-width: auto;
-        max-width: none;
-        align-items: stretch;
-        gap: 0;
-    }
-
-    /* сам «бокс» плитки */
-    .student-tile-img {
-        height: 56px;
-        /* фіксована висота як на макеті */
-        aspect-ratio: auto;
-        border-radius: 12px;
-        padding: 0 12px;
-        justify-content: center;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .student-tile-img>img {
-        width: 28px;
-        height: 28px;
-    }
-
-    /* переносимо підпис всередину боксу */
-    .student-tile>span {
-        position: absolute;
-        left: 56px;
-        /* відступ від іконки */
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    /* підказку "not available" — не показуємо на мобільному */
-    .student-title-img-speaking-club:focus::after,
-    .student-title-img-speaking-club:hover::after,
-    .student-title-img-speaking-club:active::after {
-        display: none;
-        content: none
-    }
-}
-
-
-/* ---------- MOBILE REWRITE (≤600px) ---------- */
-@media (max-width:600px) {
-
-    /* 1) Хедер */
-    .dashboard-header-s {
-        height: auto;
-        padding: 12px;
-        margin-bottom: 0;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, .08);
-    }
-
-    .dashboard-header-s span {
-        position: static;
-        font-size: 16px;
-        font-weight: 700;
-    }
-
-    .contact-btn-dropdown {
-        width: 100%;
-        max-width: 360px;
-    }
-
-    .contact-btn {
-        top: 0;
-        width: 100%;
-        height: 40px;
-        font-size: 14px;
-        border-radius: 12px;
-    }
-
-    /* Вимикаємо "ховер-відкривання" на мобільному */
-    .contact-btn-dropdown:hover .contact-btn-dropdown-ul {
-        display: none;
-    }
-
-    /* Відкриваємо списком, коли додамо клас is-open з React */
-    .contact-btn-dropdown .contact-btn-dropdown-ul {
-        display: none;
-        position: static;
-        transform: none;
-        width: 100%;
-        height: auto;
-        font-size: 14px;
-        border-radius: 12px;
-        margin-top: 8px;
-        padding: 10px 12px;
-        gap: 8px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, .08);
-    }
-
-    .contact-btn-dropdown.is-open .contact-btn-dropdown-ul {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .contact-btn-dropdown-li {
-        padding: 8px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .contact-btn-dropdown-li img {
-        width: 20px;
-        height: 20px;
-    }
-
-    /* 2) Верхня картка профілю */
-    .dashboard-content-s {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 12px;
-        font-size: 16px;
-        margin-bottom: 16px;
-    }
-
-    .right-logo {
-        display: none;
-    }
-
-    /* як у макеті — без правого логотипа */
-    .left-block {
-        width: 100%;
-        gap: 12px;
-        align-items: center;
-    }
-
-    .middle-block {
-        position: static;
-        left: auto;
-        top: auto;
-        margin-left: 12px;
-    }
-
-    .middle-block h2 {
-        font-size: 18px;
-        margin: 0 0 6px;
-    }
-
-    .level-badge {
-        margin-left: 8px;
-        font-size: 12px;
-        padding: 2px 8px;
-        border-radius: 12px;
-    }
-
-    .level-badge img {
-        width: 14px;
-        height: 14px;
-        margin-left: 4px;
-        transform: none;
-    }
-
-    .lesson-balance {
-        font-size: 14px;
-    }
-
-    .lesson-balance span {
-        margin-left: 10px;
-        padding: 4px 10px;
-        border-width: 2px;
-        border-radius: 12px;
-    }
-
-    /* 3) Сховати "Learning / Additional" і риску */
-    .dashboard-navigation {
-        display: none;
-    }
-
-    /* 4) Плитки: одна під одною, широкі й трохи вищі */
-    .student-actions {
-        width: 100%;
-    }
-
-    .student-actions-build {
-        width: 100%;
-        padding: 0 12px 16px;
-        gap: 12px;
-        flex-direction: column;
-        justify-content: stretch;
-    }
-
-    .student-tile {
-        width: 100%;
-        min-width: auto;
-        max-width: none;
-        align-items: stretch;
-        gap: 0;
-        position: relative;
-    }
-
-    .student-tile-img {
-        height: 64px;
-        /* ↑ трохи більше висота */
-        aspect-ratio: auto;
-        border-radius: 12px;
-        padding: 0 14px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        justify-content: flex-start;
-    }
-
-    .student-tile-img>img {
-        width: 28px;
-        height: 28px;
-    }
-
-    .student-tile>span {
-        position: absolute;
-        left: 64px;
-        top: 50%;
-        transform: translateY(-50%);
-        font-size: 14px;
-        font-weight: 600;
-        white-space: nowrap;
-    }
-
-    /* Підказку про "not available" вимикаємо на мобільному */
-    .student-title-img-speaking-club:focus::after,
-    .student-title-img-speaking-club:hover::after,
-    .student-title-img-speaking-club:active::after {
-        content: none;
-        display: none;
-    }
+  }
+  .pa-name {
+    font-size: 18px;
+  }
 }
