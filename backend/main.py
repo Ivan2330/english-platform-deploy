@@ -26,6 +26,10 @@ from app.api.users.students import router as students_router
 from app.api.users.staff import router as staff_router
 from app.api.users.users import router as photo_router
 
+from app.api.controls.section import router as section_router
+from app.api.controls.block import router as block_router
+from app.api.controls.lesson_content import router as lesson_content_router
+
 # Завантажуємо змінні середовища
 load_dotenv()
 
@@ -99,6 +103,10 @@ app.include_router(universal_task_router, prefix="/universal-tasks", tags=["Univ
 app.include_router(ai_feedback_router, prefix="/ai-feedback", tags=["AI Feedback"])
 app.include_router(lesson_router, prefix="/lessons", tags=["Lessons"])
 app.include_router(question_router, prefix="/questions", tags=["Questions"])
+
+app.include_router(section_router, tags=["Sections"])
+app.include_router(block_router, tags=["Blocks"])
+app.include_router(lesson_content_router, tags=["Lesson Content"])
 
 
 # ✅ **Перевірка підключення до Redis**
