@@ -12,6 +12,8 @@ import UsersListPage from "./pages/UsersListPage";
 import CreateClassPage from "./pages/CreateClassPage";
 import AllClassesPage from "./pages/AllClassesPage";
 import LessonBuilderPage from "./pages/LessonBuilderPage";
+import LessonView from "./pages/LessonView";
+import LessonBuilder from "./pages/LessonBuilder";
 
 /* Eng Practice */
 import EngPracticePage from "./pages/EngPracticePage";
@@ -57,6 +59,7 @@ function App() {
       <Routes>
         {/* Публічний логін */}
         <Route path="/login" element={<LoginPage setUser={setUser} />} />
+        <Route path="/lesson-view/:lessonId" element={<LessonView />} />
 
         {/* Приватна зона — перевірка тільки на токен (щоб refresh не кидав на /login) */}
         <Route element={<ProtectedRoute />}>
@@ -74,6 +77,8 @@ function App() {
             <Route path="/create-class" element={<CreateClassPage />} />
             <Route path="/all-classes" element={<AllClassesPage />} />
             <Route path="/lesson-builder" element={<LessonBuilderPage />} />
+            <Route path="/lesson-builder/:lessonId" element={<LessonBuilder />} />
+            
           </Route>
         </Route>
 

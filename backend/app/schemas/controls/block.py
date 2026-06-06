@@ -57,6 +57,7 @@ class BlockUpdate(BaseModel):
     media_url: str | None = None
     word_list: str | None = None
     config: Dict[str, Any] | None = None
+    questions: List[BlockQuestionCreate] | None = None
 
 
 class BlockResponse(BaseModel):

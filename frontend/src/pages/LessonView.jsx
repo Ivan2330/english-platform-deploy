@@ -1,0 +1,107 @@
+import { useEffect, useState, useMemo } from "react";
+import { useParams } from "react-router-dom";
+import axios from "axios";
+import { API_URL } from "../../config";
+import BlockRenderer from "../components/lesson/LessonBlocks";
+import "./LessonView.css";
+
+const auth = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
+const keyOf = (blockId, qId) => `${blockId}:${qId ?? "null"}`;
+
+export default function LessonView() {
+  const { lessonId } = useParams();
+  const [lesson, setLesson] = useState(null);
+  const [attempt, setAttempt] = useState(null);
+  const [initial, setInitial] = useState(() => new Map());
+  const [activeSection, setActiveSection] = useState(0);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const { data: lessonData } = await axios.get(
+          `${API_URL}/lesson-content/${lessonId}/full`,
+          auth()
+        );
+        setLesson(lessonData);
+
+        // стартуємо/відновлюємо спробу
+        const { data: att } = await axios.post(
+          `${API_URL}/attempts/start`,
+          { lesson_id: Number(lessonId) },
+          auth()
+        );
+
+        // підтягуємо вже збережені відповіді
+        const { data: full } = await axios.get(`${API_URL}/attempts/${att.id}`, auth());
+        const map = new Map();
+        (full.answers || []).forEach((a) =>
+          map.set(keyOf(a.block_id, a.question_id), a.student_answer)
+        );
+
+        // ставимо разом, щоб блоки змонтувались уже з правильними початковими значеннями
+        setInitial(map);
+        setAttempt(att);
+      } catch (e) {
+        setError("Не вдалося завантажити урок.");
+      }
+    };
+    run();
+  }, [lessonId]);
+
+  const runner = useMemo(() => {
+    if (!attempt) return null;
+    return {
+      initial,
+      save: async (blockId, questionId, studentAnswer) => {
+        await axios.post(
+          `${API_URL}/attempts/${attempt.id}/answer`,
+          { block_id: blockId, question_id: questionId ?? null, student_answer: studentAnswer },
+          auth()
+        );
+      },
+    };
+  }, [attempt, initial]);
+
+  if (error) return <div className="lv-state">{error}</div>;
+  if (!lesson || !attempt) return <div className="lv-state">Завантаження…</div>;
+
+  const sections = lesson.sections || [];
+  const current = sections[activeSection];
+
+  return (
+    <div className="lv-page">
+      <header className="lv-header">
+        <div className="lv-title">{lesson.title}</div>
+        {lesson.level && <span className="lv-level">{lesson.level}</span>}
+      </header>
+
+      <div className="lv-body">
+        <aside className="lv-rail">
+          <div className="lv-rail-label">SECTIONS</div>
+          {sections.map((s, i) => (
+            <button
+              key={s.id}
+              className={`lv-rail-item ${i === activeSection ? "is-active" : ""}`}
+              onClick={() => setActiveSection(i)}
+            >
+              {s.title}
+            </button>
+          ))}
+        </aside>
+
+        <main className="lv-doc">
+          {current ? (
+            current.blocks.length ? (
+              current.blocks.map((b) => <BlockRenderer key={b.id} block={b} runner={runner} />)
+            ) : (
+              <div className="lv-state">У цій секції ще немає блоків.</div>
+            )
+          ) : (
+            <div className="lv-state">У цьому уроці ще немає секцій.</div>
+          )}
+        </main>
+      </div>
+    </div>
+  );
+}

@@ -142,12 +142,31 @@ async def update_block(
         raise HTTPException(status_code=404, detail="Block not found")
 
     payload = data.model_dump(exclude_unset=True)
+    new_questions = payload.pop("questions", None)
+
     if "config" in payload:
         payload["config"] = (
             json.dumps(payload["config"]) if payload["config"] is not None else None
         )
     for key, value in payload.items():
         setattr(block, key, value)
+
+    # Якщо передали питання — повністю замінюємо набір
+    if new_questions is not None:
+        for q in list(block.questions):
+            await session.delete(q)
+        await session.flush()
+        for q in new_questions:
+            session.add(
+                Question(
+                    block_id=block.id,
+                    question_text=q.get("question_text"),
+                    options=json.dumps(q["options"]) if q.get("options") is not None else None,
+                    correct_answer=q.get("correct_answer"),
+                    explanation=q.get("explanation"),
+                    order=q.get("order", 0),
+                )
+            )
 
     await session.commit()
     block = await _load_block(session, block_id)

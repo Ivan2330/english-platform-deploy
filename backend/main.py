@@ -29,6 +29,7 @@ from app.api.users.users import router as photo_router
 from app.api.controls.section import router as section_router
 from app.api.controls.block import router as block_router
 from app.api.controls.lesson_content import router as lesson_content_router
+from app.api.controls.attempt import router as attempt_router
 
 # Завантажуємо змінні середовища
 load_dotenv()
@@ -107,7 +108,7 @@ app.include_router(question_router, prefix="/questions", tags=["Questions"])
 app.include_router(section_router, tags=["Sections"])
 app.include_router(block_router, tags=["Blocks"])
 app.include_router(lesson_content_router, tags=["Lesson Content"])
-
+app.include_router(attempt_router, tags=["Attempts"])
 
 # ✅ **Перевірка підключення до Redis**
 from app.core.cache import set_cache, get_cache
