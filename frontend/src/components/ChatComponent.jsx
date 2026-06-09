@@ -9,62 +9,86 @@ const ChatComponent = ({ chatId, currentUser, onClose }) => {
   const [newMessage, setNewMessage] = useState('');
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
+  const seenRef = useRef(new Set());
+
+  // Ключ для дедуплікації (повідомлення не мають унікального id)
+  const keyOfMsg = (m) => `${m.user_id}|${m.sent_at}|${m.message}`;
 
   useEffect(() => {
     if (!chatId || !currentUser?.id) return;
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    const token0 = localStorage.getItem('token');
+    if (!token0) return;
 
-    const headers = { Authorization: `Bearer ${token}` };
+    const headers = { Authorization: `Bearer ${token0}` };
+    seenRef.current = new Set();
 
     const fetchMessages = async () => {
       try {
         const res = await axios.get(`${API_URL}/chats/chats/${chatId}`, { headers });
-        if (res.data?.messages) setMessages(res.data.messages);
+        if (res.data?.messages) {
+          const list = res.data.messages;
+          list.forEach((m) => seenRef.current.add(keyOfMsg(m)));
+          setMessages(list);
+        }
       } catch (err) {
         console.error('❌ Failed to fetch messages:', err);
       }
     };
 
-    fetchMessages();
-    
+    let closed = false;
+    let attempt = 0;
+    let retryTimer = null;
 
-     // 🛑 Закриваємо старий WebSocket перед відкриттям нового
-    if (socketRef.current) {
-      try {
-        socketRef.current.close();
-      } catch (e) {
-        console.warn("❗ Couldn't close previous socket", e);
+    const connect = () => {
+      if (closed) return;
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      if (socketRef.current) {
+        try { socketRef.current.close(); } catch (e) { /* ignore */ }
       }
-    }
 
-    
-    const ws = new WebSocket(`${WS_URL}/chat-ws/${chatId}?token=${token}`);
-    socketRef.current = ws;
+      const ws = new WebSocket(`${WS_URL}/chat-ws/${chatId}?token=${token}`);
+      socketRef.current = ws;
 
-    ws.onopen = () => {
-      console.log('✅ WebSocket connected');
+      ws.onopen = () => { attempt = 0; };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const k = keyOfMsg(data);
+          if (seenRef.current.has(k)) return; // дедуплікація (реплей кешу)
+          seenRef.current.add(k);
+          setMessages((prev) => [...prev, data]);
+        } catch (e) {
+          console.error('❌ Error parsing message:', e);
+        }
+      };
+
+      ws.onerror = () => { try { ws.close(); } catch (e) { /* ignore */ } };
+
+      ws.onclose = () => {
+        if (socketRef.current === ws) socketRef.current = null;
+        if (closed) return;
+        attempt += 1;
+        const delay = Math.min(1000 * 2 ** (attempt - 1), 10000); // 1s,2s,4s,8s,10s…
+        retryTimer = setTimeout(connect, delay);
+      };
     };
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        setMessages((prev) => [...prev, data]);
-      } catch (e) {
-        console.error('❌ Error parsing message:', e);
-      }
-    };
-
-    ws.onerror = (e) => {
-      console.error('🚫 WebSocket error:', e);
-    };
-
-    ws.onclose = () => {
-      console.warn('🔌 WebSocket closed');
-    };
+    // Спершу історія (засіваємо seen), потім WS — щоб уникнути гонки/дублів
+    (async () => {
+      await fetchMessages();
+      if (!closed) connect();
+    })();
 
     return () => {
-      ws.close();
+      closed = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      if (socketRef.current) {
+        try { socketRef.current.close(); } catch (e) { /* ignore */ }
+      }
+      socketRef.current = null;
     };
   }, [chatId, currentUser?.id]);
 

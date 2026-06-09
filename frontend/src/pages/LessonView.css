@@ -1,99 +1,96 @@
 /* ===========================================================
-   Lesson view (превʼю рендерера блоків)
+   Lesson rendering — точно під апрувнутий HTML-макет
+   (використовується і в LessonView, і в центрі ClassPage)
    =========================================================== */
 .lv-page {
   min-height: 100vh;
-  background: #f4f2fb;
+  background: linear-gradient(180deg, #efeafe 0%, #eef0f8 340px);
   font-family: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
   color: #1c1b2e;
-  padding: 18px;
+  padding: 22px 18px 40px;
 }
+.lv-shell { max-width: 960px; margin: 0 auto; width: 100%; }
 .lv-state {
   padding: 48px 20px;
   text-align: center;
-  color: #8a8aa0;
+  color: #9a98ad;
   font-family: "Poppins", system-ui, sans-serif;
 }
 
-/* Header */
-.lv-header {
+/* Hero header (темно-фіолетовий градієнт, як у макеті) */
+.lv-hero {
+  background: linear-gradient(135deg, #3A2580 0%, #6C3FC2 100%);
+  border-radius: 18px;
+  padding: 20px 24px 22px;
+  margin-bottom: 14px;
+  color: #fff;
+  box-shadow: 0 16px 38px rgba(58, 37, 128, 0.28);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lv-hero-top {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: #fff;
-  border: 1px solid #ece9f8;
-  border-radius: 16px;
-  padding: 14px 18px;
-  margin-bottom: 14px;
-  box-shadow: 0 8px 24px rgba(74, 44, 143, 0.06);
+  justify-content: space-between;
+  gap: 12px;
 }
-.lv-title {
-  font-size: 18px;
-  font-weight: 700;
-}
-.lv-level {
-  background: linear-gradient(135deg, #6c63ff, #9d4edd);
-  color: #fff;
+.lv-hero-eyebrow {
   font-size: 11px;
   font-weight: 600;
-  padding: 2px 9px;
-  border-radius: 20px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
 }
+.lv-hero-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.2px;
+}
+.lv-finish {
+  flex: 0 0 auto;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-family: inherit; font-weight: 600; font-size: 13px;
+  padding: 8px 16px; border-radius: 999px;
+  backdrop-filter: blur(4px);
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.lv-finish:hover { background: rgba(255, 255, 255, 0.26); border-color: rgba(255, 255, 255, 0.5); }
+.lv-finish:disabled { background: rgba(255, 255, 255, 0.22); cursor: default; }
 
 /* Body: rail + doc */
-.lv-body {
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
-}
+.lv-body { display: flex; gap: 14px; align-items: flex-start; }
 .lv-rail {
   flex: 0 0 180px;
   background: #fff;
   border: 1px solid #ece9f8;
   border-radius: 16px;
   padding: 12px 10px;
-  position: sticky;
-  top: 18px;
+  position: sticky; top: 18px;
 }
-.lv-rail-label {
-  font-size: 10.5px;
-  letter-spacing: 0.4px;
-  color: #9a98ad;
-  padding: 2px 8px 8px;
-}
+.lv-rail-label { font-size: 10.5px; letter-spacing: 0.4px; color: #9a98ad; padding: 2px 8px 8px; }
 .lv-rail-item {
-  display: block;
-  width: 100%;
-  text-align: left;
-  border: none;
-  background: none;
-  font-family: inherit;
-  font-size: 13px;
-  color: #6a6880;
-  padding: 9px 11px;
-  border-radius: 11px;
-  cursor: pointer;
-  margin-bottom: 3px;
+  display: flex; align-items: center; gap: 6px;
+  width: 100%; text-align: left;
+  border: none; background: none; font-family: inherit;
+  font-size: 13px; color: #6a6880;
+  padding: 9px 11px; border-radius: 11px;
+  cursor: pointer; margin-bottom: 3px;
   transition: background 0.15s ease;
 }
-.lv-rail-item:hover {
-  background: #f6f4fc;
-}
-.lv-rail-item.is-active {
-  background: #4a2c8f;
-  color: #fff;
-  font-weight: 600;
-}
+.lv-rail-item:hover { background: #f6f4fc; }
+.lv-rail-item.is-active { background: #4a2c8f; color: #fff; font-weight: 600; }
 
-.lv-doc {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 13px;
-}
+.lv-doc { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 13px; }
 
-/* ---------- Загальна картка-блок ---------- */
+/* ===========================================================
+   Загальна картка-блок
+   =========================================================== */
 .blk {
   background: #fff;
   border: 1px solid #ece9f8;
@@ -103,205 +100,240 @@
 }
 
 /* ---------- Теорія + callout-и ---------- */
-.blk.theory.callout {
-  border-left-width: 4px;
-  border-left-style: solid;
-}
+.blk.theory.callout { border-left-width: 4px; border-left-style: solid; }
 .callout-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  margin-bottom: 6px;
-  text-transform: uppercase;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px;
+  margin-bottom: 6px; text-transform: uppercase;
 }
-.callout-note { border-left-color: #6c63ff; background: #f6f4ff; }
-.callout-note .callout-label { color: #4a2c8f; }
-.callout-tip { border-left-color: #f0b429; background: #fdf4e3; }
-.callout-tip .callout-label { color: #b5862a; }
-.callout-warning { border-left-color: #d4307e; background: #fdecf2; }
-.callout-warning .callout-label { color: #d4307e; }
-.callout-example { border-left-color: #16a06a; background: #ecfaf3; }
-.callout-example .callout-label { color: #16a06a; }
+.callout-note    { border-left-color: #6c63ff; background: #f6f4ff; }
+.callout-note    .callout-label { color: #4a2c8f; }
+.callout-tip,
+.callout-warning { border-left-color: #f3c66a; background: #fdf4e3; border-color: #f3e2bf; }
+.callout-tip     .callout-label,
+.callout-warning .callout-label { color: #7a4f06; }
+.callout-tip     .md,
+.callout-warning .md { color: #8a6a2a; }
+.callout-example { border-left-color: #1c7a52; background: #ecfaf3; }
+.callout-example .callout-label { color: #1c7a52; }
 
-/* Markdown */
-.md { font-size: 14px; color: #34334a; line-height: 1.6; }
-.md h1, .md h2, .md h3 { color: #4a2c8f; margin: 0 0 8px; line-height: 1.3; }
+/* Markdown усередині теорії */
+.md { font-size: 13.5px; color: #5a5870; line-height: 1.6; }
+.md h1, .md h2, .md h3 { color: #1c1b2e; margin: 0 0 10px; line-height: 1.3; font-weight: 600; }
 .md h1 { font-size: 19px; }
 .md h2 { font-size: 16px; }
 .md h3 { font-size: 14.5px; }
 .md p { margin: 0 0 8px; }
 .md ul, .md ol { margin: 0 0 8px; padding-left: 20px; }
-.md li { margin-bottom: 3px; }
-.md strong { color: #4a2c8f; }
+.md li { margin-bottom: 4px; }
+.md strong { color: #4a2c8f; font-weight: 700; }
+.md em { color: #34334a; }
+/* зелений хайлайт (як .hl у макеті) — через `backticks` */
 .md code {
-  background: #f3f1fb;
-  color: #4a2c8f;
-  padding: 1px 6px;
-  border-radius: 6px;
-  font-size: 13px;
+  background: #ecfaf3; color: #1c7a52;
+  padding: 1px 7px; border-radius: 6px;
+  font-weight: 600; font-size: 13px;
+  font-family: inherit;
+}
+.md blockquote {
+  margin: 0 0 8px; padding: 8px 14px;
+  border-left: 3px solid #cfc7f7; background: #f8f6ff;
+  border-radius: 0 10px 10px 0; color: #5a5870;
 }
 .md > *:last-child { margin-bottom: 0; }
 
-/* ---------- Завдання ---------- */
+/* Таблиця (THEORY · FORMS) */
+.md table {
+  width: 100%; border-collapse: collapse;
+  border: 1px solid #eee8f7; border-radius: 12px; overflow: hidden;
+  font-size: 12.5px; margin: 4px 0 8px;
+}
+.md thead th {
+  background: #4a2c8f; color: #fff; font-weight: 600;
+  padding: 9px 11px; text-align: left;
+}
+.md tbody td {
+  padding: 9px 11px; color: #34334a;
+  border-top: 1px solid #eee8f7; border-left: 1px solid #eee8f7;
+}
+.md tbody td:first-child { border-left: none; }
+
+/* ===========================================================
+   Завдання
+   =========================================================== */
 .blk-tag {
-  display: inline-block;
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10.5px; font-weight: 600; letter-spacing: 0.4px;
   text-transform: uppercase;
-  color: #4a2c8f;
-  background: #f3f1fb;
-  padding: 4px 10px;
-  border-radius: 20px;
+  color: #4a2c8f; background: #f3f1fb;
+  padding: 4px 10px; border-radius: 20px;
   margin-bottom: 11px;
 }
-.blk-title {
-  font-size: 14.5px;
-  font-weight: 600;
-  margin-bottom: 6px;
-}
+.blk-title { font-size: 15px; font-weight: 600; color: #1c1b2e; margin-bottom: 8px; }
 .blk-q {
-  font-size: 14px;
-  font-weight: 500;
-  color: #1c1b2e;
-  margin-bottom: 12px;
-  line-height: 1.45;
+  font-size: 15px; font-weight: 600; color: #1c1b2e;
+  margin-bottom: 10px; line-height: 1.45;
 }
+.q-item + .q-item { margin-top: 14px; }
+.q-saved { color: #1f9d57; font-weight: 700; margin-left: 8px; font-size: 13px; }
 
-/* Options (multiple choice) */
+/* Multiple choice */
 .opt {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  text-align: left;
-  border: 1.5px solid #ece9f8;
-  border-radius: 12px;
-  padding: 11px 14px;
-  background: #fff;
-  font-family: inherit;
-  font-size: 13.5px;
-  color: #34334a;
-  margin-bottom: 8px;
-  cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; text-align: left;
+  border: 1.5px solid #ece9f8; border-radius: 12px;
+  padding: 10px 13px; background: #fff;
+  font-family: inherit; font-size: 13px; color: #34334a;
+  margin-bottom: 7px; cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .opt:hover { border-color: #cfc7f7; }
-.opt .dot {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 2px solid #cfc7f7;
-  flex: none;
-}
+.opt .dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #cfc7f7; flex: none; }
 .opt.sel { border-color: #6c63ff; background: #f6f4ff; }
-.opt.sel .dot {
-  border-color: #6c63ff;
-  background: #6c63ff;
-  box-shadow: inset 0 0 0 3px #fff;
-}
+.opt.sel .dot { border-color: #6c63ff; background: #6c63ff; box-shadow: inset 0 0 0 3px #fff; }
 
 /* True / False */
 .tf-row { display: flex; gap: 10px; }
 .tf {
-  flex: 1;
-  border: 1.5px solid #ece9f8;
-  border-radius: 12px;
-  padding: 12px;
-  background: #fff;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  color: #34334a;
-  cursor: pointer;
+  flex: 1; border: 1.5px solid #ece9f8; border-radius: 12px;
+  padding: 12px; background: #fff; font-family: inherit;
+  font-size: 14px; font-weight: 500; color: #34334a; cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .tf:hover { border-color: #cfc7f7; }
 .tf.sel { border-color: #6c63ff; background: #f6f4ff; color: #4a2c8f; }
 
-/* Gap fill */
-.bank { display: flex; flex-wrap: wrap; gap: 8px; }
+/* Gap fill / word bank */
+.bank { display: flex; flex-wrap: wrap; gap: 7px; }
 .pill {
-  border: none;
-  background: #f3f1fb;
-  color: #4a2c8f;
-  font-family: inherit;
-  font-size: 13px;
-  padding: 7px 14px;
-  border-radius: 20px;
-  cursor: pointer;
+  border: none; background: #f3f1fb; color: #4a2c8f;
+  font-family: inherit; font-size: 12px;
+  padding: 5px 12px; border-radius: 20px; cursor: pointer;
+  transition: filter 0.12s ease;
 }
+.pill:hover { filter: brightness(0.97); }
 .pill.sel { background: #6c63ff; color: #fff; }
 .gap-input {
-  width: 100%;
-  border: 1.5px solid #e6e4f5;
-  background: #faf9fe;
-  border-radius: 12px;
-  padding: 11px 14px;
-  font-family: inherit;
-  font-size: 13.5px;
-  color: #34334a;
-  outline: none;
+  width: 100%; border: 1.5px solid #e6e4f5; background: #faf9fe;
+  border-radius: 12px; padding: 11px 14px; font-family: inherit;
+  font-size: 13.5px; color: #34334a; outline: none;
 }
 .gap-input:focus { border-color: #6c63ff; }
 
-.blk-soon {
-  margin-top: 10px;
-  font-size: 12px;
-  color: #b5862a;
-  background: #fdf4e3;
-  display: inline-block;
-  padding: 5px 11px;
-  border-radius: 10px;
+/* Writing */
+.writing-area {
+  width: 100%; min-height: 120px; resize: vertical;
+  border: 1.5px solid #e6e4f5; background: #faf9fe;
+  border-radius: 12px; padding: 12px 14px; font-family: inherit;
+  font-size: 13.5px; color: #34334a; line-height: 1.6; outline: none;
+}
+.writing-area:focus { border-color: #6c63ff; }
+.writing-meta { margin-top: 6px; font-size: 11.5px; color: #9a98ad; text-align: right; }
+
+/* Listening / Video */
+.media-band {
+  background: #4a2c8f; border-radius: 13px; padding: 11px 13px; margin-bottom: 6px;
+}
+.media-audio { width: 100%; display: block; }
+.media-video { width: 100%; border-radius: 13px; display: block; background: #211833; margin-bottom: 6px; }
+.media-empty {
+  background: #f6f4ff; border: 1px dashed #cfc7f7; color: #8a8aa0;
+  border-radius: 12px; padding: 16px; text-align: center; font-size: 13px; margin-bottom: 6px;
 }
 
-/* Адаптив */
+/* Matching */
+.match-list { display: flex; flex-direction: column; gap: 8px; }
+.match-row { display: flex; align-items: center; gap: 10px; }
+.match-left {
+  flex: 1; background: #f6f4ff; border: 1px solid #ece9f8;
+  border-radius: 10px; padding: 9px 12px; font-size: 13.5px; color: #34334a;
+}
+.match-sel {
+  flex: 1; border: 1.5px solid #e6e4f5; background: #fff;
+  border-radius: 10px; padding: 9px 12px; font-family: inherit;
+  font-size: 13.5px; color: #34334a; outline: none; cursor: pointer;
+}
+.match-sel:focus { border-color: #6c63ff; }
+
+/* Ordering */
+.order-list { display: flex; flex-direction: column; gap: 8px; }
+.order-row {
+  display: flex; align-items: center; gap: 10px;
+  border: 1.5px solid #ece9f8; border-radius: 12px; padding: 9px 12px; background: #fff;
+}
+.order-num {
+  flex: none; width: 24px; height: 24px; border-radius: 8px;
+  background: #4a2c8f; color: #fff; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.order-text { flex: 1; font-size: 13.5px; color: #34334a; }
+.order-btns { display: flex; gap: 4px; }
+.order-btns button {
+  border: none; cursor: pointer; background: #f3f1fb; color: #4a2c8f;
+  width: 26px; height: 26px; border-radius: 8px; font-size: 12px;
+}
+.order-btns button:disabled { opacity: 0.4; cursor: default; }
+
+/* Заглушка */
+.blk-soon {
+  margin-top: 10px; font-size: 12px; color: #7a4f06;
+  background: #fdf4e3; display: inline-block;
+  padding: 5px 11px; border-radius: 10px;
+}
+
+/* ===========================================================
+   Панель "Наживо" (для викладача)
+   =========================================================== */
+.live-panel {
+  margin-top: 8px; border: 1px dashed #cfc7f7; background: #f8f6ff;
+  border-radius: 12px; padding: 10px 12px;
+}
+.live-panel-title { font-size: 11px; font-weight: 700; color: #4a2c8f; letter-spacing: 0.3px; margin-bottom: 6px; }
+.live-row { display: flex; gap: 8px; font-size: 12.5px; padding: 2px 0; }
+.live-q { flex: none; min-width: 70px; color: #8a8aa0; font-weight: 600; }
+.live-v { color: #34334a; word-break: break-word; }
+.live-v.empty { color: #b8b6c8; font-style: italic; }
+
+/* ===========================================================
+   Адаптив
+   =========================================================== */
 @media (max-width: 760px) {
   .lv-body { flex-direction: column; }
   .lv-rail {
-    flex: none;
-    width: 100%;
-    position: static;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
+    flex: none; width: 100%; position: static;
+    display: flex; flex-wrap: wrap; gap: 6px;
   }
   .lv-rail-label { width: 100%; }
   .lv-rail-item { width: auto; }
 }
-
-.q-item:not(:last-child) {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px dashed #f0edf9;
+@media (max-width: 480px) {
+  .lv-page { padding: 14px 12px 32px; }
+  .lv-hero { padding: 16px 18px 18px; }
+  .lv-hero-title { font-size: 20px; }
+  .blk { padding: 14px 15px; }
 }
 
-.writing-area {
-  width: 100%;
-  min-height: 90px;
-  resize: vertical;
-  border: 1.5px solid #e6e4f5;
-  background: #faf9fe;
-  border-radius: 12px;
-  padding: 12px 14px;
-  font-family: inherit;
-  font-size: 13.5px;
-  color: #34334a;
-  outline: none;
+/* ===========================================================
+   Гарна скролилка (сторінка уроку + рейка + центр-док)
+   =========================================================== */
+.lv-page, .lv-doc, .lv-rail { scrollbar-width: thin; scrollbar-color: #cdc4f2 transparent; }
+.lv-page::-webkit-scrollbar,
+.lv-doc::-webkit-scrollbar,
+.lv-rail::-webkit-scrollbar { width: 10px; height: 10px; }
+.lv-page::-webkit-scrollbar-track,
+.lv-doc::-webkit-scrollbar-track,
+.lv-rail::-webkit-scrollbar-track { background: transparent; }
+.lv-page::-webkit-scrollbar-thumb,
+.lv-doc::-webkit-scrollbar-thumb,
+.lv-rail::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6C63FF, #9D4EDD);
+  border: 3px solid #eef0f8;
+  background-clip: padding-box;
+  border-radius: 999px;
+  min-height: 40px;
 }
-.writing-area:focus { border-color: #6c63ff; }
-.writing-meta { margin-top: 8px; font-size: 11.5px; color: #9a98ad; }
-
-.media-audio { width: 100%; margin-bottom: 12px; }
-.media-video { width: 100%; border-radius: 12px; margin-bottom: 12px; background: #000; }
-.media-empty {
-  background: #f3f1fb;
-  color: #9a98ad;
-  border-radius: 12px;
-  padding: 18px;
-  text-align: center;
-  font-size: 13px;
-  margin-bottom: 12px;
+.lv-page::-webkit-scrollbar-thumb:hover,
+.lv-doc::-webkit-scrollbar-thumb:hover,
+.lv-rail::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #5b53f0, #8a3fd0);
+  border-width: 2px;
 }
-
-.q-saved { color: #16a06a; font-size: 12px; font-weight: 700; margin-left: 8px; }

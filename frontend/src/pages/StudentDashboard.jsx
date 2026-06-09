@@ -19,6 +19,7 @@ const I = {
   wallet: (p) => (<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="3" y="6" width="18" height="13" rx="2" /><path d="M3 10h18" /><circle cx="16.5" cy="14" r="1" /></svg>),
   headset: (p) => (<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M4 13a8 8 0 0 1 16 0" /><rect x="2.5" y="13" width="4" height="6" rx="1.5" /><rect x="17.5" y="13" width="4" height="6" rx="1.5" /><path d="M20 19a4 4 0 0 1-4 3h-2" /></svg>),
   chevron: (p) => (<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="m9 6 6 6-6 6" /></svg>),
+  award: (p) => (<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="12" cy="9" r="6" /><path d="M8.5 14 7 21l5-2.5L17 21l-1.5-7" /></svg>),
 };
 
 /* Ініціали з імені: "student_user" → "SU", "Anna" → "AN" */
@@ -117,6 +118,7 @@ const StudentDashboardPage = () => {
             <I.mic /> Speaking Club <span className="pa-soon-tag">soon</span>
           </button>
           <button className="pa-nav-item" onClick={openPractice}><I.clipboard /> Eng Practice</button>
+          <button className="pa-nav-item" onClick={() => navigate("/my-results")}><I.award /> My Results</button>
         </nav>
 
         <div className="pa-side-foot">{contactDropdown("pa-contact--side")}</div>

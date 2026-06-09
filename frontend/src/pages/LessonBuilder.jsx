@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { API_URL } from "../../config";
 import "./LessonBuilder.css";
+import "../styles/homework.css";
 
 const TASK_TYPES = [
   "multiple_choice",
@@ -12,6 +13,8 @@ const TASK_TYPES = [
   "writing",
   "listening",
   "video",
+  "matching",
+  "ordering",
 ];
 const CALLOUTS = ["none", "note", "tip", "warning", "example"];
 
@@ -63,16 +66,59 @@ export default function LessonBuilder() {
     await load();
   };
 
+  const renameSection = async (s) => {
+    const title = prompt("Назва секції:", s.title);
+    if (title == null || title.trim() === "") return;
+    await axios.put(`${API_URL}/sections/${s.id}`, { title }, auth());
+    await load();
+  };
+
+  const toggleHomework = async (s) => {
+    const kind = s.kind === "homework" ? "general" : "homework";
+    await axios.put(`${API_URL}/sections/${s.id}`, { kind }, auth());
+    await load();
+  };
+
   const deleteBlock = async (id) => {
     if (!window.confirm("Видалити блок?")) return;
     await axios.delete(`${API_URL}/blocks/${id}`, auth());
     await load();
   };
 
+  // Перепорядкування: переприсвоюємо order = індекс і шлемо лише змінені
+  const reorder = async (items, endpoint) => {
+    await Promise.all(
+      items
+        .map((it, i) =>
+          it.order !== i ? axios.put(`${API_URL}/${endpoint}/${it.id}`, { order: i }, auth()) : null
+        )
+        .filter(Boolean)
+    );
+    await load();
+  };
+  const moveSection = (idx, dir) => {
+    const arr = [...sections];
+    const j = idx + dir;
+    if (j < 0 || j >= arr.length) return;
+    [arr[idx], arr[j]] = [arr[j], arr[idx]];
+    reorder(arr, "sections");
+  };
+  const moveBlock = (idx, dir) => {
+    if (!current) return;
+    const arr = [...current.blocks];
+    const j = idx + dir;
+    if (j < 0 || j >= arr.length) return;
+    [arr[idx], arr[j]] = [arr[j], arr[idx]];
+    reorder(arr, "blocks");
+  };
+
   return (
     <div className="lb-page">
       <header className="lb-top">
-        <div className="lb-title">Конструктор · {lesson.title}</div>
+        <div className="lbh-top-left">
+          <Link className="lb-back" to="/lesson-builder">←</Link>
+          <div className="lb-title">Конструктор · {lesson.title}</div>
+        </div>
         <a className="lb-preview" href={`/lesson-view/${lesson.id}`} target="_blank" rel="noreferrer">
           Превʼю ↗
         </a>
@@ -84,12 +130,23 @@ export default function LessonBuilder() {
             <span>Секції</span>
             <button onClick={addSection}>+</button>
           </div>
-          {sections.map((s) => (
+          {sections.map((s, i) => (
             <div key={s.id} className={`lb-rail-item ${s.id === activeSection ? "is-active" : ""}`}>
               <button className="lb-rail-name" onClick={() => setActiveSection(s.id)}>
                 {s.title}
+                {s.kind === "homework" && <span className="hw-badge">HW</span>}
               </button>
-              <button className="lb-del" onClick={() => deleteSection(s.id)}>✕</button>
+              <div className="lb-rail-actions">
+                <button className="lb-mini" onClick={() => moveSection(i, -1)} disabled={i === 0}>▲</button>
+                <button className="lb-mini" onClick={() => moveSection(i, 1)} disabled={i === sections.length - 1}>▼</button>
+                <button
+                  className={`lb-mini ${s.kind === "homework" ? "is-hw" : ""}`}
+                  onClick={() => toggleHomework(s)}
+                  title={s.kind === "homework" ? "Зробити звичайною секцією" : "Позначити як домашнє завдання"}
+                >🏠</button>
+                <button className="lb-mini" onClick={() => renameSection(s)}>✎</button>
+                <button className="lb-mini" onClick={() => deleteSection(s.id)}>✕</button>
+              </div>
             </div>
           ))}
           {!sections.length && <div className="lb-empty">Додай першу секцію →</div>}
@@ -99,8 +156,12 @@ export default function LessonBuilder() {
           {current ? (
             <>
               <div className="lb-blocks">
-                {current.blocks.map((b) => (
+                {current.blocks.map((b, i) => (
                   <div key={b.id} className="lb-block">
+                    <div className="lb-block-move">
+                      <button onClick={() => moveBlock(i, -1)} disabled={i === 0}>▲</button>
+                      <button onClick={() => moveBlock(i, 1)} disabled={i === current.blocks.length - 1}>▼</button>
+                    </div>
                     <div className="lb-block-info">
                       <span className="lb-block-type">
                         {b.block_type === "theory" ? "Theory" : (b.task_type || "task")}
@@ -169,9 +230,12 @@ function BlockEditor({ block, sectionId, order, onClose, onSaved }) {
       explanation: q.explanation || "",
     }))
   );
+  const [pairs, setPairs] = useState(() => (block.config?.pairs || []).map((p) => ({ ...p })));
+  const [items, setItems] = useState(() => [...(block.config?.items || [])]);
   const [saving, setSaving] = useState(false);
 
-  const usesQuestions = blockType === "task" && taskType !== "writing";
+  const usesQuestions =
+    blockType === "task" && !["writing", "matching", "ordering"].includes(taskType);
   const usesMedia = taskType === "listening" || taskType === "video";
 
   const setQ = (i, patch) => setQuestions((qs) => qs.map((q, idx) => (idx === i ? { ...q, ...patch } : q)));
@@ -190,6 +254,13 @@ function BlockEditor({ block, sectionId, order, onClose, onSaved }) {
   const delOpt = (i, oi) =>
     setQ(i, { options: questions[i].options.filter((_, idx) => idx !== oi) });
 
+  const addPair = () => setPairs((p) => [...p, { left: "", right: "" }]);
+  const setPair = (i, patch) => setPairs((p) => p.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
+  const delPair = (i) => setPairs((p) => p.filter((_, idx) => idx !== i));
+  const addItem = () => setItems((it) => [...it, ""]);
+  const setItem = (i, val) => setItems((it) => it.map((x, idx) => (idx === i ? val : x)));
+  const delItem = (i) => setItems((it) => it.filter((_, idx) => idx !== i));
+
   const save = async () => {
     setSaving(true);
     try {
@@ -204,6 +275,11 @@ function BlockEditor({ block, sectionId, order, onClose, onSaved }) {
             order: idx,
           }))
         : [];
+
+      let config = {};
+      if (taskType === "matching") config = { pairs: pairs.filter((p) => p.left && p.right) };
+      else if (taskType === "ordering") config = { items: items.filter((x) => x.trim()) };
+
       const payload = {
         section_id: sectionId,
         order: isNew ? order : block.order ?? 0,
@@ -213,7 +289,7 @@ function BlockEditor({ block, sectionId, order, onClose, onSaved }) {
         task_type: blockType === "task" ? taskType : null,
         title: blockType === "task" ? title || null : null,
         media_url: usesMedia ? mediaUrl || null : null,
-        config: blockType === "task" ? {} : null,
+        config: blockType === "task" ? config : null,
         questions: qPayload,
       };
       if (isNew) await axios.post(`${API_URL}/blocks/`, payload, auth());
@@ -279,6 +355,41 @@ function BlockEditor({ block, sectionId, order, onClose, onSaved }) {
                   <label>URL медіа</label>
                   <input value={mediaUrl} onChange={(e) => setMediaUrl(e.target.value)} placeholder="https://…" />
                 </>
+              )}
+
+              {taskType === "matching" && (
+                <div className="lb-questions">
+                  <div className="lb-q-head">
+                    <span>Пари (ліве → праве)</span>
+                    <button onClick={addPair}>+ пара</button>
+                  </div>
+                  {pairs.map((p, i) => (
+                    <div key={i} className="lb-pair">
+                      <input value={p.left} onChange={(e) => setPair(i, { left: e.target.value })} placeholder="ліве" />
+                      <span className="lb-pair-arrow">→</span>
+                      <input value={p.right} onChange={(e) => setPair(i, { right: e.target.value })} placeholder="праве" />
+                      <button onClick={() => delPair(i)}>✕</button>
+                    </div>
+                  ))}
+                  {!pairs.length && <div className="lb-empty">Додай першу пару →</div>}
+                </div>
+              )}
+
+              {taskType === "ordering" && (
+                <div className="lb-questions">
+                  <div className="lb-q-head">
+                    <span>Елементи (у правильному порядку)</span>
+                    <button onClick={addItem}>+ елемент</button>
+                  </div>
+                  {items.map((it, i) => (
+                    <div key={i} className="lb-item-row">
+                      <span className="lb-item-num">{i + 1}</span>
+                      <input value={it} onChange={(e) => setItem(i, e.target.value)} placeholder="елемент" />
+                      <button onClick={() => delItem(i)}>✕</button>
+                    </div>
+                  ))}
+                  {!items.length && <div className="lb-empty">Додай перший елемент →</div>}
+                </div>
               )}
 
               {usesQuestions && (

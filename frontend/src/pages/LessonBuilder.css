@@ -208,7 +208,7 @@
   color: #9a98ad;
   cursor: pointer;
 }
-.lb-modal-body { padding: 18px 20px; overflow-y: auto; }
+.lb-modal-body { padding: 18px 20px; overflow-y: auto; flex: 1; min-height: 0; }
 .lb-modal-body label {
   display: block;
   font-size: 12px;
@@ -361,4 +361,103 @@
 @media (max-width: 760px) {
   .lb-body { flex-direction: column; }
   .lb-rail { flex: none; width: 100%; position: static; }
+  .lb-modal-bg { padding: 10px; }
+  .lb-modal { max-height: 95vh; }
+  .lb-modal-body { padding: 14px 16px; }
+}
+
+/* ===========================================================
+   Back-link (у топ-барі редактора й домашньої)
+   =========================================================== */
+.lbh-top-left { display: flex; align-items: center; gap: 12px; }
+.lb-back {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 10px;
+  background: #f3f1fb; color: #4a2c8f; text-decoration: none;
+  font-size: 18px; line-height: 1; transition: background 0.15s ease;
+}
+.lb-back:hover { background: #ece8fb; }
+
+/* ===========================================================
+   Домашня сторінка білдера (список + створення уроків)
+   =========================================================== */
+.lbh-count { font-size: 13px; color: #8a8aa0; font-weight: 500; }
+
+.lbh-create {
+  display: flex; gap: 10px; align-items: center;
+  background: #fff; border: 1px solid #ece9f8; border-radius: 16px;
+  padding: 12px 14px; margin-bottom: 14px;
+  box-shadow: 0 8px 24px rgba(74, 44, 143, 0.06);
+}
+.lbh-create-title {
+  flex: 1; min-width: 0;
+  border: 1.5px solid #e6e4f5; background: #faf9fe; border-radius: 12px;
+  padding: 11px 14px; font-family: inherit; font-size: 14px; color: #34334a; outline: none;
+}
+.lbh-create-title:focus { border-color: #6c63ff; }
+.lbh-create-level {
+  flex: 0 0 auto; border: 1.5px solid #e6e4f5; background: #fff; border-radius: 12px;
+  padding: 11px 12px; font-family: inherit; font-size: 14px; color: #4a2c8f; cursor: pointer; outline: none;
+}
+.lbh-create-level:focus { border-color: #6c63ff; }
+.lbh-create-btn {
+  flex: 0 0 auto; border: none; cursor: pointer;
+  background: linear-gradient(135deg, #6C63FF, #9D4EDD); color: #fff;
+  font-family: inherit; font-weight: 600; font-size: 14px;
+  padding: 11px 18px; border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(108, 99, 255, 0.28);
+  transition: transform 0.12s ease, filter 0.15s ease;
+}
+.lbh-create-btn:hover { transform: translateY(-1px); }
+.lbh-create-btn:disabled { background: #d8d2f2; box-shadow: none; cursor: default; transform: none; }
+
+.lbh-filter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.lbh-chip {
+  border: 1.5px solid #e6e4f5; background: #fff; color: #6a6880;
+  font-family: inherit; font-size: 13px; font-weight: 500;
+  padding: 7px 16px; border-radius: 999px; cursor: pointer;
+  transition: all 0.15s ease;
+}
+.lbh-chip:hover { border-color: #cfc7f7; }
+.lbh-chip.on {
+  background: linear-gradient(135deg, #6C63FF, #9D4EDD);
+  color: #fff; border-color: transparent; font-weight: 600;
+}
+
+.lbh-grid {
+  display: grid; gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.lbh-card {
+  background: #fff; border: 1px solid #ece9f8; border-radius: 16px;
+  padding: 16px; cursor: pointer;
+  box-shadow: 0 8px 22px rgba(74, 44, 143, 0.05);
+  transition: transform 0.14s ease, box-shadow 0.18s ease, border-color 0.15s ease;
+  display: flex; flex-direction: column; gap: 10px; min-height: 120px;
+}
+.lbh-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(74, 44, 143, 0.12);
+  border-color: #d8cef2;
+}
+.lbh-card-top { display: flex; align-items: center; justify-content: space-between; }
+.lbh-card-level {
+  font-size: 11px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, #6C63FF, #9D4EDD);
+  padding: 3px 11px; border-radius: 999px;
+}
+.lbh-card-menu { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s ease; }
+.lbh-card:hover .lbh-card-menu { opacity: 1; }
+.lbh-card-menu button {
+  border: none; cursor: pointer; background: #f3f1fb; color: #6a6880;
+  width: 26px; height: 26px; border-radius: 8px; font-size: 12px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.lbh-card-menu button:hover { background: #ece8fb; color: #4a2c8f; }
+.lbh-card-title { font-size: 15px; font-weight: 600; color: #1c1b2e; line-height: 1.35; flex: 1; }
+.lbh-card-open { font-size: 12.5px; font-weight: 600; color: #6c63ff; }
+
+@media (max-width: 560px) {
+  .lbh-create { flex-wrap: wrap; }
+  .lbh-create-title { flex: 1 1 100%; }
 }

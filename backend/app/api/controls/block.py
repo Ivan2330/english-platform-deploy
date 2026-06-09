@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from typing import List
+from app.api.deps import require_staff
 
 from app.core.database import get_async_session
 from app.api.users.auth import current_active_user
@@ -73,7 +74,7 @@ async def _load_block(session: AsyncSession, block_id: int) -> Block | None:
 async def create_block(
     data: BlockCreate,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(require_staff),
 ):
     section = (
         await session.execute(select(Section).where(Section.id == data.section_id))
@@ -135,7 +136,7 @@ async def update_block(
     block_id: int,
     data: BlockUpdate,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(require_staff),
 ):
     block = await _load_block(session, block_id)
     if not block:
@@ -177,7 +178,7 @@ async def update_block(
 async def delete_block(
     block_id: int,
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(require_staff),
 ):
     block = (
         await session.execute(select(Block).where(Block.id == block_id))

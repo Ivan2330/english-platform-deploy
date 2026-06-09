@@ -1,630 +1,180 @@
-// import React, { useEffect, useRef, useState } from "react";
-// import { WS_URL, API_URL } from "../../config";
-// import axios from "axios";
-// import "../pages/CallComponent.css";
-// import micro_on from "../assets/calls/micON.svg";
-// import micro_off from "../assets/calls/micOFF.svg";
-// import camera_on from "../assets/calls/camON.svg";
-// import camera_off from "../assets/calls/camOFF.svg";
-// import end_call from "../assets/calls/endCall.svg";
-
-// const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
-//   const [callId, setCallId] = useState(null);
-//   const [micOn, setMicOn] = useState(true);
-//   const [camOn, setCamOn] = useState(true);
-
-//   const localVideoRef = useRef(null);
-//   const remoteVideoRef = useRef(null);
-//   const mediaStreamRef = useRef(null);
-//   const socketRef = useRef(null);
-//   const pcRef = useRef(null);
-//   const remoteStream = useRef(new MediaStream());
-
-//   const makingOffer = useRef(false);
-//   const polite = useRef(role !== "staff");
-//   const pendingIce = useRef([]);
-//   const peerJoined = useRef(false);
-
-//   const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
-//   const wsToken = () => localStorage.getItem("token");
-
-//   useEffect(() => {
-//     (async () => {
-//       try {
-//         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-//         mediaStreamRef.current = stream;
-//         if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-//         console.log("✅ Local media acquired", stream.getTracks().map(t => `${t.kind} (${t.id})`));
-//       } catch (e) {
-//         console.error("❌ Failed to acquire media:", e);
-//       }
-//     })();
-//   }, []);
-
-//   useEffect(() => {
-//     (async () => {
-//       try {
-//         const headers = authHeaders();
-//         const { data: calls } = await axios.get(`${API_URL}/calls/calls/?classroom_id=${classroomId}`, { headers });
-//         let call = calls.find(c => c.status === "active");
-
-//         if (!call && role === "staff") {
-//           const { data: created } = await axios.post(`${API_URL}/calls/calls/`, { classroom_id: classroomId, status: "active" }, { headers });
-//           call = created;
-//         }
-
-//         if (!call) return;
-
-//         const { data: parts } = await axios.get(`${API_URL}/calls/calls/${call.id}/participants`, { headers });
-//         const me = parts.find(p => p.user_id === currentUserId && !p.left_at);
-//         if (!me) await axios.post(`${API_URL}/calls/calls/${call.id}/join`, {}, { headers });
-
-//         setCallId(call.id);
-//       } catch (e) {
-//         console.error("❌ Call init error:", e);
-//       }
-//     })();
-//   }, [classroomId, role, currentUserId]);
-
-//   useEffect(() => {
-//     if (!callId) return;
-
-//     const ws = new WebSocket(`${WS_URL}/calls-ws/ws/calls/${callId}?token=${wsToken()}`);
-//     socketRef.current = ws;
-
-//     const pc = new RTCPeerConnection({
-//       iceServers: [
-//         { urls: "stun:stun.l.google.com:19302" },
-//         { urls: "turn:my-prime-academy.online:3478", username: "Prime#1910", credential: "Prime#1910Academy" }
-//       ]
-//     });
-//     pcRef.current = pc;
-//     window.pcRef = pc;
-
-//     remoteVideoRef.current.srcObject = remoteStream.current;
-
-//     const addTracks = () => {
-//       if (!mediaStreamRef.current) return false;
-//       mediaStreamRef.current.getTracks().forEach(track => {
-//         if (!pc.getSenders().find(s => s.track?.id === track.id)) {
-//           pc.addTrack(track, mediaStreamRef.current);
-//           console.log("🎞️ Added local track:", track.kind, track.id);
-//         }
-//       });
-//       return true;
-//     };
-//     if (!addTracks()) {
-//       const interval = setInterval(() => addTracks() && clearInterval(interval), 400);
-//     }
-
-//     pc.ontrack = (event) => {
-//       const video = remoteVideoRef.current;
-//       const incomingStream = event.streams?.[0];
-
-//       if (!incomingStream || !video) return;
-
-//       if (event.track.kind === "video") {
-//         console.log("🎥 Incoming video track:", event.track.id);
-//       }
-
-//       event.track && !remoteStream.current.getTracks().some(t => t.id === event.track.id) &&
-//         remoteStream.current.addTrack(event.track);
-
-//       if (!video.srcObject) {
-//         video.srcObject = remoteStream.current;
-//       }
-
-//       video.onloadedmetadata = () => {
-//         video.play()
-//           .then(() => console.log("▶️ Remote video playing"))
-//           .catch(e => console.error("❌ video play error (metadata):", e));
-//       };
-
-//       setTimeout(() => {
-//         video.play().catch(e => console.error("❌ video play retry:", e));
-//       }, 1000);
-
-//       console.log("📡 ontrack triggered");
-
-//       setTimeout(() => {
-//         console.log("🧪 FINAL CHECK —", {
-//           videoWidth: video?.videoWidth,
-//           readyState: video?.readyState,
-//           paused: video?.paused,
-//           srcObject: video?.srcObject,
-//           tracks: video?.srcObject?.getTracks().map(t => `${t.kind} ${t.readyState}`)
-//         });
-
-//         const statsInterval = setInterval(() => {
-//           pc.getStats(null).then(stats => {
-//             stats.forEach(report => {
-//               if (report.type === "inbound-rtp" && report.kind === "video") {
-//                 console.log("📊 Video stats:", {
-//                   framesDecoded: report.framesDecoded,
-//                   framesDropped: report.framesDropped,
-//                   framesPerSecond: report.framesPerSecond,
-//                 });
-//               }
-//             });
-//           });
-//         }, 5000);
-//         setTimeout(() => clearInterval(statsInterval), 20000);
-
-//       }, 5000);
-//     };
-
-//     pc.onicecandidate = e => {
-//       if (e.candidate) {
-//         console.log("📤 Sending ICE:", e.candidate);
-//         ws.send(JSON.stringify({ action: "ice_candidate", candidate: e.candidate, user: currentUserId }));
-//       }
-//     };
-
-//     pc.onnegotiationneeded = async () => {
-//       if (!peerJoined.current) return;
-//       try {
-//         makingOffer.current = true;
-//         const offer = await pc.createOffer();
-//         await pc.setLocalDescription(offer);
-//         ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
-//       } catch (e) {
-//         console.error("negotiationneeded error", e);
-//       } finally {
-//         makingOffer.current = false;
-//       }
-//     };
-
-//     ws.onmessage = async ({ data }) => {
-//       const msg = JSON.parse(data);
-//       console.log("📨 WS msg:", msg);
-//       try {
-//         if (msg.action === "you_joined") console.log("🟢 Waiting for peer");
-
-//         if (msg.action === "join" && msg.user !== currentUserId) {
-//           peerJoined.current = true;
-//           if (pc.signalingState === "stable") {
-//             const offer = await pc.createOffer();
-//             await pc.setLocalDescription(offer);
-//             ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
-//           }
-//         }
-
-//         if (msg.action === "offer" && msg.user !== currentUserId) {
-//           peerJoined.current = true;
-//           const offerDesc = new RTCSessionDescription(msg.offer);
-//           const ready = !makingOffer.current && (pc.signalingState === "stable" || pc.signalingState === "have-remote-offer");
-//           const collision = msg.offer && !ready;
-
-//           if (collision && !polite.current) return;
-//           if (collision && polite.current) await pc.setLocalDescription({ type: "rollback" });
-
-//           await pc.setRemoteDescription(offerDesc);
-//           const answer = await pc.createAnswer();
-//           await pc.setLocalDescription(answer);
-//           ws.send(JSON.stringify({ action: "answer", answer, user: currentUserId }));
-//           pendingIce.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
-//           pendingIce.current = [];
-//         }
-
-//         if (msg.action === "answer" && msg.user !== currentUserId) {
-//           if (!pc.localDescription || pc.localDescription.type !== "offer") {
-//             console.warn("⏳ Ignoring early answer — no local offer yet");
-//             return;
-//           }
-//           await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
-//           pendingIce.current.forEach(c => pc.addIceCandidate(c).catch(console.error));
-//           pendingIce.current = [];
-//         }
-
-//         if (msg.action === "ice_candidate" && msg.user !== currentUserId && msg.candidate) {
-//           const cand = new RTCIceCandidate(msg.candidate);
-//           if (pc.remoteDescription?.type) {
-//             await pc.addIceCandidate(cand).catch(console.error);
-//           } else {
-//             pendingIce.current.push(cand);
-//           }
-//         }
-//       } catch (e) {
-//         console.error("RTC message error:", e);
-//       }
-//     };
-
-//     return () => {
-//       ws.close();
-//       pc.close();
-//     };
-//   }, [callId]);
-
-//   useEffect(() => {
-//     window.localVideoRef = localVideoRef;
-//     window.remoteVideoRef = remoteVideoRef;
-//   }, []);
-
-//   const toggleMic = () => {
-//     const track = mediaStreamRef.current?.getAudioTracks()[0];
-//     if (!track) return;
-//     track.enabled = !track.enabled;
-//     setMicOn(track.enabled);
-//     socketRef.current?.send(JSON.stringify({ action: "toggle_mic", status: track.enabled }));
-//   };
-
-//   const toggleCam = () => {
-//     const track = mediaStreamRef.current?.getVideoTracks()[0];
-//     if (!track) return;
-//     track.enabled = !track.enabled;
-//     setCamOn(track.enabled);
-//     socketRef.current?.send(JSON.stringify({ action: "toggle_camera", status: track.enabled }));
-//   };
-
-//   const leaveCall = async () => {
-//     socketRef.current?.send(JSON.stringify({ action: "end_call" }));
-//     socketRef.current?.close();
-//     mediaStreamRef.current?.getTracks().forEach(t => t.stop());
-//     try {
-//       await axios.delete(`${API_URL}/calls/calls/${callId}/leave`, { headers: authHeaders() });
-//     } catch {}
-//     if (onLeave) onLeave();
-//   };
-
-//   if (!callId) return <p>🔌 Waiting for call...</p>;
-
-//   return (
-//     <div className="call-container">
-//       <h2>📞 Call in progress</h2>
-//       <div className="video-wrapper">
-//         <video ref={remoteVideoRef} autoPlay playsInline className="video remote" />
-//         <video ref={localVideoRef} autoPlay muted playsInline className="video local" />
-//       </div>
-//       <div className="button-group-actions">
-//         <button onClick={toggleMic}>{micOn ? <img src={micro_on} alt="mic on" /> : <img src={micro_off} alt="mic off" />}</button>
-//         <button onClick={toggleCam}>{camOn ? <img src={camera_on} alt="cam on" /> : <img src={camera_off} alt="cam off" />}</button>
-//         <button onClick={leaveCall}><img src={end_call} alt="end" /></button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default CallComponent;
-
-// src/components/CallComponent.jsx
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  LiveKitRoom,
+  useTracks,
+  VideoTrack,
+  RoomAudioRenderer,
+  useLocalParticipant,
+} from "@livekit/components-react";
+import { Track } from "livekit-client";
+import "@livekit/components-styles";
+import "./call-ui.css";
 import axios from "axios";
-import { WS_URL, API_URL } from "../../config";
-import "../pages/CallComponent.css";
-import micro_on from "../assets/calls/micON.svg";
-import micro_off from "../assets/calls/micOFF.svg";
-import camera_on from "../assets/calls/camON.svg";
-import camera_off from "../assets/calls/camOFF.svg";
-import end_call from "../assets/calls/endCall.svg";
+import { API_URL } from "../../config";
 
-const ICE_SERVERS = [
-  { urls: "stun:stun.l.google.com:19302" },
-  { urls: "turn:my-prime-academy.online:3478", username: "Prime#1910", credential: "Prime#1910Academy" },
-];
+/* ---------- Іконки ---------- */
+const MicIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0" /><path d="M12 18v3" /></svg>
+);
+const MicOffIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 3 18 18" /><path d="M9 9v2a3 3 0 0 0 5 2.2" /><path d="M15 9.3V6a3 3 0 0 0-5.7-1.3" /><path d="M5 11a7 7 0 0 0 11 5.3" /><path d="M12 18v3" /></svg>
+);
+const CamIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="14" height="12" rx="2" /><path d="m16 10 6-3v10l-6-3" /></svg>
+);
+const CamOffIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 3 18 18" /><path d="M16 16H4a2 2 0 0 1-2-2V8" /><path d="M6 6h8a2 2 0 0 1 2 2v2l4-2v8" /></svg>
+);
+const LeaveIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6c0 8 7 15 15 15a2 2 0 0 0 2-2v-2.5a1 1 0 0 0-.8-1l-3.2-.7a1 1 0 0 0-1 .3l-1.2 1.3a12 12 0 0 1-5.5-5.5l1.3-1.2a1 1 0 0 0 .3-1l-.7-3.2a1 1 0 0 0-1-.8H5a2 2 0 0 0-2 2z" transform="rotate(135 12 12)" /></svg>
+);
+const MicOffMini = () => (
+  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 3 18 18" /><path d="M9 9v2a3 3 0 0 0 5 2.2" /><path d="M15 9.3V6a3 3 0 0 0-5.7-1.3" /><path d="M5 11a7 7 0 0 0 11 5.3" /><path d="M12 18v3" /></svg>
+);
 
-const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
-  const [callId, setCallId] = useState(null);
-  const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
+/* ---------- Хелпери ---------- */
+function gradientFor(identity, isLocal) {
+  if (isLocal) return "linear-gradient(135deg,#6C63FF,#D4307E)";
+  const palette = [
+    "linear-gradient(135deg,#6C63FF,#9D4EDD)",
+    "linear-gradient(135deg,#D4307E,#9D4EDD)",
+    "linear-gradient(135deg,#1f9d57,#6C63FF)",
+    "linear-gradient(135deg,#f0883e,#D4307E)",
+    "linear-gradient(135deg,#3aa0c2,#6C63FF)",
+  ];
+  let h = 0;
+  const s = String(identity || "");
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return palette[h % palette.length];
+}
+function initialsOf(name) {
+  if (!name) return "?";
+  const parts = name.replace(/[._-]+/g, " ").trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+function roleOf(metadata) {
+  try { return JSON.parse(metadata || "{}").role || null; } catch { return null; }
+}
 
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
-
-  const mediaStreamRef = useRef(null);
-  const remoteStreamRef = useRef(new MediaStream());
-
-  const socketRef = useRef(null);
-  const pcRef = useRef(null);
-
-  const makingOffer = useRef(false);
-  const polite = useRef(role !== "staff"); // студент — polite
-  const pendingIce = useRef([]);
-  const peerJoined = useRef(false);
-
-  const authHeaders = () => ({ Authorization: `Bearer ${localStorage.getItem("token")}` });
-  const wsToken = () => localStorage.getItem("token") || "";
-
-  const log = (...args) => console.log("[CALL]", ...args);
-  const warn = (...args) => console.warn("[CALL]", ...args);
-  const err = (...args) => console.error("[CALL]", ...args);
-
-  // 1) Локальні медіа ДО сигналінгу
-  useEffect(() => {
-    (async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        mediaStreamRef.current = stream;
-        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-        log("Local media:", stream.getTracks().map(t => `${t.kind}:${t.id}`));
-      } catch (e) {
-        err("getUserMedia failed:", e);
-      }
-    })();
-  }, []);
-
-  // 2) Створення/пошук Call + join
-  useEffect(() => {
-    (async () => {
-      try {
-        const headers = authHeaders();
-        const { data: calls } = await axios.get(`${API_URL}/calls/calls/?classroom_id=${classroomId}`, { headers });
-        let call = calls.find(c => c.status === "active");
-
-        if (!call) {
-          const { data: created } = await axios.post(`${API_URL}/calls/calls/`, { classroom_id: classroomId, status: "active" }, { headers });
-          call = created;
-          log("Created call:", call.id);
-        }
-        if (!call) {
-          warn("No active call in classroom");
-          return;
-        }
-
-        const { data: parts } = await axios.get(`${API_URL}/calls/calls/${call.id}/participants`, { headers });
-        const me = parts.find(p => p.user_id === currentUserId && !p.left_at);
-        if (!me) {
-          await axios.post(`${API_URL}/calls/calls/${call.id}/join`, {}, { headers });
-          log("Joined call:", call.id);
-        }
-
-        setCallId(call.id);
-      } catch (e) {
-        err("Call init error:", e);
-      }
-    })();
-  }, [classroomId, role, currentUserId]);
-
-  // 3) WS + RTCPeerConnection
-  useEffect(() => {
-    if (!callId) return;
-
-    // ТВОЄ: тримаю префікс як у тебе
-    const ws = new WebSocket(`${WS_URL}/calls-ws/ws/calls/${callId}?token=${wsToken()}`);
-    socketRef.current = ws;
-
-    const pc = new RTCPeerConnection({
-      iceServers: ICE_SERVERS,
-      bundlePolicy: "max-bundle",
-      rtcpMuxPolicy: "require",
-    });
-    pcRef.current = pc;
-    window.pcRef = pc;
-
-    // Стани для дебагу
-    pc.oniceconnectionstatechange = () => log("ICE state →", pc.iceConnectionState);
-    pc.onconnectionstatechange = () => log("PC state →", pc.connectionState);
-    pc.onsignalingstatechange = () => log("Signaling →", pc.signalingState);
-
-    // Remote stream → video
-    remoteStreamRef.current = new MediaStream();
-    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStreamRef.current;
-
-    // Додаємо локальні треки гарантовано ДО сигналінгу
-    const ensureTracks = async () => {
-      let tries = 0;
-      while (!mediaStreamRef.current && tries < 20) {
-        await new Promise(r => setTimeout(r, 150));
-        tries++;
-      }
-      if (!mediaStreamRef.current) {
-        err("No local media, cannot add tracks");
-        return false;
-      }
-      mediaStreamRef.current.getTracks().forEach(track => {
-        if (!pc.getSenders().find(s => s.track?.id === track.id)) {
-          pc.addTrack(track, mediaStreamRef.current);
-          log("Added local track:", track.kind, track.id);
-        }
-      });
-      return true;
-    };
-
-    pc.ontrack = (event) => {
-      const video = remoteVideoRef.current;
-      const incomingStream = event.streams?.[0];
-      if (!incomingStream || !video) return;
-
-      if (!remoteStreamRef.current.getTracks().some(t => t.id === event.track.id)) {
-        remoteStreamRef.current.addTrack(event.track);
-      }
-      if (!video.srcObject) video.srcObject = remoteStreamRef.current;
-
-      video.onloadedmetadata = () => {
-        video.play()
-          .then(() => log("▶️ Remote video playing"))
-          .catch(e => err("Video play error (metadata):", e));
-      };
-      setTimeout(() => video.play().catch(e => err("Video play retry:", e)), 400);
-
-      log("ontrack:", event.track.kind, event.track.id);
-    };
-
-    pc.onicecandidate = e => {
-      if (e.candidate) {
-        log("➡️ local ICE:", e.candidate.candidate?.split(" ").slice(0,6).join(" "));
-        ws.send(JSON.stringify({ action: "ice_candidate", candidate: e.candidate, user: currentUserId }));
-      } else {
-        log("ICE gathering complete");
-      }
-    };
-
-    pc.onnegotiationneeded = async () => {
-      if (!peerJoined.current) return;
-      try {
-        makingOffer.current = true;
-        if (!(await ensureTracks())) return;
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
-        log("↗️ sent offer (onnegotiationneeded)");
-      } catch (e) {
-        err("negotiationneeded error:", e);
-      } finally {
-        makingOffer.current = false;
-      }
-    };
-
-    ws.onopen = () => log("WS open");
-    ws.onerror = (e) => err("WS error", e);
-    ws.onclose = (ev) => warn(`WS close (code=${ev.code}${ev.reason ? `, reason=${ev.reason}` : ""})`);
-
-    ws.onmessage = async ({ data }) => {
-      const msg = safeJSON(data);
-      if (!msg) return;
-      log("WS msg:", msg);
-
-      try {
-        if (msg.action === "peers") {
-          const peers = Array.isArray(msg.peers) ? msg.peers : [];
-          if (peers.length > 0) {
-            peerJoined.current = true;
-            if (await ensureTracks()) {
-              const offer = await pc.createOffer();
-              await pc.setLocalDescription(offer);
-              ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
-              log("↗️ sent offer (peers)");
-            }
-          }
-        }
-
-        if (msg.action === "you_joined") {
-          log("you_joined");
-        }
-
-        if (msg.action === "join" && msg.user !== currentUserId) {
-          peerJoined.current = true;
-          if (pc.signalingState === "stable" && await ensureTracks()) {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            ws.send(JSON.stringify({ action: "offer", offer, user: currentUserId }));
-            log("↗️ sent offer (join)");
-          }
-        }
-
-        if (msg.action === "offer" && msg.user !== currentUserId && msg.offer) {
-          peerJoined.current = true;
-          const ready = !makingOffer.current && (pc.signalingState === "stable" || pc.signalingState === "have-remote-offer");
-          const collision = msg.offer && !ready;
-
-          if (collision && !polite.current) {
-            warn("glare: ignore foreign offer (impolite)");
-            return;
-          }
-          if (collision && polite.current) {
-            warn("glare: rollback (polite)");
-            await pc.setLocalDescription({ type: "rollback" });
-          }
-
-          if (await ensureTracks()) {
-            await pc.setRemoteDescription(new RTCSessionDescription(msg.offer));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            ws.send(JSON.stringify({ action: "answer", answer, user: currentUserId }));
-            log("↘️ sent answer");
-
-            for (const c of pendingIce.current) {
-              await pc.addIceCandidate(c).catch(err);
-            }
-            pendingIce.current = [];
-          }
-        }
-
-        if (msg.action === "answer" && msg.user !== currentUserId && msg.answer) {
-          if (!pc.localDescription || pc.localDescription.type !== "offer") {
-            warn("Ignoring answer (no local offer)");
-            return;
-          }
-          await pc.setRemoteDescription(new RTCSessionDescription(msg.answer));
-          log("✔ remote answer set");
-          for (const c of pendingIce.current) {
-            await pc.addIceCandidate(c).catch(err);
-          }
-          pendingIce.current = [];
-        }
-
-        if (msg.action === "ice_candidate" && msg.user !== currentUserId && msg.candidate) {
-          const cand = new RTCIceCandidate(msg.candidate);
-          if (pc.remoteDescription?.type) {
-            await pc.addIceCandidate(cand).catch(err);
-          } else {
-            pendingIce.current.push(cand);
-          }
-          log("⬅️ remote ICE:", msg.candidate.candidate?.split(" ").slice(0,6).join(" "));
-        }
-
-        if (msg.action === "call_ended") {
-          warn("Call ended by host");
-          await leaveCall();
-        }
-      } catch (e) {
-        err("RTC message error:", e);
-      }
-    };
-
-    // Перш ніж щось відправляти — гарантуємо треки
-    (async () => { await ensureTracks(); })();
-
-    return () => {
-      try { ws.close(); } catch {}
-      try { pc.close(); } catch {}
-    };
-  }, [callId]);
-
-  useEffect(() => {
-    window.localVideoRef = localVideoRef;
-    window.remoteVideoRef = remoteVideoRef;
-  }, []);
-
-  const toggleMic = () => {
-    const track = mediaStreamRef.current?.getAudioTracks()?.[0];
-    if (!track) return;
-    track.enabled = !track.enabled;
-    setMicOn(track.enabled);
-    socketRef.current?.send(JSON.stringify({ action: "toggle_mic", status: track.enabled }));
-  };
-
-  const toggleCam = () => {
-    const track = mediaStreamRef.current?.getVideoTracks()?.[0];
-    if (!track) return;
-    track.enabled = !track.enabled;
-    setCamOn(track.enabled);
-    socketRef.current?.send(JSON.stringify({ action: "toggle_camera", status: track.enabled }));
-  };
-
-  const leaveCall = async () => {
-    try { socketRef.current?.send(JSON.stringify({ action: "end_call" })); } catch {}
-    try { socketRef.current?.close(); } catch {}
-    mediaStreamRef.current?.getTracks()?.forEach(t => t.stop());
-    try {
-      if (callId) await axios.delete(`${API_URL}/calls/calls/${callId}/leave`, { headers: authHeaders() });
-    } catch {}
-    if (onLeave) onLeave?.();
-  };
-
-  if (!callId) return <p>🔌 Waiting for call...</p>;
+/* ---------- Плитка учасника ---------- */
+function Tile({ trackRef }) {
+  const p = trackRef.participant;
+  const camOn = !!(trackRef.publication && !trackRef.publication.isMuted && trackRef.source === Track.Source.Camera);
+  const micOn = p.isMicrophoneEnabled;
+  const speaking = p.isSpeaking;
+  const role = roleOf(p.metadata);
+  const rawName = p.name || p.identity;
+  const label = p.isLocal ? "You" : rawName;
+  const q = p.connectionQuality;
+  const qColor = q === "poor" ? "#f0a020" : q === "lost" ? "#e05050" : "#36c98d";
 
   return (
-    <div className="call-container">
-      <h2>📞 Call in progress</h2>
-      <div className="video-wrapper">
-        <video ref={remoteVideoRef} autoPlay playsInline className="video remote" />
-        <video ref={localVideoRef} autoPlay muted playsInline className="video local" />
-      </div>
-      <div className="button-group-actions">
-        <button onClick={toggleMic}>
-          {micOn ? <img src={micro_on} alt="mic on" /> : <img src={micro_off} alt="mic off" />}
-        </button>
-        <button onClick={toggleCam}>
-          {camOn ? <img src={camera_on} alt="cam on" /> : <img src={camera_off} alt="cam off" />}
-        </button>
-        <button onClick={leaveCall}><img src={end_call} alt="end" /></button>
+    <div className={`lkc-tile ${speaking ? "is-speaking" : ""}`}>
+      {camOn ? (
+        <VideoTrack trackRef={trackRef} className="lkc-video" />
+      ) : (
+        <div className="lkc-avatar" style={{ background: gradientFor(p.identity, p.isLocal) }}>
+          {initialsOf(rawName)}
+        </div>
+      )}
+      <span className="lkc-quality" style={{ background: qColor }} title={`Connection: ${q || "unknown"}`} />
+      <div className="lkc-namebar">
+        <span className="lkc-name">
+          {label}{role === "teacher" && !p.isLocal ? " · teacher" : ""}
+        </span>
+        {!micOn && <span className="lkc-micoff"><MicOffMini /></span>}
       </div>
     </div>
+  );
+}
+
+/* ---------- Контроли ---------- */
+function CallControls({ onLeave }) {
+  const lp = useLocalParticipant();
+  const localParticipant = lp.localParticipant;
+  const micOn = lp.isMicrophoneEnabled ?? localParticipant?.isMicrophoneEnabled ?? false;
+  const camOn = lp.isCameraEnabled ?? localParticipant?.isCameraEnabled ?? false;
+
+  return (
+    <div className="lkc-controls">
+      <button className={`lkc-btn ${micOn ? "" : "is-off"}`} onClick={() => localParticipant?.setMicrophoneEnabled(!micOn)} title={micOn ? "Вимкнути мікрофон" : "Увімкнути мікрофон"} aria-label="Мікрофон">
+        {micOn ? <MicIcon /> : <MicOffIcon />}
+      </button>
+      <button className={`lkc-btn ${camOn ? "" : "is-off"}`} onClick={() => localParticipant?.setCameraEnabled(!camOn)} title={camOn ? "Вимкнути камеру" : "Увімкнути камеру"} aria-label="Камера">
+        {camOn ? <CamIcon /> : <CamOffIcon />}
+      </button>
+      <button className="lkc-btn lkc-leave" onClick={onLeave} title="Вийти з дзвінка" aria-label="Вийти">
+        <LeaveIcon />
+      </button>
+    </div>
+  );
+}
+
+/* ---------- Сцена ---------- */
+function CallStage({ onLeave }) {
+  const tracks = useTracks(
+    [
+      { source: Track.Source.Camera, withPlaceholder: true },
+      { source: Track.Source.Microphone, withPlaceholder: false },
+    ],
+    { onlySubscribed: false }
+  );
+  const tiles = tracks.filter((t) => t.source === Track.Source.Camera);
+  const count = tiles.length;
+
+  return (
+    <div className="lkc">
+      <div className="lkc-statusbar">
+        <span className="lkc-live"><span className="lkc-livedot" /> Call in progress</span>
+        <span className="lkc-count">{count} {count === 1 ? "person" : "people"}</span>
+      </div>
+      <div className="lkc-stage">
+        {count === 0 && <div className="lkc-waiting">Очікуємо учасників…</div>}
+        {tiles.map((tr) => (
+          <Tile key={`${tr.participant.identity}_${tr.source}`} trackRef={tr} />
+        ))}
+      </div>
+      <CallControls onLeave={onLeave} />
+      <RoomAudioRenderer />
+    </div>
+  );
+}
+
+const CallComponent = ({ classroomId, currentUserId, role, onLeave }) => {
+  const [token, setToken] = useState(null);
+  const [url, setUrl] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const getToken = async () => {
+      try {
+        const t = localStorage.getItem("token");
+        const { data } = await axios.get(`${API_URL}/livekit/token`, {
+          params: { classroom_id: classroomId },
+          headers: { Authorization: `Bearer ${t}` },
+        });
+        setToken(data.token);
+        setUrl(data.url);
+      } catch (e) {
+        setError(
+          e?.response?.status === 503
+            ? "Дзвінки ще не налаштовані (LiveKit)."
+            : "Не вдалося приєднатися до дзвінка."
+        );
+      }
+    };
+    getToken();
+  }, [classroomId]);
+
+  if (error) return <div className="call-state">{error}</div>;
+  if (!token || !url) return <div className="call-state">Підключення…</div>;
+
+  return (
+    <LiveKitRoom token={token} serverUrl={url} connect={true} video={true} audio={true} onDisconnected={onLeave} style={{ height: "100%", width: "100%" }}>
+      <CallStage onLeave={onLeave} />
+    </LiveKitRoom>
   );
 };
 
 export default CallComponent;
-
-// helpers
-function safeJSON(x) { try { return JSON.parse(x); } catch { return null; } }
-

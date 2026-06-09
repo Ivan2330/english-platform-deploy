@@ -53,3 +53,14 @@ class AttemptResponse(BaseModel):
 
 class AttemptFullResponse(AttemptResponse):
     answers: List[AnswerResponse] = []
+
+
+class MyAttemptItem(BaseModel):
+    """Елемент списку «Мої результати» (для учня)."""
+    id: int
+    lesson_id: int
+    lesson_title: str | None = None
+    status: str
+    overall_grade: float | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None

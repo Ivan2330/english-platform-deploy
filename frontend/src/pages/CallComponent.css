@@ -139,3 +139,5 @@ video {
         width: 94%;
     }
 }
+
+.call-state { display: flex; align-items: center; justify-content: center; height: 100%; color: #8a8aa0; font-size: 13px; text-align: center; padding: 20px; }

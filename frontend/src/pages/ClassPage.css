@@ -1,406 +1,392 @@
 /* ========== RESET & BASE ========== */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-ul {
-  list-style: none;
-}
-
-a {
-  text-decoration: none;
-}
-
-button {
-  border: none;
-  cursor: pointer;
-  background: none;
-  font-family: 'Poppins';
-}
-
-body {
-  height: 100vh;
-  font-family: 'Poppins';
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+ul { list-style: none; }
+a { text-decoration: none; }
+button { border: none; cursor: pointer; background: none; font-family: 'Poppins'; }
+body { height: 100vh; font-family: 'Poppins'; }
 
 .class-page {
   width: 100%;
+  height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  background: #f4f2fb;
+  font-family: 'Poppins';
+  color: #2a2440;
 }
 
-/* ========== HEADER ========== */
+/* ========== HEADER (Variant A) ========== */
 .header {
   width: 100%;
-  height: clamp(80px, 9.26vh, 120px);
+  height: 64px;
+  flex: 0 0 auto;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0 26px 0 16px;
-  background: linear-gradient(to right, #7085F6 0%, #FFA4FD 100%);
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 20px;
+  background: #fff;
+  border-bottom: 1px solid #ece9f8;
 }
 
-.header button:first-of-type {
-  height: 60%;
-  width: clamp(150px, 12.25vw, 320px);
-  background: #E3E7FF;
-  font-size: clamp(15px, 1.4vw, 30px);
-  border-radius: 50px;
+.header .choose-lesson {
+  background: #fff;
+  color: #4A2C8F;
+  border: 1.5px solid #d8cef2;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  transition: 0.18s ease;
+  flex: 0 0 auto;
 }
+.header .choose-lesson:hover { border-color: #6C63FF; background: #f7f5ff; }
 
-.header button:last-of-type {
+.header-center {
+  flex: 1 1 auto;
   display: flex;
-  height: 70%;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
 }
+.hc-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: #2a2440;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 38vw;
+}
+.hc-level {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #6C63FF, #9D4EDD);
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+.hc-progress { flex: 0 0 auto; font-size: 12px; color: #8a8aa0; }
 
-.header button:last-of-type img {
-  height: 100%;
-  aspect-ratio: 1;
+.header-actions { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+
+.header .goafter-btn {
+  background: linear-gradient(135deg, #6C63FF 0%, #9D4EDD 100%);
+  color: #fff; border: none; border-radius: 12px;
+  padding: 8px 16px; font-weight: 600; font-size: 14px;
+  box-shadow: 0 4px 14px rgba(108, 99, 255, 0.28);
+  transition: transform 0.12s ease, box-shadow 0.2s ease;
 }
+.header .goafter-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(108, 99, 255, 0.38); }
+
+.header .finish-btn {
+  background: #1f9d57; color: #fff; border: none; border-radius: 12px;
+  padding: 8px 16px; font-weight: 600; font-size: 14px; transition: filter 0.15s ease;
+}
+.header .finish-btn:hover { filter: brightness(1.06); }
+.header .finish-btn:disabled { background: #cfeede; color: #1f9d57; cursor: default; }
+
+.header .leave-btn { display: flex; height: 38px; flex: 0 0 auto; }
+.header .leave-btn img { height: 100%; aspect-ratio: 1; }
 
 /* ========== LAYOUT ========== */
 .main-content {
   width: 100%;
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
+  grid-template-columns: 220px 1fr 320px;
+  gap: 16px;
+  padding: 16px;
   overflow: hidden;
-  grid-template-columns: 18% 54% 28%;
-  gap: 0;
 }
 
 /* LEFT panel */
 .left-panel {
-  margin-top: 12px;
-  padding-left: 22px;
-  position: relative;
-  overflow: hidden;
-}
-
-.left-panel::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 1px;
-  height: 100%;
-  background: rgba(112, 133, 246, .45);
-  box-shadow: 0 0 0 1px rgba(112, 133, 246, .12);
-  opacity: .65;
-}
-
-.chat-toggle {
-  width: clamp(75px, 3.9vw, 105px);
-  min-width: 75px;
-  aspect-ratio: 1;
-}
-
-.chat-toggle img {
-  width: 100%;
-  height: 100%;
-}
-
-.section-list {
+  background: #fff;
+  border: 1px solid #ece9f8;
+  border-radius: 18px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 14px;
+  overflow-y: auto;
 }
+.chat-toggle {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  background: #f1eefb;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: 0.15s ease;
+  align-self: flex-start;
+}
+.chat-toggle:hover { background: #e7e1fb; }
+.chat-toggle img { width: 22px; height: 22px; }
 
+.section-list { display: flex; flex-direction: column; gap: 8px; }
 .section-button {
-  background: #7085F6;
-  color: #fff;
-  font-size: clamp(12px, 1.5vw, 18px);
+  background: #f7f5ff;
+  color: #4a4660;
+  font-size: 14px;
+  font-weight: 500;
   padding: 10px 14px;
-  border-radius: 10px;
-  min-width: 120px;
-  max-width: 92%;
-  transition: .25s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, .08);
+  border-radius: 12px;
   text-align: left;
+  border: 1.5px solid transparent;
+  transition: 0.18s ease;
 }
-
-.section-button:hover {
-  background: #5b6adf;
-  transform: translateY(-1px);
-}
-
+.section-button:hover { background: #efeafe; }
 .section-button.active {
-  background: #E3E7FF;
-  color: #7085F6;
-  font-weight: 700;
-  border: 2px solid #7085F6;
+  background: linear-gradient(135deg, #6C63FF, #9D4EDD);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(108, 99, 255, 0.28);
 }
 
 /* CENTER panel */
 .center-panel {
-  margin-top: 16px;
   background: #fff;
-  border: none;
-  box-shadow: none;
-  padding: 28px 20px;
-  border-radius: 28px;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  border: 1px solid #ece9f8;
+  border-radius: 18px;
   overflow-y: auto;
-  min-height: 420px;
+  min-height: 0;
+}
+
+.lesson-placeholder {
+  color: #6C63FF;
+  border: 1px dashed #d9d2f2;
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  width: 100%;
+  max-width: 520px;
 }
 
 /* RIGHT panel (desktop) */
 .right-panel {
-  position: relative;
+  background: #fff;
+  border: 1px solid #ece9f8;
+  border-radius: 18px;
   overflow: hidden;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 16px;
+  flex-direction: column;
 }
 
-.right-panel::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 100%;
-  background: rgba(112, 133, 246, .45);
-  box-shadow: 0 0 0 1px rgba(112, 133, 246, .12);
-  opacity: .65;
-}
-
-/* Placeholder in right panel */
+/* Placeholder "Ready to start?" */
 .placeholder-box {
-  width: 100%;
-  min-height: 60vh;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 22px;
-  padding: 20px;
-  transform: translateY(-6%);
-}
-
-.placeholder-box img {
-  width: clamp(180px, 50%, 320px);
-  margin: 0 auto;
-}
-
-.placeholder-box button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 83%;
-  height: clamp(70px, 8.79vh, 100px);
-  font-size: clamp(20px, 4.444vh, 48px);
-  border: 10px solid #7085F6;
-  border-radius: 25px;
-  padding: 10px;
-  transition: .2s;
-  background: #fff;
-  color: #1b1b1b;
-}
-
-.placeholder-box button:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 12px rgba(112, 133, 246, .35);
-}
-
-/* Center placeholder */
-.lesson-placeholder {
-  color: #7085F6;
-  border: 1px dashed rgba(112, 133, 246, .5);
-  border-radius: 16px;
-  padding: 20px 16px;
+  gap: 16px;
+  padding: 24px;
   text-align: center;
+}
+.placeholder-box img { width: clamp(120px, 55%, 200px); }
+.placeholder-box .pb-title { font-weight: 700; font-size: 17px; color: #2a2440; }
+.placeholder-box .pb-sub { font-size: 13px; color: #8a8aa0; margin-top: -8px; }
+.placeholder-box button {
   width: 100%;
+  max-width: 220px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #6C63FF 0%, #9D4EDD 55%, #D4307E 100%);
+  border: none;
+  border-radius: 14px;
+  transition: transform 0.18s ease, filter 0.18s ease;
+  box-shadow: 0 8px 20px rgba(108, 99, 255, 0.3);
+}
+.placeholder-box button:hover { transform: translateY(-1px); filter: brightness(1.05); }
+
+/* Call loading / error state (used by CallComponent) */
+.call-state {
+  display: flex; align-items: center; justify-content: center;
+  height: 100%; color: #8a8aa0; font-size: 13px; text-align: center; padding: 20px;
 }
 
-/* ========== MOBILE BEHAVIOR ========== */
+/* ========== RESPONSIVE GRID ========== */
 @media (max-width: 1100px) {
-  .main-content {
-    grid-template-columns: 1fr;
-  }
+  .main-content { grid-template-columns: 1fr; }
 }
 
-/* На мобільному ліву панель ховаємо, центр робимо з відступом під док;
-   праву НЕ ховаємо, а перетворюємо на шторку (нижній drawer) — Це той самий інстанс CallComponent */
 @media (max-width: 900px) {
-  .left-panel {
-    display: none;
-  }
-
-  .center-panel {
-    padding-bottom: 88px;
-  }
+  .left-panel { display: none; }
+  .center-panel { margin-bottom: 0; }
+  .main-content { padding-bottom: 88px; }
 
   .right-panel {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 64px;
+    left: 0; right: 0; bottom: 64px;
     transform: translateY(110%);
-    transition: transform .28s ease;
+    transition: transform 0.28s ease;
     background: #fff;
     border-radius: 16px 16px 0 0;
-    box-shadow: 0 -10px 24px rgba(0, 0, 0, .14);
+    border: none;
+    box-shadow: 0 -10px 24px rgba(28, 27, 46, 0.16);
     max-height: 80vh;
     z-index: 999;
-    /* під backdropом 998, над центром */
-    padding-top: 10px;
-    display: block;
-    /* не grid/flex, усередині свої елементи */
+    display: flex;
   }
-
-  .right-panel.is-open {
-    transform: translateY(0%);
-  }
+  .right-panel.is-open { transform: translateY(0%); }
 }
 
-/* ========== MOBILE DOCK (нижня панель) ========== */
+/* ========== MOBILE DOCK ========== */
 .mdock-bar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 0; right: 0; bottom: 0;
   height: 64px;
   padding: 6px 10px;
   display: none;
   gap: 8px;
-  background: rgba(255, 255, 255, .92);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(8px);
-  border-top: 1px solid rgba(0, 0, 0, .08);
+  border-top: 1px solid #ece9f8;
   z-index: 1000;
 }
-
-@media (max-width: 900px) {
-  .mdock-bar {
-    display: flex;
-  }
-}
+@media (max-width: 900px) { .mdock-bar { display: flex; } }
 
 .mdock-btn {
   flex: 1 1 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
   height: 100%;
-  border: 2px solid #7085F6;
+  border: 1.5px solid #d8cef2;
   border-radius: 12px;
   background: #fff;
-  font-weight: 700;
+  font-weight: 600;
   font-size: 14px;
+  color: #4A2C8F;
 }
+.mdock-btn.is-active { background: #efeafe; border-color: #6C63FF; }
 
-.mdock-btn.is-active {
-  background: #EAF0FF;
-}
-
-/* Backdrop під шторки */
 .mdock-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, .2);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .2s ease;
+  position: fixed; inset: 0;
+  background: rgba(28, 27, 46, 0.2);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s ease;
   z-index: 998;
 }
+.mdock-backdrop.is-open { opacity: 1; pointer-events: auto; }
 
-.mdock-backdrop.is-open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* Drawer (використовуємо лише для вкладки Sections) */
 .mdock-drawer {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 64px;
+  position: fixed; left: 0; right: 0; bottom: 64px;
   background: #fff;
   border-radius: 16px 16px 0 0;
-  box-shadow: 0 -10px 24px rgba(0, 0, 0, .14);
+  box-shadow: 0 -10px 24px rgba(28, 27, 46, 0.16);
   transform: translateY(110%);
-  transition: transform .28s ease;
+  transition: transform 0.28s ease;
   z-index: 999;
   display: grid;
   grid-template-rows: auto 1fr;
   max-height: 80vh;
   overflow: hidden;
 }
-
-.mdock-drawer.is-open {
-  transform: translateY(0%);
-}
-
+.mdock-drawer.is-open { transform: translateY(0%); }
 .mdock-drawer-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 14px;
-  border-bottom: 1px solid rgba(0, 0, 0, .06);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #ece9f8;
 }
-
-.mdock-drawer-head h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.mdock-close {
-  border: none;
-  background: transparent;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.mdock-drawer-body {
-  overflow: auto;
-  padding: 10px 10px 12px;
-}
-
-/* Список секцій у шторці */
-.mdock-sections-list {
-  list-style: none;
-  padding: 6px;
-  margin: 0;
-  display: grid;
-  gap: 10px;
-}
-
+.mdock-drawer-head h3 { margin: 0; font-size: 16px; color: #4A2C8F; }
+.mdock-close { border: none; background: transparent; font-size: 20px; cursor: pointer; color: #8a8aa0; }
+.mdock-drawer-body { overflow: auto; padding: 12px; }
+.mdock-sections-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .mdock-section-btn {
-  width: 100%;
-  text-align: left;
+  width: 100%; text-align: left;
   padding: 12px 14px;
   border-radius: 12px;
-  border: 2px solid #7085F6;
-  background: #fff;
-  font-weight: 600;
+  border: 1.5px solid transparent;
+  background: #f7f5ff;
+  font-weight: 500;
+  color: #4a4660;
 }
-
 .mdock-section-btn.is-active {
-  background: #EAF0FF;
+  background: linear-gradient(135deg, #6C63FF, #9D4EDD);
+  color: #fff; font-weight: 600;
 }
 
-/* Приховати док на десктопі */
 @media (min-width: 901px) {
-
-  .mdock-backdrop,
-  .mdock-drawer,
-  .mdock-bar {
-    display: none !important;
-  }
+  .mdock-backdrop, .mdock-drawer, .mdock-bar { display: none !important; }
 }
 
-/* ========== TIGHT INTEGRATION WITH CALL/CHAT ========== */
-/* Коли відкрито вкладку call — права панель (CallComponent) стає шторкою */
-.class-page.mdock-open.mdock-tab-call .right-panel {
-  /* клас is-open вже додано інлайн у JSX */
+/* ========== INCOMING CALL ========== */
+.incoming-call { position: fixed; right: 24px; bottom: 24px; z-index: 1200; animation: ic-slide-in 0.25s ease; }
+@keyframes ic-slide-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+.incoming-call-card {
+  display: flex; align-items: center; gap: 14px;
+  background: #fff; border: 1px solid #ece9f8; border-radius: 18px;
+  padding: 16px 18px; box-shadow: 0 18px 50px rgba(74, 44, 143, 0.22);
+  min-width: 300px; max-width: 360px;
+}
+.ic-pulse {
+  flex: 0 0 auto; width: 46px; height: 46px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; border-radius: 50%;
+  background: linear-gradient(135deg, #6C63FF 0%, #D4307E 100%);
+  color: #fff; animation: ic-pulse 1.4s infinite;
+}
+@keyframes ic-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.45); }
+  70% { box-shadow: 0 0 0 14px rgba(108, 99, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(108, 99, 255, 0); }
+}
+.ic-text { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; }
+.ic-text strong { color: #2a2440; font-size: 14px; }
+.ic-text span { color: #8a8aa0; font-size: 12px; }
+.ic-actions { display: flex; flex-direction: column; gap: 8px; flex: 0 0 auto; }
+.ic-join, .ic-dismiss { border: none; border-radius: 10px; padding: 8px 14px; font-weight: 600; font-size: 13px; cursor: pointer; transition: filter 0.15s ease; }
+.ic-join { background: #6C63FF; color: #fff; }
+.ic-join:hover { filter: brightness(1.07); }
+.ic-dismiss { background: #f1eefb; color: #6c6c84; }
+.ic-dismiss:hover { filter: brightness(0.97); }
+
+/* ========== PHONE POLISH ========== */
+@media (max-width: 560px) {
+  .header { padding: 0 12px; gap: 6px; }
+  .header .choose-lesson { font-size: 12px; padding: 7px 12px; }
+  .header-center { gap: 6px; }
+  .hc-title { max-width: 30vw; font-size: 13px; }
+  .header .goafter-btn, .header .finish-btn { font-size: 12px; padding: 6px 10px; }
+}
+@media (max-width: 640px) {
+  .incoming-call { left: 12px; right: 12px; bottom: 76px; }
+  .incoming-call-card { min-width: 0; max-width: none; width: 100%; }
 }
 
-/* Коли вкладка chat — переміщаємо чат-оверлей під шторку (див. ChatComponent.css для точних стилів). */
+/* ========== ГАРНА СКРОЛИЛКА ========== */
+.center-panel, .left-panel, .right-panel, .mdock-drawer-body {
+  scrollbar-width: thin;
+  scrollbar-color: #cdc4f2 transparent;
+}
+.center-panel::-webkit-scrollbar,
+.left-panel::-webkit-scrollbar,
+.right-panel::-webkit-scrollbar,
+.mdock-drawer-body::-webkit-scrollbar { width: 10px; height: 10px; }
+.center-panel::-webkit-scrollbar-track,
+.left-panel::-webkit-scrollbar-track,
+.right-panel::-webkit-scrollbar-track,
+.mdock-drawer-body::-webkit-scrollbar-track { background: transparent; }
+.center-panel::-webkit-scrollbar-thumb,
+.left-panel::-webkit-scrollbar-thumb,
+.right-panel::-webkit-scrollbar-thumb,
+.mdock-drawer-body::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6C63FF, #9D4EDD);
+  border: 3px solid #fff;
+  background-clip: padding-box;
+  border-radius: 999px;
+  min-height: 40px;
+}
+.center-panel::-webkit-scrollbar-thumb:hover,
+.left-panel::-webkit-scrollbar-thumb:hover,
+.right-panel::-webkit-scrollbar-thumb:hover,
+.mdock-drawer-body::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #5b53f0, #8a3fd0);
+  border-width: 2px;
+}
+.center-panel::-webkit-scrollbar-corner,
+.left-panel::-webkit-scrollbar-corner { background: transparent; }

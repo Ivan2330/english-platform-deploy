@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 
 const CALLOUT_LABEL = { tip: "Tip", note: "Note", warning: "Watch out", example: "Example" };
 const keyOf = (blockId, qId) => `${blockId}:${qId ?? "null"}`;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 /* ---------- Теорія ---------- */
 function TheoryBlock({ block }) {
@@ -27,7 +36,7 @@ function useSaver(runner, blockId, qId, initial) {
         await runner.save(blockId, qId, next);
         setSaved(true);
       } catch {
-        /* мовчки: користувач може повторити */
+        /* мовчки */
       }
     }
   };
@@ -85,7 +94,7 @@ function GapQuestion({ question, label, blockId, runner }) {
         <input
           className="gap-input"
           value={val ?? ""}
-          onChange={(e) => setVal(e.target.value)}
+          onChange={(e) => { setVal(e.target.value); runner?.live?.(blockId, question.id, e.target.value); }}
           onBlur={(e) => commit(e.target.value)}
           placeholder="Type your answer…"
         />
@@ -103,7 +112,7 @@ function ShortInput({ question, label, blockId, runner }) {
       <input
         className="gap-input"
         value={val ?? ""}
-        onChange={(e) => setVal(e.target.value)}
+        onChange={(e) => { setVal(e.target.value); runner?.live?.(blockId, question.id, e.target.value); }}
         onBlur={(e) => commit(e.target.value)}
         placeholder="Your answer…"
       />
@@ -144,7 +153,7 @@ function WritingTask({ block, runner }) {
       <textarea
         className="writing-area"
         value={val ?? ""}
-        onChange={(e) => setVal(e.target.value)}
+        onChange={(e) => { setVal(e.target.value); runner?.live?.(block.id, null, e.target.value); }}
         onBlur={(e) => commit(e.target.value)}
         placeholder="Start typing…"
       />
@@ -175,6 +184,99 @@ function MediaTask({ block, tag, runner }) {
   );
 }
 
+/* ---------- Matching ---------- */
+function MatchingTask({ block, runner }) {
+  const pairs = (block.config && block.config.pairs) || [];
+  const lefts = pairs.map((p) => p.left);
+  const rights = useMemo(() => shuffle(pairs.map((p) => p.right)), [block.id]);
+
+  const initRaw = runner?.initial?.get(keyOf(block.id, null));
+  const initMap = useMemo(() => {
+    try { return initRaw ? JSON.parse(initRaw) : {}; } catch { return {}; }
+  }, [initRaw]);
+
+  const [sel, setSel] = useState(initMap);
+  const [saved, setSaved] = useState(false);
+
+  const pick = async (left, val) => {
+    const next = { ...sel, [left]: val };
+    setSel(next);
+    setSaved(false);
+    if (runner) {
+      try { await runner.save(block.id, null, JSON.stringify(next)); setSaved(true); } catch {}
+    }
+  };
+
+  return (
+    <div className="blk task">
+      <span className="blk-tag">Matching</span>
+      {block.title && <div className="blk-title">{block.title}<SavedTick saved={saved} /></div>}
+      <div className="match-list">
+        {lefts.map((l, i) => (
+          <div key={i} className="match-row">
+            <span className="match-left">{l}</span>
+            <select className="match-sel" value={sel[l] || ""} onChange={(e) => pick(l, e.target.value)}>
+              <option value="">—</option>
+              {rights.map((r, j) => <option key={j} value={r}>{r}</option>)}
+            </select>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Ordering ---------- */
+function OrderingTask({ block, runner }) {
+  const correct = (block.config && block.config.items) || [];
+  const initRaw = runner?.initial?.get(keyOf(block.id, null));
+  const initOrder = useMemo(() => {
+    try {
+      const p = initRaw ? JSON.parse(initRaw) : null;
+      return Array.isArray(p) && p.length ? p : shuffle(correct);
+    } catch {
+      return shuffle(correct);
+    }
+  }, [initRaw, block.id]);
+
+  const [order, setOrder] = useState(initOrder);
+  const [saved, setSaved] = useState(false);
+
+  const commit = async (next) => {
+    setOrder(next);
+    setSaved(false);
+    if (runner) {
+      try { await runner.save(block.id, null, JSON.stringify(next)); setSaved(true); } catch {}
+    }
+  };
+  const move = (i, dir) => {
+    const j = i + dir;
+    if (j < 0 || j >= order.length) return;
+    const next = [...order];
+    [next[i], next[j]] = [next[j], next[i]];
+    commit(next);
+  };
+
+  return (
+    <div className="blk task">
+      <span className="blk-tag">Ordering</span>
+      {block.title && <div className="blk-title">{block.title}<SavedTick saved={saved} /></div>}
+      <div className="order-list">
+        {order.map((it, i) => (
+          <div key={i} className="order-row">
+            <span className="order-num">{i + 1}</span>
+            <span className="order-text">{it}</span>
+            <span className="order-btns">
+              <button onClick={() => move(i, -1)} disabled={i === 0}>▲</button>
+              <button onClick={() => move(i, 1)} disabled={i === order.length - 1}>▼</button>
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ---------- Заглушка ---------- */
 function GenericTask({ block }) {
   return (
@@ -187,9 +289,51 @@ function GenericTask({ block }) {
   );
 }
 
+/* ---------- Панель "Наживо" (для викладача) ---------- */
+const NULL_KEY_TYPES = new Set(["writing", "open_text", "matching", "ordering"]);
+
+function fmtLive(v) {
+  if (v == null || v === "") return "—";
+  try {
+    const parsed = JSON.parse(v);
+    if (Array.isArray(parsed)) return parsed.join(" → ");
+    if (parsed && typeof parsed === "object")
+      return Object.entries(parsed).map(([k, val]) => `${k} → ${val || "—"}`).join(", ");
+  } catch {
+    /* звичайний рядок */
+  }
+  return String(v);
+}
+
+function BlockLivePanel({ block, live }) {
+  const qs = block.questions || [];
+  let rows;
+  if (NULL_KEY_TYPES.has(block.task_type)) {
+    rows = [{ label: "Відповідь", value: live.get(keyOf(block.id, null)) }];
+  } else if (qs.length) {
+    rows = qs.map((q, i) => ({
+      label: qs.length > 1 ? `Q${i + 1}` : "Відповідь",
+      value: live.get(keyOf(block.id, q.id)),
+    }));
+  } else {
+    rows = [{ label: "Відповідь", value: live.get(keyOf(block.id, null)) }];
+  }
+
+  return (
+    <div className="live-panel">
+      <div className="live-panel-title">👁 Учень — наживо</div>
+      {rows.map((r, i) => (
+        <div key={i} className="live-row">
+          <span className="live-q">{r.label}</span>
+          <span className={`live-v ${r.value ? "" : "empty"}`}>{fmtLive(r.value)}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ---------- Диспетчер ---------- */
-export default function BlockRenderer({ block, runner }) {
-  if (block.block_type === "theory") return <TheoryBlock block={block} />;
+function renderBlockBody(block, runner) {
   switch (block.task_type) {
     case "multiple_choice": return <TaskBlock block={block} tag="Multiple choice" QuestionComp={MCQuestion} runner={runner} />;
     case "true_false": return <TaskBlock block={block} tag="True / False" QuestionComp={TFQuestion} runner={runner} />;
@@ -199,6 +343,20 @@ export default function BlockRenderer({ block, runner }) {
     case "writing": return <WritingTask block={block} runner={runner} />;
     case "listening": return <MediaTask block={block} tag="Listening" runner={runner} />;
     case "video": return <MediaTask block={block} tag="Video" runner={runner} />;
+    case "matching": return <MatchingTask block={block} runner={runner} />;
+    case "ordering": return <OrderingTask block={block} runner={runner} />;
     default: return <GenericTask block={block} />;
   }
+}
+
+export default function BlockRenderer({ block, runner, live }) {
+  if (block.block_type === "theory") return <TheoryBlock block={block} />;
+  const body = renderBlockBody(block, runner);
+  if (!live) return body;
+  return (
+    <>
+      {body}
+      <BlockLivePanel block={block} live={live} />
+    </>
+  );
 }

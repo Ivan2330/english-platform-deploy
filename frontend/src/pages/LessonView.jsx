@@ -4,6 +4,7 @@ import axios from "axios";
 import { API_URL } from "../../config";
 import BlockRenderer from "../components/lesson/LessonBlocks";
 import "./LessonView.css";
+import "../styles/homework.css";
 
 const auth = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 const keyOf = (blockId, qId) => `${blockId}:${qId ?? "null"}`;
@@ -15,6 +16,7 @@ export default function LessonView() {
   const [initial, setInitial] = useState(() => new Map());
   const [activeSection, setActiveSection] = useState(0);
   const [error, setError] = useState(null);
+  const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
     const run = async () => {
@@ -63,6 +65,16 @@ export default function LessonView() {
     };
   }, [attempt, initial]);
 
+  const completeLesson = async () => {
+    if (!attempt) return;
+    try {
+      await axios.post(`${API_URL}/attempts/${attempt.id}/complete`, {}, auth());
+      setCompleted(true);
+    } catch {
+      alert("Не вдалося завершити урок.");
+    }
+  };
+
   if (error) return <div className="lv-state">{error}</div>;
   if (!lesson || !attempt) return <div className="lv-state">Завантаження…</div>;
 
@@ -71,36 +83,44 @@ export default function LessonView() {
 
   return (
     <div className="lv-page">
-      <header className="lv-header">
-        <div className="lv-title">{lesson.title}</div>
-        {lesson.level && <span className="lv-level">{lesson.level}</span>}
-      </header>
-
-      <div className="lv-body">
-        <aside className="lv-rail">
-          <div className="lv-rail-label">SECTIONS</div>
-          {sections.map((s, i) => (
-            <button
-              key={s.id}
-              className={`lv-rail-item ${i === activeSection ? "is-active" : ""}`}
-              onClick={() => setActiveSection(i)}
-            >
-              {s.title}
+      <div className="lv-shell">
+        <header className="lv-hero">
+          <div className="lv-hero-top">
+            <span className="lv-hero-eyebrow">LESSON{lesson.level ? ` · ${lesson.level}` : ""}</span>
+            <button className="lv-finish" onClick={completeLesson} disabled={completed}>
+              {completed ? "✓ Завершено" : "Завершити урок"}
             </button>
-          ))}
-        </aside>
+          </div>
+          <h1 className="lv-hero-title">{lesson.title}</h1>
+        </header>
 
-        <main className="lv-doc">
-          {current ? (
-            current.blocks.length ? (
-              current.blocks.map((b) => <BlockRenderer key={b.id} block={b} runner={runner} />)
+        <div className="lv-body">
+          <aside className="lv-rail">
+            <div className="lv-rail-label">SECTIONS</div>
+            {sections.map((s, i) => (
+              <button
+                key={s.id}
+                className={`lv-rail-item ${i === activeSection ? "is-active" : ""}`}
+                onClick={() => setActiveSection(i)}
+              >
+                {s.title}
+                {s.kind === "homework" && <span className="hw-badge">HW</span>}
+              </button>
+            ))}
+          </aside>
+
+          <main className="lv-doc">
+            {current ? (
+              current.blocks.length ? (
+                current.blocks.map((b) => <BlockRenderer key={b.id} block={b} runner={runner} />)
+              ) : (
+                <div className="lv-state">У цій секції ще немає блоків.</div>
+              )
             ) : (
-              <div className="lv-state">У цій секції ще немає блоків.</div>
-            )
-          ) : (
-            <div className="lv-state">У цьому уроці ще немає секцій.</div>
-          )}
-        </main>
+              <div className="lv-state">У цьому уроці ще немає секцій.</div>
+            )}
+          </main>
+        </div>
       </div>
     </div>
   );

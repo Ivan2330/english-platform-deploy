@@ -12,7 +12,10 @@
     "vite": "^6.2.1"
   },
   "dependencies": {
+    "@livekit/components-react": "^2.9.21",
+    "@livekit/components-styles": "^1.2.0",
     "axios": "^1.8.2",
+    "livekit-client": "^2.19.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",

@@ -1,0 +1,18 @@
+/* Спільний бейдж домашнього завдання (секція kind="homework") */
+.hw-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, #D4307E, #9D4EDD);
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: 6px;
+  vertical-align: middle;
+  line-height: 1.6;
+}
+
+/* Активний перемикач "домашка" у конструкторі */
+.lb-mini.is-hw { box-shadow: inset 0 0 0 2px #D4307E; border-radius: 6px; }

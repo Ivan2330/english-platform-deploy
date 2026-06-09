@@ -25,11 +25,14 @@ from app.api.users.auth import fastapi_users, auth_backend
 from app.api.users.students import router as students_router
 from app.api.users.staff import router as staff_router
 from app.api.users.users import router as photo_router
+from app.api.connection.classroom_ws import router as classroom_ws_router
 
 from app.api.controls.section import router as section_router
 from app.api.controls.block import router as block_router
 from app.api.controls.lesson_content import router as lesson_content_router
 from app.api.controls.attempt import router as attempt_router
+
+from app.api.connection.livekit import router as livekit_router
 
 # Завантажуємо змінні середовища
 load_dotenv()
@@ -97,6 +100,8 @@ app.include_router(call_router, prefix="/calls", tags=["Calls"])
 app.include_router(call_ws_router, prefix="/calls-ws", tags=["Calls WebSocket"])
 app.include_router(chat_router, prefix="/chats", tags=["Chats"])
 app.include_router(chat_ws_router, prefix="/chat-ws", tags=["Chats WebSocket"])
+app.include_router(livekit_router, tags=["LiveKit"])
+app.include_router(classroom_ws_router, prefix="/classroom-ws", tags=["Classroom WebSocket"])
 
 # ✅ **Роутери завдань та результатів**
 app.include_router(task_result_router, prefix="/task-results", tags=["Task Results"])

@@ -1,0 +1,173 @@
+.sr-page {
+  min-height: 100vh;
+  background: #f4f2fb;
+  font-family: "Poppins", system-ui, sans-serif;
+  color: #2a2440;
+}
+
+.sr-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: #8a8aa0;
+}
+
+.sr-top {
+  padding: 22px 28px;
+  background: #fff;
+  border-bottom: 1px solid #ece9f8;
+}
+.sr-title { font-size: 20px; font-weight: 700; color: #4A2C8F; }
+
+.sr-body {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  padding: 20px 28px;
+  align-items: start;
+}
+
+/* ---- Список спроб ---- */
+.sr-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: sticky;
+  top: 20px;
+}
+.sr-att {
+  position: relative;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #ece9f8;
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sr-att:hover { border-color: #cdbff3; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(74,44,143,0.08); }
+.sr-att.is-active { border-color: #6C63FF; box-shadow: 0 8px 24px rgba(108,99,255,0.18); }
+.sr-att-title { font-weight: 600; font-size: 14px; color: #2a2440; }
+.sr-att-meta { display: flex; align-items: center; gap: 10px; }
+.sr-status { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+.sr-status.completed { background: #e7f8ee; color: #1f9d57; }
+.sr-status.in_progress { background: #fff3e0; color: #c77700; }
+.sr-date { font-size: 11px; color: #a8a5bd; }
+.sr-grade-badge {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  min-width: 30px;
+  text-align: center;
+  background: linear-gradient(135deg, #6C63FF, #9D4EDD);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 3px 9px;
+  border-radius: 10px;
+}
+
+.sr-empty {
+  background: #fff;
+  border: 1px dashed #d9d2f2;
+  border-radius: 14px;
+  padding: 26px;
+  text-align: center;
+  color: #9a96b4;
+  font-size: 14px;
+}
+
+/* ---- Перегляд ---- */
+.sr-main { min-width: 0; }
+
+.sr-overall {
+  background: #fff;
+  border: 1px solid #ece9f8;
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.sr-overall--pending { color: #9a96b4; }
+.sr-overall-head { display: flex; align-items: center; justify-content: space-between; }
+.sr-overall-label { font-weight: 700; color: #4A2C8F; }
+.sr-overall-grade {
+  font-size: 22px;
+  font-weight: 800;
+  color: #6C63FF;
+}
+.sr-overall-pending { font-size: 13px; color: #a8a5bd; }
+.sr-overall-comment {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #f0edfa;
+  font-size: 14px;
+  color: #4a4660;
+  white-space: pre-wrap;
+}
+
+.sr-section { margin-bottom: 22px; }
+.sr-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8a86a8;
+  margin-bottom: 10px;
+}
+
+.sr-block {
+  background: #fff;
+  border: 1px solid #ece9f8;
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+}
+.sr-block-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: #6C63FF;
+  background: #f1eefb;
+  padding: 2px 10px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+.sr-block-title { font-weight: 600; margin-bottom: 10px; }
+
+.sr-q { padding: 10px 0; border-top: 1px solid #f4f1fc; }
+.sr-q:first-of-type { border-top: none; }
+.sr-q-text { font-size: 14px; color: #2a2440; margin-bottom: 6px; }
+.sr-answer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sr-answer-val { font-size: 14px; font-weight: 600; color: #4A2C8F; }
+.sr-noanswer { font-size: 13px; color: #b3b0c4; }
+.sr-bot { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+.sr-bot.ok { background: #e7f8ee; color: #1f9d57; }
+.sr-bot.no { background: #fdecec; color: #d23b3b; }
+
+.sr-teacher {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f7f5ff;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sr-teacher-grade { font-size: 13px; font-weight: 700; color: #6C63FF; }
+.sr-teacher-fb { font-size: 13px; color: #4a4660; white-space: pre-wrap; }
+
+/* ---- Адаптив ---- */
+@media (max-width: 800px) {
+  .sr-body { grid-template-columns: 1fr; }
+  .sr-list { position: static; }
+}
+
+@media (max-width: 480px) {
+  .sr-top { padding: 16px 14px; }
+  .sr-body { padding: 14px; }
+}

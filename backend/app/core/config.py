@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     expire_token_minutes: int = 120
     OPENAI_API_KEY: str
     OPENAI_API_URL: str
+    LIVEKIT_URL: str = ""
+    LIVEKIT_API_KEY: str = ""
+    LIVEKIT_API_SECRET: str = ""
     
     log_level: str = "info"
     environment: str = "development"

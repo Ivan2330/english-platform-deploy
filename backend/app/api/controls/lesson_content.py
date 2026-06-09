@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_async_session
 from app.api.users.auth import current_active_user
+from app.api.deps import is_staff
 from app.models.users.users import User
 from app.models.controls.lessons import Lesson
 from app.models.controls.section import Section
@@ -21,7 +22,10 @@ async def get_full_lesson(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user),
 ):
-    """Повертає урок із секціями, блоками й питаннями (для сторінки заняття)."""
+    """Повертає урок із секціями, блоками й питаннями (для сторінки заняття).
+
+    Для не-персоналу (учнів) ховаємо правильні відповіді й пояснення.
+    """
     result = await session.execute(
         select(Lesson)
         .where(Lesson.id == lesson_id)
@@ -50,6 +54,14 @@ async def get_full_lesson(
                 blocks=[block_to_response(b) for b in blocks],
             )
         )
+
+    # учням не віддаємо правильні відповіді / пояснення
+    if not is_staff(current_user):
+        for s in section_responses:
+            for b in s.blocks:
+                for q in b.questions:
+                    q.correct_answer = None
+                    q.explanation = None
 
     return LessonFullResponse(
         id=lesson.id,

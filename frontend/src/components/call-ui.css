@@ -1,0 +1,187 @@
+/* ===== Кастомний UI дзвінка (під дизайн класу — Variant A) ===== */
+.lkc {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: #f4f2fb;
+  padding: 12px;
+  gap: 10px;
+}
+
+/* Смужка статусу */
+.lkc-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  padding: 2px 4px;
+}
+.lkc-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4A2C8F;
+}
+.lkc-livedot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #D4307E;
+  box-shadow: 0 0 0 0 rgba(212, 48, 126, 0.5);
+  animation: lkc-pulse 1.5s infinite;
+}
+@keyframes lkc-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(212, 48, 126, 0.5); }
+  70% { box-shadow: 0 0 0 7px rgba(212, 48, 126, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(212, 48, 126, 0); }
+}
+.lkc-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c6c84;
+  background: #efeafe;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+/* Сцена з плитками */
+.lkc-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.lkc-waiting {
+  margin: auto;
+  color: #8a8aa0;
+  font-size: 13px;
+}
+
+/* Плитка учасника */
+.lkc-tile {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #211833;
+  border: 2px solid transparent;
+  flex: 0 0 auto;
+}
+.lkc-tile.is-speaking {
+  border-color: #36c98d;
+  box-shadow: 0 0 0 1px rgba(54, 201, 141, 0.4);
+}
+.lkc-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Аватар-кружечок (камера офф) */
+.lkc-avatar {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 23px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+/* Індикатор зʼєднання (кольоровий, видимий) */
+.lkc-quality {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 0, 0, 0.35);
+}
+
+/* Низ плитки: імʼя + мік-офф */
+.lkc-namebar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+}
+.lkc-name {
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lkc-micoff {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #e0464d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(224, 70, 77, 0.5);
+}
+
+/* Контроли */
+.lkc-controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 0 2px;
+}
+.lkc-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: #4A2C8F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(74, 44, 143, 0.12);
+  transition: transform 0.12s ease, background 0.15s ease;
+}
+.lkc-btn svg { width: 20px; height: 20px; }
+.lkc-btn:hover { transform: translateY(-1px); }
+.lkc-btn.is-off { background: #efeafe; color: #8a8aa0; }
+.lkc-btn.lkc-leave { background: #e0464d; color: #fff; box-shadow: 0 4px 12px rgba(224, 70, 77, 0.4); }
+.lkc-btn.lkc-leave:hover { filter: brightness(1.06); }
+
+/* ===== Скролилка сцени дзвінка (на світлому тлі панелі) ===== */
+.lkc-stage { scrollbar-width: thin; scrollbar-color: #cdc4f2 transparent; }
+.lkc-stage::-webkit-scrollbar { width: 8px; }
+.lkc-stage::-webkit-scrollbar-track { background: transparent; }
+.lkc-stage::-webkit-scrollbar-thumb {
+  background: #cdc4f2; border-radius: 999px;
+  border: 2px solid #f4f2fb; background-clip: padding-box;
+}
+.lkc-stage::-webkit-scrollbar-thumb:hover { background: #6C63FF; }

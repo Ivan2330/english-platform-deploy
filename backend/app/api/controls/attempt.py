@@ -20,6 +20,7 @@ from app.schemas.controls.attempt import (
     AnswerResponse,
     AnswerGrade,
     AttemptGrade,
+    MyAttemptItem,
 )
 
 router = APIRouter(prefix="/attempts", tags=["Attempts"])
@@ -94,6 +95,34 @@ async def start_attempt(
     return attempt
 
 
+@router.get("/my", response_model=list[MyAttemptItem])
+async def get_my_attempts(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user),
+):
+    """Усі спроби поточного учня (для сторінки «Мої результати»)."""
+    result = await session.execute(
+        select(LessonAttempt, Lesson.title)
+        .join(Lesson, Lesson.id == LessonAttempt.lesson_id)
+        .where(LessonAttempt.student_id == current_user.id)
+        .order_by(LessonAttempt.started_at.desc())
+    )
+    items = []
+    for attempt, title in result.all():
+        items.append(
+            MyAttemptItem(
+                id=attempt.id,
+                lesson_id=attempt.lesson_id,
+                lesson_title=title,
+                status=attempt.status,
+                overall_grade=attempt.overall_grade,
+                started_at=attempt.started_at,
+                completed_at=attempt.completed_at,
+            )
+        )
+    return items
+
+
 @router.get("/{attempt_id}", response_model=AttemptFullResponse)
 async def get_attempt(
     attempt_id: int,
@@ -103,6 +132,9 @@ async def get_attempt(
     attempt = await _load_attempt_full(session, attempt_id)
     if not attempt:
         raise HTTPException(status_code=404, detail="Attempt not found")
+    # учень може дивитись лише свою спробу; staff — будь-яку
+    if not is_staff(current_user) and attempt.student_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not allowed")
     return attempt
 
 
@@ -125,6 +157,23 @@ async def get_my_attempt(
     if not attempt:
         raise HTTPException(status_code=404, detail="No attempt yet")
     return attempt
+
+
+@router.get("/lesson/{lesson_id}", response_model=list[AttemptResponse])
+async def get_lesson_attempts(
+    lesson_id: int,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(current_active_user),
+):
+    """Список усіх спроб уроку (для вчителя/адміна)."""
+    if not is_staff(current_user):
+        raise HTTPException(status_code=403, detail="Not allowed")
+    result = await session.execute(
+        select(LessonAttempt)
+        .where(LessonAttempt.lesson_id == lesson_id)
+        .order_by(LessonAttempt.started_at.desc())
+    )
+    return result.scalars().all()
 
 
 # ---------- відповіді ----------
