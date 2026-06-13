@@ -38,7 +38,7 @@ export default function LessonBuilderHome() {
     setCreating(true);
     try {
       const { data } = await axios.post(
-        `${API_URL}/lessons/lessons`,
+        `${API_URL}/lessons/lessons/`,
         { title: title.trim(), level },
         auth()
       );
