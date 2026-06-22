@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_URL } from "../../config";
 import BlockRenderer from "../components/lesson/LessonBlocks";
@@ -11,8 +11,19 @@ const keyOf = (blockId, qId) => `${blockId}:${qId ?? "null"}`;
 
 export default function LessonView() {
   const { lessonId } = useParams();
+  const navigate = useNavigate();
+  const previewMode = useMemo(() => {
+    if (new URLSearchParams(window.location.search).get("preview") === "1") return true;
+    try {
+      return JSON.parse(localStorage.getItem("user") || "null")?.role === "staff";
+    } catch {
+      return false;
+    }
+  }, []);
+
   const [lesson, setLesson] = useState(null);
   const [attempt, setAttempt] = useState(null);
+  const [loaded, setLoaded] = useState(false);
   const [initial, setInitial] = useState(() => new Map());
   const [activeSection, setActiveSection] = useState(0);
   const [error, setError] = useState(null);
@@ -27,7 +38,13 @@ export default function LessonView() {
         );
         setLesson(lessonData);
 
-        // стартуємо/відновлюємо спробу
+        // прев'ю для викладача — лише читання, без створення спроби
+        if (previewMode) {
+          setLoaded(true);
+          return;
+        }
+
+        // стартуємо/відновлюємо спробу (для учня)
         const { data: att } = await axios.post(
           `${API_URL}/attempts/start`,
           { lesson_id: Number(lessonId) },
@@ -44,6 +61,7 @@ export default function LessonView() {
         // ставимо разом, щоб блоки змонтувались уже з правильними початковими значеннями
         setInitial(map);
         setAttempt(att);
+        setLoaded(true);
       } catch (e) {
         setError("Не вдалося завантажити урок.");
       }
@@ -76,7 +94,7 @@ export default function LessonView() {
   };
 
   if (error) return <div className="lv-state">{error}</div>;
-  if (!lesson || !attempt) return <div className="lv-state">Завантаження…</div>;
+  if (!loaded || !lesson) return <div className="lv-state">Завантаження…</div>;
 
   const sections = lesson.sections || [];
   const current = sections[activeSection];
@@ -86,10 +104,18 @@ export default function LessonView() {
       <div className="lv-shell">
         <header className="lv-hero">
           <div className="lv-hero-top">
-            <span className="lv-hero-eyebrow">LESSON{lesson.level ? ` · ${lesson.level}` : ""}</span>
-            <button className="lv-finish" onClick={completeLesson} disabled={completed}>
-              {completed ? "✓ Завершено" : "Завершити урок"}
-            </button>
+            <span className="lv-hero-eyebrow">
+              LESSON{lesson.level ? ` · ${lesson.level}` : ""}{previewMode ? " · ПРЕВ'Ю" : ""}
+            </span>
+            {previewMode ? (
+              <button className="lv-finish" onClick={() => navigate(`/lesson-builder/${lessonId}`)}>
+                ← До конструктора
+              </button>
+            ) : (
+              <button className="lv-finish" onClick={completeLesson} disabled={completed}>
+                {completed ? "✓ Завершено" : "Завершити урок"}
+              </button>
+            )}
           </div>
           <h1 className="lv-hero-title">{lesson.title}</h1>
         </header>

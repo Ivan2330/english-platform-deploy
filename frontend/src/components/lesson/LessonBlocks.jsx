@@ -163,17 +163,44 @@ function WritingTask({ block, runner }) {
 }
 
 /* ---------- Listening / Video ---------- */
+function getEmbedUrl(url) {
+  if (!url) return null;
+  const yt = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/
+  );
+  if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+  const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
+  // Google Drive (загальнодоступний файл) → вбудований перегляд
+  const gd = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:export=\w+&)?id=)([A-Za-z0-9_-]+)/);
+  if (gd) return `https://drive.google.com/file/d/${gd[1]}/preview`;
+  return null;
+}
+
 function MediaTask({ block, tag, runner }) {
   const qs = block.questions || [];
   const multi = qs.length > 1;
+  const embed = getEmbedUrl(block.media_url);
   return (
     <div className="blk task">
       <span className="blk-tag">{tag}</span>
       {block.title && <div className="blk-title">{block.title}</div>}
       {block.media_url ? (
-        tag === "Video"
-          ? <video className="media-video" src={block.media_url} controls />
-          : <audio className="media-audio" src={block.media_url} controls />
+        embed ? (
+          <div className="media-embed">
+            <iframe
+              src={embed}
+              title={block.title || tag}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        ) : tag === "Video" ? (
+          <video className="media-video" src={block.media_url} controls />
+        ) : (
+          <div className="media-band"><audio className="media-audio" src={block.media_url} controls /></div>
+        )
       ) : (
         <div className="media-empty">{tag} not attached yet</div>
       )}

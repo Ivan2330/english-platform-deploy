@@ -363,7 +363,7 @@ const ClassPage = () => {
         <div
           ref={centerRef}
           className="center-panel"
-          style={{ alignItems: 'flex-start', justifyContent: 'center', paddingTop: '40px', paddingBottom: '40px' }}
+          style={{ alignItems: 'flex-start', justifyContent: 'center', paddingTop: '18px', paddingBottom: '32px' }}
         >
           {lessonFull ? (
             activeSection ? (

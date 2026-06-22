@@ -119,7 +119,7 @@ export default function LessonBuilder() {
           <Link className="lb-back" to="/lesson-builder">←</Link>
           <div className="lb-title">Конструктор · {lesson.title}</div>
         </div>
-        <a className="lb-preview" href={`/lesson-view/${lesson.id}`} target="_blank" rel="noreferrer">
+        <a className="lb-preview" href={`/lesson-view/${lesson.id}?preview=1`} target="_blank" rel="noreferrer">
           Превʼю ↗
         </a>
       </header>
