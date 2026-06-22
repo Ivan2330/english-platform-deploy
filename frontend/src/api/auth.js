@@ -1,6 +1,5 @@
 import axios from "axios";
-
-const API_URL = "http://127.0.0.1:8000"; // URL бекенду
+import { API_URL } from "../../config";
 
 export const login = async (email, password) => {
   const formData = new URLSearchParams();

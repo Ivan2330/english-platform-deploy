@@ -15,6 +15,13 @@ function shuffle(arr) {
 
 /* ---------- Теорія ---------- */
 function TheoryBlock({ block }) {
+  if (block.callout_style === "header") {
+    return (
+      <div className="blk-hero">
+        <div className="md"><ReactMarkdown>{block.content || ""}</ReactMarkdown></div>
+      </div>
+    );
+  }
   const style = block.callout_style && block.callout_style !== "none" ? block.callout_style : null;
   return (
     <div className={`blk theory ${style ? `callout callout-${style}` : ""}`}>

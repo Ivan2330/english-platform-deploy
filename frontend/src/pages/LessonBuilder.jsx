@@ -16,7 +16,7 @@ const TASK_TYPES = [
   "matching",
   "ordering",
 ];
-const CALLOUTS = ["none", "note", "tip", "warning", "example"];
+const CALLOUTS = ["none", "header", "note", "tip", "warning", "example"];
 
 const auth = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } });
 
