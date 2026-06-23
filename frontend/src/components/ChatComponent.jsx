@@ -2,18 +2,50 @@ import React, { useEffect, useRef, useState } from 'react';
 import { WS_URL, API_URL } from '../../config';
 import axios from 'axios';
 import '../pages/ChatComponent.css';
-import sender from '../assets/send_button.svg';
 
 const ChatComponent = ({ chatId, currentUser, onClose }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [pos, setPos] = useState(null);          // {x,y} — позиція на десктопі
+  const [dragging, setDragging] = useState(false);
+
   const socketRef = useRef(null);
   const messagesEndRef = useRef(null);
   const seenRef = useRef(new Set());
+  const panelRef = useRef(null);
+  const isDesktopRef = useRef(true);
 
-  // Ключ для дедуплікації (повідомлення не мають унікального id)
-  const keyOfMsg = (m) => `${m.user_id}|${m.sent_at}|${m.message}`;
+  // Дедуплікація: за стабільним id, інакше — за складеним ключем
+  const keyOfMsg = (m) => (m.id != null ? `id:${m.id}` : `${m.user_id}|${m.sent_at}|${m.message}`);
 
+  // Час: бекенд віддає UTC без позначки → додаємо 'Z', щоб коректно перевести в локальний
+  const fmtTime = (s) => {
+    if (!s) return '';
+    const hasTz = /[zZ]|[+-]\d{2}:?\d{2}$/.test(s);
+    const d = new Date(hasTz ? s : s + 'Z');
+    return isNaN(d.getTime()) ? '' : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // ── Десктоп vs мобільний (для перетягування) ──
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 641px)');
+    const apply = () => {
+      isDesktopRef.current = mq.matches;
+      if (mq.matches && !pos) {
+        const w = 360, h = 520;
+        setPos({
+          x: Math.max(12, window.innerWidth - w - 24),
+          y: Math.max(12, window.innerHeight - h - 24),
+        });
+      }
+    };
+    apply();
+    mq.addEventListener?.('change', apply);
+    return () => mq.removeEventListener?.('change', apply);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── WebSocket + історія (логіка без змін) ──
   useEffect(() => {
     if (!chatId || !currentUser?.id) return;
     const token0 = localStorage.getItem('token');
@@ -31,7 +63,7 @@ const ChatComponent = ({ chatId, currentUser, onClose }) => {
           setMessages(list);
         }
       } catch (err) {
-        console.error('❌ Failed to fetch messages:', err);
+        console.error('Failed to fetch messages:', err);
       }
     };
 
@@ -61,7 +93,7 @@ const ChatComponent = ({ chatId, currentUser, onClose }) => {
           seenRef.current.add(k);
           setMessages((prev) => [...prev, data]);
         } catch (e) {
-          console.error('❌ Error parsing message:', e);
+          console.error('Error parsing message:', e);
         }
       };
 
@@ -76,7 +108,6 @@ const ChatComponent = ({ chatId, currentUser, onClose }) => {
       };
     };
 
-    // Спершу історія (засіваємо seen), потім WS — щоб уникнути гонки/дублів
     (async () => {
       await fetchMessages();
       if (!closed) connect();
@@ -99,42 +130,83 @@ const ChatComponent = ({ chatId, currentUser, onClose }) => {
   const sendMessage = () => {
     const trimmed = newMessage.trim();
     if (!trimmed || socketRef.current?.readyState !== WebSocket.OPEN) return;
-
-    const payload = { content: trimmed };
-    socketRef.current.send(JSON.stringify(payload));
+    socketRef.current.send(JSON.stringify({ content: trimmed }));
     setNewMessage('');
   };
 
+  // ── Перетягування (тільки десктоп, за хедер) ──
+  const startDrag = (e) => {
+    if (!isDesktopRef.current || !panelRef.current) return;
+    e.preventDefault();
+    const rect = panelRef.current.getBoundingClientRect();
+    const offX = e.clientX - rect.left;
+    const offY = e.clientY - rect.top;
+    setDragging(true);
+
+    const move = (ev) => {
+      const w = panelRef.current?.offsetWidth ?? 360;
+      const h = panelRef.current?.offsetHeight ?? 520;
+      const x = Math.max(8, Math.min(ev.clientX - offX, window.innerWidth - w - 8));
+      const y = Math.max(8, Math.min(ev.clientY - offY, window.innerHeight - h - 8));
+      setPos({ x, y });
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  const style = isDesktopRef.current && pos ? { left: pos.x, top: pos.y } : undefined;
+
   return (
-    <div className="chat-container">
-      <div className="chat-header">
-        <p className="chat">Chat</p>
-        <button className="chat-close-button" onClick={onClose}>✖</button>
+    <div
+      ref={panelRef}
+      className={`chat-panel ${dragging ? 'is-dragging' : ''}`}
+      style={style}
+    >
+      <div className="chat-head" onPointerDown={startDrag}>
+        <span className="chat-grip" aria-hidden>&#x283F;</span>
+        <span className="chat-head-title">Чат класу</span>
+        <button className="chat-x" onClick={onClose} aria-label="Закрити">&#x2715;</button>
       </div>
-      <div className="chat-messages">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`chat-message ${msg.user_id === currentUser.id ? 'own-message' : 'other-message'}`}
-          >
-            <div className="chat-meta">
-              <span className="chat-role">{msg.role}</span>
-              <span className="chat-time">{new Date(msg.sent_at).toLocaleTimeString()}</span>
+
+      <div className="chat-body">
+        {messages.length === 0 && (
+          <div className="chat-empty">Повідомлень ще немає — почніть розмову 👋</div>
+        )}
+        {messages.map((msg, idx) => {
+          const own = msg.user_id === currentUser.id;
+          return (
+            <div key={idx} className={`chat-row ${own ? 'own' : 'other'}`}>
+              <div className="chat-bubble">
+                {!own && <span className="chat-role">{msg.role}</span>}
+                <span className="chat-text">{msg.message}</span>
+                <span className="chat-time">
+                  {fmtTime(msg.sent_at)}
+                </span>
+              </div>
             </div>
-            <div className="chat-text">{msg.message}</div>
-          </div>
-        ))}
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
-      <div className="chat-input">
+
+      <div className="chat-foot">
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-          placeholder="Type a message..."
+          placeholder="Напишіть повідомлення…"
         />
-        <button onClick={sendMessage}><img src={sender} alt="send" /></button>
+        <button className="chat-send" onClick={sendMessage} aria-label="Надіслати">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+            <path d="M3.4 20.4 21 12 3.4 3.6 3 10l12 2-12 2 .4 6.4Z" fill="#fff" />
+          </svg>
+        </button>
       </div>
     </div>
   );

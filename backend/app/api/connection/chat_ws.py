@@ -109,11 +109,12 @@ async def chat_websocket(
             await db.refresh(new_message)
 
             chat_message = {
+                "id": new_message.id,
                 "chat_id": chat_id,
                 "message": message.content,
                 "user_id": current_user.id,
                 "role": current_user.role,
-                "sent_at": datetime.utcnow().isoformat(),
+                "sent_at": (new_message.sent_at or datetime.utcnow()).isoformat(),
                 "is_read": False,
             }
             

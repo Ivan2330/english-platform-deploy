@@ -71,7 +71,6 @@ const ClassPage = () => {
       try { msg = JSON.parse(e.data); } catch { return; }
 
       if (msg.type === 'go_after_me') {
-        console.log('[ЗА МНОЮ] recv ←', msg, '| current lesson:', lessonFullRef.current?.id, '| role:', user.role);
         // Учні слідують за вчителем; сам вчитель — ні
         if (user.role !== 'staff') {
           const applyPosition = () => {
@@ -182,7 +181,6 @@ const ClassPage = () => {
       section_id: activeSectionRef.current,
       scroll_ratio: ratio,
     };
-    console.log('[ЗА МНОЮ] send →', payload);
     sendWs(payload);
   };
 
