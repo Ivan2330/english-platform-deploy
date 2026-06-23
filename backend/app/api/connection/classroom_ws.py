@@ -94,6 +94,7 @@ async def classroom_websocket(
                 "from_role": conn["role"],
             }
             if etype == "go_after_me":
+                payload["lesson_id"] = msg.get("lesson_id")
                 payload["section_id"] = msg.get("section_id")
                 payload["scroll_ratio"] = msg.get("scroll_ratio", 0)
             elif etype == "answer_update":
