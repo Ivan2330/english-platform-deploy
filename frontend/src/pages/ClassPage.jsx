@@ -175,7 +175,7 @@ const ClassPage = () => {
     const el = centerRef.current;
     const max = el ? el.scrollHeight - el.clientHeight : 0;
     const ratio = el && max > 0 ? el.scrollTop / max : 0;
-    sendWs({ type: 'go_after_me', lesson_id: lessonFullRef.current?.id ?? null, section_id: activeSectionRef.current, scroll_ratio: ratio });
+    sendWs({ type: 'go_after_me', lesson_id: lessonFull?.id ?? lessonFullRef.current?.id ?? null, section_id: activeSectionRef.current, scroll_ratio: ratio });
   };
 
   const completeLesson = async () => {
@@ -288,6 +288,10 @@ const ClassPage = () => {
       const headers = { Authorization: `Bearer ${token}` };
       await axios.patch(`${API_URL}/classrooms/classrooms/${id}/set-lesson/${lesson.id}`, {}, { headers });
       await loadLessonContent(lesson.id, user, headers);
+      // одразу переводимо учнів на новий урок (без потреби тиснути «За мною»)
+      if (user?.role === 'staff') {
+        sendWs({ type: 'go_after_me', lesson_id: lesson.id, section_id: null, scroll_ratio: 0 });
+      }
       setShowLessonSelector(false);
     } catch (err) {
       console.error('Failed to set lesson:', err);
