@@ -32,9 +32,9 @@ const ChatComponent = ({ chatId, currentUser, onClose }) => {
     const apply = () => {
       isDesktopRef.current = mq.matches;
       if (mq.matches && !pos) {
-        const w = 360, h = 520;
+        const w = 320, h = 480;
         setPos({
-          x: Math.max(12, window.innerWidth - w - 24),
+          x: 24,
           y: Math.max(12, window.innerHeight - h - 24),
         });
       }

@@ -3,11 +3,12 @@
    ============================================================ */
 .chat-panel {
   position: fixed;
-  right: 24px;
+  left: 24px;
+  right: auto;
   bottom: 24px;
-  width: 360px;
-  height: 520px;
-  max-height: 72vh;
+  width: 320px;
+  height: 480px;
+  max-height: 70vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
