@@ -50,6 +50,7 @@ const ClassPage = () => {
   const centerRef = useRef(null);
   const inCallRef = useRef(false);
   const activeSectionRef = useRef(null);
+  const lessonFullRef = useRef(null);
 
   const isStaff = user?.role === 'staff';
 
@@ -72,14 +73,26 @@ const ClassPage = () => {
       if (msg.type === 'go_after_me') {
         // Учні слідують за вчителем; сам вчитель — ні
         if (user.role !== 'staff') {
-          if (msg.section_id != null) setActiveSectionId(msg.section_id);
-          requestAnimationFrame(() => {
-            const el = centerRef.current;
-            if (el) {
-              const max = el.scrollHeight - el.clientHeight;
-              el.scrollTo({ top: (msg.scroll_ratio || 0) * max, behavior: 'smooth' });
-            }
-          });
+          const applyPosition = () => {
+            if (msg.section_id != null) setActiveSectionId(msg.section_id);
+            requestAnimationFrame(() => {
+              const el = centerRef.current;
+              if (el) {
+                const max = el.scrollHeight - el.clientHeight;
+                el.scrollTo({ top: (msg.scroll_ratio || 0) * max, behavior: 'smooth' });
+              }
+            });
+          };
+          if (msg.lesson_id != null && msg.lesson_id !== lessonFullRef.current?.id) {
+            // Вчитель перейшов на ІНШИЙ урок — підвантажуємо його, тоді переходимо
+            const token = localStorage.getItem('token');
+            const headers = { Authorization: `Bearer ${token}` };
+            loadLessonContent(msg.lesson_id, user, headers)
+              .then(() => setTimeout(applyPosition, 350))
+              .catch(() => {});
+          } else {
+            applyPosition();
+          }
         }
       } else if (msg.type === 'call_started') {
         if (!inCallRef.current) setIncomingCall({ fromRole: msg.from_role });
@@ -162,7 +175,7 @@ const ClassPage = () => {
     const el = centerRef.current;
     const max = el ? el.scrollHeight - el.clientHeight : 0;
     const ratio = el && max > 0 ? el.scrollTop / max : 0;
-    sendWs({ type: 'go_after_me', section_id: activeSectionRef.current, scroll_ratio: ratio });
+    sendWs({ type: 'go_after_me', lesson_id: lessonFullRef.current?.id ?? null, section_id: activeSectionRef.current, scroll_ratio: ratio });
   };
 
   const completeLesson = async () => {
@@ -201,6 +214,7 @@ const ClassPage = () => {
   const loadLessonContent = async (lessonId, currentUser, headers) => {
     const { data: full } = await axios.get(`${API_URL}/lesson-content/${lessonId}/full`, { headers });
     setLessonFull(full);
+    lessonFullRef.current = full;
     setActiveSectionId(full.sections?.[0]?.id ?? null);
     setCompleted(false);
 
@@ -363,7 +377,7 @@ const ClassPage = () => {
         <div
           ref={centerRef}
           className="center-panel"
-          style={{ alignItems: 'flex-start', justifyContent: 'center', paddingTop: '18px', paddingBottom: '32px' }}
+          style={{ alignItems: 'flex-start', justifyContent: 'center', paddingTop: '8px', paddingBottom: '28px' }}
         >
           {lessonFull ? (
             activeSection ? (

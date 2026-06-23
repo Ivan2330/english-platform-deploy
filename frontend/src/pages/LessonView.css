@@ -359,3 +359,8 @@
   background: linear-gradient(180deg, #5b53f0, #8a3fd0);
   border-width: 2px;
 }
+
+/* Прибрати стрілки скролбару */
+.lv-page::-webkit-scrollbar-button,
+.lv-doc::-webkit-scrollbar-button,
+.lv-rail::-webkit-scrollbar-button { display: none; height: 0; width: 0; }

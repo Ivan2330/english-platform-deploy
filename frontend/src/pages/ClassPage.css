@@ -390,3 +390,9 @@ body { height: 100vh; font-family: 'Poppins'; }
 }
 .center-panel::-webkit-scrollbar-corner,
 .left-panel::-webkit-scrollbar-corner { background: transparent; }
+
+/* Прибрати стрілки скролбару (Windows/Chrome) — чистий повзунок-пілюля */
+.center-panel::-webkit-scrollbar-button,
+.left-panel::-webkit-scrollbar-button,
+.right-panel::-webkit-scrollbar-button,
+.mdock-drawer-body::-webkit-scrollbar-button { display: none; height: 0; width: 0; }
