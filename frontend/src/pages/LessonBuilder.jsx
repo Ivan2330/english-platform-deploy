@@ -164,7 +164,7 @@ export default function LessonBuilder() {
                     </div>
                     <div className="lb-block-info">
                       <span className="lb-block-type">
-                        {b.block_type === "theory" ? "Theory" : (b.task_type || "task")}
+                        {b.block_type === "theory" ? "Theory" : b.block_type === "image" ? "Image" : (b.task_type || "task")}
                       </span>
                       <span className="lb-block-title">
                         {b.title || (b.content ? b.content.slice(0, 50) + "…" : "—")}
@@ -181,6 +181,9 @@ export default function LessonBuilder() {
               <div className="lb-add">
                 <button onClick={() => setEditingBlock({ block_type: "theory", _new: true })}>
                   + Теорія
+                </button>
+                <button onClick={() => setEditingBlock({ block_type: "image", _new: true })}>
+                  + Картинка
                 </button>
                 <button
                   onClick={() =>
@@ -284,10 +287,10 @@ function BlockEditor({ block, sectionId, order, onClose, onSaved }) {
         section_id: sectionId,
         order: isNew ? order : block.order ?? 0,
         block_type: blockType,
-        content: blockType === "theory" ? content : null,
+        content: blockType === "theory" || blockType === "image" ? content : null,
         callout_style: blockType === "theory" ? callout : null,
         task_type: blockType === "task" ? taskType : null,
-        title: blockType === "task" ? title || null : null,
+        title: blockType === "task" || blockType === "image" ? title || null : null,
         media_url: usesMedia ? mediaUrl || null : null,
         config: blockType === "task" ? config : null,
         questions: qPayload,
@@ -315,6 +318,9 @@ function BlockEditor({ block, sectionId, order, onClose, onSaved }) {
             <button className={blockType === "theory" ? "on" : ""} onClick={() => setBlockType("theory")}>
               Теорія
             </button>
+            <button className={blockType === "image" ? "on" : ""} onClick={() => setBlockType("image")}>
+              Картинка
+            </button>
             <button className={blockType === "task" ? "on" : ""} onClick={() => setBlockType("task")}>
               Завдання
             </button>
@@ -334,6 +340,22 @@ function BlockEditor({ block, sectionId, order, onClose, onSaved }) {
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="## Заголовок&#10;Текст **жирним**&#10;- пункт"
+              />
+            </>
+          ) : blockType === "image" ? (
+            <>
+              <label>Посилання на картинки (по одному в рядок)</label>
+              <textarea
+                rows={4}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="https://…/cat.jpg&#10;https://…/sea.jpg"
+              />
+              <label>Підпис (необовʼязково)</label>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Напр.: Our trip to the sea"
               />
             </>
           ) : (

@@ -366,6 +366,36 @@ function BlockLivePanel({ block, live }) {
   );
 }
 
+/* ---------- Вільні картинки (image-блок) ---------- */
+function ImageBlock({ block }) {
+  const urls = (block.content || block.media_url || "")
+    .split(/[\n\r\s,]+/)
+    .map((u) => u.trim())
+    .filter(Boolean);
+
+  if (!urls.length) {
+    return (
+      <div className="blk">
+        <span className="blk-tag">Image</span>
+        <div className="media-empty">Картинку ще не додано</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="blk blk-image">
+      <div className={`blk-images count-${Math.min(urls.length, 3)}`}>
+        {urls.map((u, i) => (
+          <a key={i} href={u} target="_blank" rel="noreferrer" className="blk-img-wrap">
+            <img className="blk-img" src={u} alt={block.title || `image ${i + 1}`} loading="lazy" />
+          </a>
+        ))}
+      </div>
+      {block.title && <div className="blk-img-caption">{block.title}</div>}
+    </div>
+  );
+}
+
 /* ---------- Диспетчер ---------- */
 function renderBlockBody(block, runner) {
   switch (block.task_type) {
@@ -384,6 +414,7 @@ function renderBlockBody(block, runner) {
 }
 
 export default function BlockRenderer({ block, runner, live }) {
+  if (block.block_type === "image") return <ImageBlock block={block} />;
   if (block.block_type === "theory") return <TheoryBlock block={block} />;
   const body = renderBlockBody(block, runner);
   if (!live) return body;
