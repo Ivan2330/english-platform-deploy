@@ -165,15 +165,21 @@ async def get_lesson_attempts(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user),
 ):
-    """Список усіх спроб уроку (для вчителя/адміна)."""
+    """Список усіх спроб уроку (для вчителя/адміна). Повертає username учня."""
     if not is_staff(current_user):
         raise HTTPException(status_code=403, detail="Not allowed")
     result = await session.execute(
-        select(LessonAttempt)
+        select(LessonAttempt, User.username)
+        .join(User, User.id == LessonAttempt.student_id)
         .where(LessonAttempt.lesson_id == lesson_id)
         .order_by(LessonAttempt.started_at.desc())
     )
-    return result.scalars().all()
+    items = []
+    for attempt, username in result.all():
+        payload = AttemptResponse.model_validate(attempt).model_dump()
+        payload["student_username"] = username
+        items.append(payload)
+    return items
 
 
 # ---------- відповіді ----------

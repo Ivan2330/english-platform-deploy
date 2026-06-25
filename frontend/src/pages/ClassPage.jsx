@@ -330,6 +330,16 @@ const ClassPage = () => {
         </div>
 
         <div className="header-actions">
+          {isStaff && lessonFull && (
+            <button
+              className="goafter-btn"
+              onClick={() => window.open(`/grading/${lessonFull.id}`, '_blank', 'noopener,noreferrer')}
+              title="Відкрити оцінювання спроб цього уроку"
+              style={{ background: '#fff', color: '#4A2C8F', border: '1px solid #ece9f8' }}
+            >
+              📝 Оцінити
+            </button>
+          )}
           {isStaff && sections.length > 0 && (
             <button
               className="goafter-btn"

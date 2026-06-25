@@ -1,0 +1,73 @@
+/* Додаткові стилі для GradingHome (доповнюють LessonBuilder.css) */
+.lbh-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #efeafe 0%, #eef0f8 280px);
+  padding: 22px 18px 40px;
+  font-family: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: #1c1b2e;
+}
+.lbh-top {
+  max-width: 1080px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lbh-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #2a2440;
+}
+.lbh-back {
+  border: 1px solid #ece9f8;
+  background: #fff;
+  color: #4A2C8F;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  transition: background 0.15s ease;
+}
+.lbh-back:hover { background: #f6f4ff; }
+
+.lbh-toolbar {
+  max-width: 1080px;
+  margin: 0 auto 14px;
+}
+.lbh-search {
+  width: 100%;
+  border: 1px solid #ece9f8;
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.lbh-search:focus {
+  border-color: #b9a7f0;
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+}
+.lbh-grid { max-width: 1080px; margin: 0 auto; }
+.lbh-state {
+  max-width: 1080px;
+  margin: 24px auto;
+  text-align: center;
+  color: #8a8aa0;
+  font-size: 14px;
+}
+.lbh-card-title {
+  font-weight: 600;
+  color: #2a2440;
+  font-size: 15px;
+}
+.lbh-card-cta {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6C63FF;
+}

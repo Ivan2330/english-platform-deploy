@@ -46,6 +46,7 @@ class AttemptResponse(BaseModel):
     teacher_comment: str | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None
+    student_username: str | None = None
 
     class Config:
         from_attributes = True

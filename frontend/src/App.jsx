@@ -16,6 +16,7 @@ import LessonView from "./pages/LessonView";
 import LessonBuilderHome from "./pages/LessonBuilderHome";
 import LessonBuilder from "./pages/LessonBuilder";
 import GradingPage from "./pages/GradingPage";
+import GradingHome from "./pages/GradingHome";
 import StudentResults from "./pages/StudentResults";
 
 /* Eng Practice */
@@ -75,6 +76,7 @@ function App() {
 
           {/* Для всього персоналу (вчителі + адміни): оцінювання */}
           <Route element={<StaffRoute user={user} />}>
+            <Route path="/grading" element={<GradingHome />} />
             <Route path="/grading/:lessonId" element={<GradingPage />} />
           </Route>
 

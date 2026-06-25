@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_URL } from "../../config";
 import "./GradingPage.css";
@@ -10,6 +10,7 @@ const keyOf = (b, q) => `${b}:${q ?? "null"}`;
 
 export default function GradingPage() {
   const { lessonId } = useParams();
+  const navigate = useNavigate();
   const [lesson, setLesson] = useState(null);
   const [attempts, setAttempts] = useState([]);
   const [selected, setSelected] = useState(null);
@@ -50,6 +51,7 @@ export default function GradingPage() {
   return (
     <div className="gr-page">
       <header className="gr-top">
+        <button className="gr-back" onClick={() => navigate(-1)}>← Назад</button>
         <div className="gr-title">Оцінювання · {lesson.title}</div>
       </header>
 
@@ -62,7 +64,7 @@ export default function GradingPage() {
               className={`gr-att ${at.id === selected ? "is-active" : ""}`}
               onClick={() => openAttempt(at.id)}
             >
-              <span className="gr-att-student">Учень #{at.student_id}</span>
+              <span className="gr-att-student">{at.student_username || `Учень #${at.student_id}`}</span>
               <span className={`gr-status ${at.status}`}>
                 {at.status === "completed" ? "завершено" : "в процесі"}
               </span>

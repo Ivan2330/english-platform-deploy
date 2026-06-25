@@ -117,6 +117,14 @@ const AdminDashboardPage = () => {
               </div>
               <div className="tile-glow"></div>
             </button>
+
+            <button className="cyber-tile tile-purple" onClick={() => navigate("/grading")}>
+              <div className="tile-content">
+                <span className="tile-icon">📝</span>
+                <span className="tile-label">Grading</span>
+              </div>
+              <div className="tile-glow"></div>
+            </button>
           </div>
 
           <h2 className="panel-title mt-large">CLASSROOM MANAGEMENT</h2>
