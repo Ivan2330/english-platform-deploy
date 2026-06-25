@@ -12,6 +12,7 @@ from app.models.controls.block import Block
 from app.models.controls.questions import Question
 from app.models.controls.lesson_attempt import LessonAttempt
 from app.models.controls.answer import Answer
+from app.models.classrooms.classroom import Classroom
 from app.schemas.controls.attempt import (
     AttemptStart,
     AttemptResponse,
@@ -162,18 +163,35 @@ async def get_my_attempt(
 @router.get("/lesson/{lesson_id}", response_model=list[AttemptResponse])
 async def get_lesson_attempts(
     lesson_id: int,
+    all: bool = False,
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(current_active_user),
 ):
-    """Список усіх спроб уроку (для вчителя/адміна). Повертає username учня."""
+    """Список спроб уроку (для вчителя/адміна). Повертає username учня.
+    За замовчуванням віддає лише спроби учнів, які є в класах поточного вчителя.
+    Адміни (is_admin / status='admin') бачать усе. Параметр ?all=1 — також показати всі (для адмінів)."""
     if not is_staff(current_user):
         raise HTTPException(status_code=403, detail="Not allowed")
-    result = await session.execute(
+
+    is_admin_user = bool(getattr(current_user, "is_admin", False)) or (getattr(current_user, "status", None) == "admin")
+
+    query = (
         select(LessonAttempt, User.username)
         .join(User, User.id == LessonAttempt.student_id)
         .where(LessonAttempt.lesson_id == lesson_id)
         .order_by(LessonAttempt.started_at.desc())
     )
+
+    if not (is_admin_user and all):
+        # обмежуємо учнями, прив'язаними до класів цього вчителя
+        my_students_subq = (
+            select(Classroom.student_id)
+            .where(Classroom.teacher_id == current_user.id)
+            .where(Classroom.student_id.is_not(None))
+        )
+        query = query.where(LessonAttempt.student_id.in_(my_students_subq))
+
+    result = await session.execute(query)
     items = []
     for attempt, username in result.all():
         payload = AttemptResponse.model_validate(attempt).model_dump()

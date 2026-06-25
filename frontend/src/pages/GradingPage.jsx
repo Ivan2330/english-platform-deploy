@@ -17,13 +17,19 @@ export default function GradingPage() {
   const [attempt, setAttempt] = useState(null);
   const [answers, setAnswers] = useState(new Map());
   const [error, setError] = useState(null);
+  const [showAll, setShowAll] = useState(false);
+
+  // дізнатися, чи адмін (для показу тоглу «Мої / Усі»)
+  let me = null;
+  try { me = JSON.parse(localStorage.getItem("user") || "null"); } catch { me = null; }
+  const isAdmin = !!(me && (me.is_admin || me.status === "admin"));
 
   useEffect(() => {
     const run = async () => {
       try {
         const [{ data: l }, { data: a }] = await Promise.all([
           axios.get(`${API_URL}/lesson-content/${lessonId}/full`, auth()),
-          axios.get(`${API_URL}/attempts/lesson/${lessonId}`, auth()),
+          axios.get(`${API_URL}/attempts/lesson/${lessonId}${showAll ? "?all=1" : ""}`, auth()),
         ]);
         setLesson(l);
         setAttempts(a);
@@ -32,7 +38,7 @@ export default function GradingPage() {
       }
     };
     run();
-  }, [lessonId]);
+  }, [lessonId, showAll]);
 
   const openAttempt = useCallback(async (id) => {
     setSelected(id);
@@ -57,7 +63,18 @@ export default function GradingPage() {
 
       <div className="gr-body">
         <aside className="gr-list">
-          <div className="gr-list-head">Спроби</div>
+          <div className="gr-list-head">
+            <span>Спроби</span>
+            {isAdmin && (
+              <button
+                className="gr-toggle"
+                onClick={() => setShowAll((v) => !v)}
+                title="Перемкнути перелік"
+              >
+                {showAll ? "Усі" : "Мої"}
+              </button>
+            )}
+          </div>
           {attempts.map((at) => (
             <button
               key={at.id}

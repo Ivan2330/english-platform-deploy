@@ -207,3 +207,24 @@
   transition: background 0.15s ease;
 }
 .gr-back:hover { background: #f6f4ff; }
+
+/* Хедер списку спроб + тогл «Мої / Усі» */
+.gr-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.gr-toggle {
+  border: 1px solid #ece9f8;
+  background: #fff;
+  color: #4A2C8F;
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+.gr-toggle:hover { background: #f6f4ff; }
